@@ -2108,7 +2108,12 @@
     "continuous deployment",
     "continuous delivery",
     "ci cd pipelines",
-    "ci pipelines"
+    "ci pipelines",
+    "ci/cd pipelines",
+    "ci/cd pipeline",
+    "cicd pipelines",
+    "deployment pipelines",
+    "build pipelines"
    ],
    "prerequisites": [
     "git"

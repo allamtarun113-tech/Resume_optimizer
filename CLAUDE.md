@@ -226,7 +226,7 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-**Status:** Phases 0–3 ✅ done (2026-09-23). Phase 4 code complete (2026-09-23); exit check pending a live run. Next up: Phase 5.
+**Status:** Phases 0–4 ✅ done (2026-09-23). Next up: Phase 5.
 Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
@@ -276,7 +276,7 @@ Implementation notes (decided during Phase 3):
 - UI: "Already have it, add to resume" cards (with evidence + uplift) vs. "Skill gaps" list.
 - **Exit:** no suggestion references a skill without evidence (tested with adversarial fixtures). Uplift numbers match a recomputed score.
 
-### Phase 4: Learning path
+### Phase 4: Learning path ✅
 Implementation notes (decided during Phase 4):
 - `ingestion/resources_seed.yaml` is the source of truth (about 200 free, reputable resources; each URL was checked when added). Sync it with `uv run python -m scripts.seed_resources` (backend/): it upserts on `(skill_id, url)` and deletes rows no longer in the file. A test validates skill ids, https and duplicates.
 - MCP server (`app/mcp_server/server.py`, fastmcp 4): tools `get_learning_resources` (free first, easier first, shorter first, max 3 per skill) and `get_skill_prerequisites`. Agents use it in-process via `open_tools(server)` (in-memory transport). It is mounted at `/mcp` (streamable HTTP, stateless JSON) **only when `MCP_SERVICE_TOKEN` is set**, behind `Authorization: Bearer <token>`.

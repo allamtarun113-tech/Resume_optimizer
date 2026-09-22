@@ -64,6 +64,7 @@ def test_skill_key(name: str, key: str) -> None:
         ("C#", "csharp"),
         ("Amazon Web Services", "aws"),
         ("Communication skills", "communication"),
+        ("CI/CD pipelines", "ci-cd"),
         ("Tensorflow2", "tensorflow"),  # fuzzy
         ("Kubernete", "kubernetes"),  # fuzzy
         ("Javascrpt", "javascript"),  # fuzzy
