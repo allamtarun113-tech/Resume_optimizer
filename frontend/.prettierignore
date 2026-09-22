@@ -2,3 +2,5 @@ node_modules
 .next
 pnpm-lock.yaml
 components/ui
+lib/openapi.json
+lib/api-schema.d.ts

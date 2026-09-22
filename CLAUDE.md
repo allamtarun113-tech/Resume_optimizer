@@ -228,7 +228,7 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-**Status:** Phase 0 ✅ done (2026-09-23). Next up: Phase 1.
+**Status:** Phase 0 ✅ done (2026-09-23). Phase 1 code complete (2026-09-23); exit check pending a live run with the OpenAI key. Next up: Phase 2.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
 
@@ -242,6 +242,13 @@ Each phase ends with working, deployed software plus tests. **Don't start a phas
 - **Exit:** a logged-in user hits an authenticated `/health/me` from the deployed frontend.
 
 ### Phase 1: Input and extraction
+Implementation notes (decided during Phase 1):
+- The backend talks to Supabase through its REST APIs (PostgREST + Storage) with the secret key (`SUPABASE_SERVICE_ROLE_KEY`, an `sb_secret_...` key), via `app/db/supabase.py`. Every user-facing query filters by `user_id`. `DATABASE_URL` is unused so far.
+- Text is extracted at upload time (`POST /documents`), so scanned PDFs are rejected immediately. The JD and the extra-skills text are stored as `documents` rows (`jd`, `extra_text`); `extra_text` doc ids go into `analyses.supporting_doc_ids`.
+- ProfileExtractor labels documents `RESUME`, `S1`, `S2`… (supplementary ordered by content hash), so re-uploading identical files gives an identical prompt and a cache hit. Labels are mapped back to `resume` / `supplementary:<doc_id>` in Python; items citing an unknown label are dropped.
+- OpenAI calls use the Responses API (`responses.parse`) with `store=False`. `temperature=0` and `reasoning.effort` (`OPENAI_REASONING_EFFORT`) are both sent; whichever one a model rejects is dropped and remembered (`app/llm/client.py`).
+- The cache key also includes the output JSON schema, so a schema change never returns stale cached data.
+- The frontend polls `GET /analyses/{id}` every 2 s (no Realtime yet). API types are generated: `scripts/export_openapi.py` → `frontend/lib/openapi.json` → `pnpm gen:api` → `lib/api-schema.d.ts`.
 - Upload UI: resume PDF, JD textarea, extra-skills textarea, supporting docs (PDF/DOCX/text).
 - DocumentParser (no LLM) + unit tests on sample resumes.
 - OpenAI wrapper (`llm/`): structured outputs, caching, token logging, retries.
@@ -290,8 +297,9 @@ OPENAI_API_KEY=
 OPENAI_MODEL_SMALL=            # cheap model for extraction
 OPENAI_MODEL_LARGE=            # used sparingly
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_REASONING_EFFORT=low    # sent to reasoning models only
 SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=     # secret key (sb_secret_...), server only
 SUPABASE_JWT_SECRET=
 DATABASE_URL=                  # Supabase Postgres (pooler) connection string
 MCP_SERVICE_TOKEN=

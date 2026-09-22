@@ -1,0 +1,1146 @@
+{
+  "components": {
+    "schemas": {
+      "AnalysisCreate": {
+        "properties": {
+          "extra_text": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Text"
+          },
+          "jd_text": {
+            "maxLength": 15000,
+            "minLength": 50,
+            "title": "Jd Text",
+            "type": "string"
+          },
+          "resume_doc_id": {
+            "format": "uuid",
+            "title": "Resume Doc Id",
+            "type": "string"
+          },
+          "supporting_doc_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Supporting Doc Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "resume_doc_id",
+          "jd_text"
+        ],
+        "title": "AnalysisCreate",
+        "type": "object"
+      },
+      "AnalysisCreated": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "parsing",
+              "extracting",
+              "scoring",
+              "advising",
+              "done",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "AnalysisCreated",
+        "type": "object"
+      },
+      "AnalysisResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "job_requirements": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobRequirements"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "llm_usage": {
+            "$ref": "#/components/schemas/LLMUsage"
+          },
+          "prompt_versions": {
+            "additionalProperties": true,
+            "title": "Prompt Versions",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "parsing",
+              "extracting",
+              "scoring",
+              "advising",
+              "done",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "student_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudentProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "error",
+          "created_at",
+          "updated_at",
+          "prompt_versions",
+          "student_profile",
+          "job_requirements",
+          "llm_usage"
+        ],
+        "title": "AnalysisResponse",
+        "type": "object"
+      },
+      "Body_upload_document_documents_post": {
+        "properties": {
+          "file": {
+            "anyOf": [
+              {
+                "contentMediaType": "application/octet-stream",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File"
+          },
+          "kind": {
+            "enum": [
+              "resume",
+              "supporting"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "Body_upload_document_documents_post",
+        "type": "object"
+      },
+      "Certification": {
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\"YYYY-MM\", \"YYYY\", \"present\", or null if not stated.",
+            "title": "Date"
+          },
+          "evidence": {
+            "description": "Short verbatim quote (under 200 characters) copied exactly from that document.",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "description": "Id of the document this came from, exactly as given, e.g. \"RESUME\" or \"S1\".",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "issuer",
+          "date",
+          "source",
+          "evidence"
+        ],
+        "title": "Certification",
+        "type": "object"
+      },
+      "DocumentResponse": {
+        "properties": {
+          "char_count": {
+            "title": "Char Count",
+            "type": "integer"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "resume",
+              "supporting",
+              "jd",
+              "extra_text"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "filename",
+          "char_count",
+          "sections"
+        ],
+        "title": "DocumentResponse",
+        "type": "object"
+      },
+      "Education": {
+        "properties": {
+          "degree": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Degree"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\"YYYY-MM\", \"YYYY\", \"present\", or null if not stated.",
+            "title": "End"
+          },
+          "evidence": {
+            "description": "Short verbatim quote (under 200 characters) copied exactly from that document.",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "field_of_study": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Of Study"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "GPA/CGPA/percentage as written, if stated.",
+            "title": "Grade"
+          },
+          "institution": {
+            "title": "Institution",
+            "type": "string"
+          },
+          "source": {
+            "description": "Id of the document this came from, exactly as given, e.g. \"RESUME\" or \"S1\".",
+            "title": "Source",
+            "type": "string"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\"YYYY-MM\", \"YYYY\", \"present\", or null if not stated.",
+            "title": "Start"
+          }
+        },
+        "required": [
+          "institution",
+          "degree",
+          "field_of_study",
+          "start",
+          "end",
+          "grade",
+          "source",
+          "evidence"
+        ],
+        "title": "Education",
+        "type": "object"
+      },
+      "Experience": {
+        "properties": {
+          "employment_type": {
+            "enum": [
+              "full_time",
+              "part_time",
+              "internship",
+              "freelance",
+              "research",
+              "volunteer",
+              "other"
+            ],
+            "title": "Employment Type",
+            "type": "string"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\"YYYY-MM\", \"YYYY\", \"present\", or null if not stated.",
+            "title": "End"
+          },
+          "evidence": {
+            "description": "Short verbatim quote (under 200 characters) copied exactly from that document.",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "highlights": {
+            "description": "Responsibilities and achievements as stated.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Highlights",
+            "type": "array"
+          },
+          "organization": {
+            "title": "Organization",
+            "type": "string"
+          },
+          "source": {
+            "description": "Id of the document this came from, exactly as given, e.g. \"RESUME\" or \"S1\".",
+            "title": "Source",
+            "type": "string"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\"YYYY-MM\", \"YYYY\", \"present\", or null if not stated.",
+            "title": "Start"
+          },
+          "technologies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Technologies",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "organization",
+          "employment_type",
+          "start",
+          "end",
+          "technologies",
+          "highlights",
+          "source",
+          "evidence"
+        ],
+        "title": "Experience",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "JobRequirements": {
+        "properties": {
+          "company": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company"
+          },
+          "requirements": {
+            "items": {
+              "$ref": "#/components/schemas/Requirement"
+            },
+            "title": "Requirements",
+            "type": "array"
+          },
+          "role_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Title"
+          },
+          "seniority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "intern",
+                  "entry",
+                  "mid",
+                  "senior",
+                  "lead"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seniority"
+          }
+        },
+        "required": [
+          "role_title",
+          "company",
+          "seniority",
+          "requirements"
+        ],
+        "title": "JobRequirements",
+        "type": "object"
+      },
+      "LLMUsage": {
+        "properties": {
+          "cached_calls": {
+            "title": "Cached Calls",
+            "type": "integer"
+          },
+          "calls": {
+            "title": "Calls",
+            "type": "integer"
+          },
+          "input_tokens": {
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "title": "Output Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "calls",
+          "cached_calls",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "LLMUsage",
+        "type": "object"
+      },
+      "MeResponse": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email"
+        ],
+        "title": "MeResponse",
+        "type": "object"
+      },
+      "Project": {
+        "properties": {
+          "challenges": {
+            "description": "Problems faced or solved, if stated.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Challenges",
+            "type": "array"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\"YYYY-MM\", \"YYYY\", \"present\", or null if not stated.",
+            "title": "End"
+          },
+          "evidence": {
+            "description": "Short verbatim quote (under 200 characters) copied exactly from that document.",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "highlights": {
+            "description": "Concrete technical details: what was built, how, design decisions.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Highlights",
+            "type": "array"
+          },
+          "metrics": {
+            "description": "Quantified results as stated (numbers, scale).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The student's role, if stated.",
+            "title": "Role"
+          },
+          "source": {
+            "description": "Id of the document this came from, exactly as given, e.g. \"RESUME\" or \"S1\".",
+            "title": "Source",
+            "type": "string"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\"YYYY-MM\", \"YYYY\", \"present\", or null if not stated.",
+            "title": "Start"
+          },
+          "summary": {
+            "description": "One or two sentences on what the project is.",
+            "title": "Summary",
+            "type": "string"
+          },
+          "technologies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Technologies",
+            "type": "array"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "name",
+          "summary",
+          "role",
+          "technologies",
+          "highlights",
+          "metrics",
+          "challenges",
+          "start",
+          "end",
+          "url",
+          "source",
+          "evidence"
+        ],
+        "title": "Project",
+        "type": "object"
+      },
+      "Requirement": {
+        "properties": {
+          "category": {
+            "enum": [
+              "skill",
+              "domain",
+              "experience",
+              "education",
+              "soft_skill"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "evidence": {
+            "description": "Short verbatim quote from the job description.",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "importance": {
+            "description": "must = required/essential; nice = preferred/bonus/plus.",
+            "enum": [
+              "must",
+              "nice"
+            ],
+            "title": "Importance",
+            "type": "string"
+          },
+          "min_years": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Minimum years if stated, else null.",
+            "title": "Min Years"
+          },
+          "name": {
+            "description": "One atomic requirement, e.g. 'Python', 'REST APIs', '2+ years backend experience', 'B.Tech in Computer Science'.",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "importance",
+          "min_years",
+          "evidence"
+        ],
+        "title": "Requirement",
+        "type": "object"
+      },
+      "SkillMention": {
+        "properties": {
+          "context": {
+            "description": "Where in the document the skill appears.",
+            "enum": [
+              "skills_section",
+              "project",
+              "experience",
+              "education",
+              "certification",
+              "summary",
+              "other"
+            ],
+            "title": "Context",
+            "type": "string"
+          },
+          "context_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Project or job name when context is project or experience, else null.",
+            "title": "Context Name"
+          },
+          "evidence": {
+            "description": "Short verbatim quote (under 200 characters) copied exactly from that document.",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "name": {
+            "description": "Skill, tool, language or concept, as written.",
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "description": "Id of the document this came from, exactly as given, e.g. \"RESUME\" or \"S1\".",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "context",
+          "context_name",
+          "source",
+          "evidence"
+        ],
+        "title": "SkillMention",
+        "type": "object"
+      },
+      "StudentProfile": {
+        "properties": {
+          "certifications": {
+            "items": {
+              "$ref": "#/components/schemas/Certification"
+            },
+            "title": "Certifications",
+            "type": "array"
+          },
+          "education": {
+            "items": {
+              "$ref": "#/components/schemas/Education"
+            },
+            "title": "Education",
+            "type": "array"
+          },
+          "experience": {
+            "items": {
+              "$ref": "#/components/schemas/Experience"
+            },
+            "title": "Experience",
+            "type": "array"
+          },
+          "headline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The student's own summary line, if any.",
+            "title": "Headline"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/Project"
+            },
+            "title": "Projects",
+            "type": "array"
+          },
+          "skills": {
+            "description": "One entry per place a skill appears; the same skill may repeat.",
+            "items": {
+              "$ref": "#/components/schemas/SkillMention"
+            },
+            "title": "Skills",
+            "type": "array"
+          }
+        },
+        "required": [
+          "headline",
+          "skills",
+          "projects",
+          "experience",
+          "education",
+          "certifications"
+        ],
+        "title": "StudentProfile",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "title": "Resume Optimizer API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/analyses": {
+      "post": {
+        "operationId": "create_analysis_analyses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Analysis",
+        "tags": [
+          "analyses"
+        ]
+      }
+    },
+    "/analyses/{analysis_id}": {
+      "get": {
+        "operationId": "get_analysis_analyses__analysis_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Analysis",
+        "tags": [
+          "analyses"
+        ]
+      }
+    },
+    "/documents": {
+      "post": {
+        "description": "Upload a resume/supporting file, or paste supporting text. Text is extracted now.",
+        "operationId": "upload_document_documents_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_document_documents_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/me": {
+      "get": {
+        "operationId": "me_health_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Me",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

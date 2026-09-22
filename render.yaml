@@ -15,3 +15,13 @@ services:
       # Comma-separated list of frontend origins allowed to call the API.
       - key: ALLOWED_ORIGINS
         value: https://resume-optimizer-ten-virid.vercel.app,http://localhost:3000
+      # Secrets and per-environment choices: set in the Render dashboard
+      # (sync: false means the Blueprint never overwrites them).
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL_SMALL
+        sync: false
+      - key: OPENAI_MODEL_LARGE
+        sync: false

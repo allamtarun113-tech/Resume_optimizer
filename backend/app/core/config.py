@@ -18,11 +18,14 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
     database_url: str = ""
 
-    # OpenAI (used from Phase 1)
+    # OpenAI
     openai_api_key: str = ""
     openai_model_small: str = ""
     openai_model_large: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
+    # Sent to reasoning models only; dropped automatically for models that reject it.
+    openai_reasoning_effort: str = "low"
+    openai_timeout_seconds: float = 120
 
     mcp_service_token: str = ""
     # Accepts a JSON list or a comma-separated string.

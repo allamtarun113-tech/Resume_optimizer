@@ -25,3 +25,8 @@ def client(settings: Settings) -> Iterator[TestClient]:
     app.dependency_overrides[get_settings] = lambda: settings
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"

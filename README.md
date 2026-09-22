@@ -30,6 +30,10 @@ pnpm dev
 Checks: `uv run ruff check . && uv run mypy app tests && uv run pytest` (backend) and
 `pnpm lint && pnpm typecheck && pnpm test` (frontend).
 
+After changing a backend API schema, regenerate the frontend types:
+`uv run python -m scripts.export_openapi` (in `backend/`), then `pnpm gen:api` (in `frontend/`).
+CI fails if they are out of date.
+
 ## One-time setup
 
 ### 1. Supabase
@@ -58,9 +62,13 @@ git push -u origin main
 ### 3. Render (backend)
 Dashboard → **New → Blueprint** → connect the GitHub repo. Render reads `render.yaml`,
 builds `backend/Dockerfile` on the free plan and health-checks `/health`.
-When prompted, set:
+`ALLOWED_ORIGINS` and `SUPABASE_URL` live in `render.yaml`. In the service's
+**Environment** tab, set these secrets (they are declared with `sync: false`):
 ```
-ALLOWED_ORIGINS=https://<your-vercel-domain>,http://localhost:3000
+SUPABASE_SERVICE_ROLE_KEY=<Supabase → Project Settings → API Keys → secret key (sb_secret_...)>
+OPENAI_API_KEY=<platform.openai.com → API keys>
+OPENAI_MODEL_SMALL=<cheap model, used for extraction>
+OPENAI_MODEL_LARGE=<optional; defaults to the small model>
 ```
 (`SUPABASE_JWT_SECRET` only if your project still uses legacy HS256 JWT signing.)
 The service URL looks like `https://resume-optimizer-api.onrender.com`.

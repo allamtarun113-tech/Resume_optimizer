@@ -21,6 +21,9 @@ export default async function Home() {
       {data?.claims ? (
         <div className="flex flex-col items-center gap-4">
           <p className="text-sm">Signed in as {email}</p>
+          <Button nativeButton={false} render={<Link href="/analyze" />}>
+            New analysis
+          </Button>
           <BackendCheck />
           <SignOutButton />
         </div>

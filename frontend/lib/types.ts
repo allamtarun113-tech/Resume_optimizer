@@ -1,12 +1,15 @@
-// Mirrors backend Pydantic schemas (backend/app/schemas). Later phases will
-// generate these from the FastAPI OpenAPI spec with openapi-typescript.
+// API types, generated from the backend's OpenAPI spec (lib/api-schema.d.ts).
+// To refresh: `uv run python -m scripts.export_openapi` in backend/, then `pnpm gen:api`.
+import type { components } from "./api-schema";
 
-export type HealthResponse = {
-  status: "ok";
-  version: string;
-};
+type Schemas = components["schemas"];
 
-export type MeResponse = {
-  user_id: string;
-  email: string | null;
-};
+export type HealthResponse = Schemas["HealthResponse"];
+export type MeResponse = Schemas["MeResponse"];
+export type DocumentResponse = Schemas["DocumentResponse"];
+export type AnalysisCreate = Schemas["AnalysisCreate"];
+export type AnalysisCreated = Schemas["AnalysisCreated"];
+export type AnalysisResponse = Schemas["AnalysisResponse"];
+export type AnalysisStatus = AnalysisResponse["status"];
+export type StudentProfile = Schemas["StudentProfile"];
+export type JobRequirements = Schemas["JobRequirements"];
