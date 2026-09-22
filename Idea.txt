@@ -1,0 +1,175 @@
+
+Project Overview:
+
+Resume Optimizer is a complete application designed primarily to help students understand how well their profile matches a particular job opportunity.
+
+The application will take a student's resume and a job description, analyze both, and provide a percentage score indicating how well the student fits the requirements of that particular role.
+
+The purpose of the application is not only to provide a job-fit score but also to help students understand what they already have, what is missing from their resume, what skills they need to learn, and how they can prepare for the interview.
+
+User Inputs:
+
+The application will accept the following information from the user:
+
+•⁠  ⁠Resume — uploaded as a PDF.
+•⁠  ⁠Job Description — provided as text.
+•⁠  ⁠Additional Skills and Experience — information that may not currently be present in the resume.
+ •⁠  ⁠Supporting Documents — these may be provided as PDF files, document files, or directly pasted as text, information that may not currently be present in the resume, additional projects completed by the student. The additional information is important because a student may possess certain skills or may have completed relevant projects but may not have included them in the resume.
+
+Job Fit Score:
+
+The Resume Optimizer will compare the student's complete profile with the provided job description.
+
+After analyzing the information, the application will provide a percentage-based Job Fit Score showing how well the student matches the particular role - This score should be deterministic but the LLM should be used to get the deterministic values. I mean to analyse the system. 
+
+For example, the application may indicate that a student is:
+
+75% fit for the provided job description.
+
+The purpose of this score is to help students understand whether their current profile is suitable for applying for the role and where improvements may be required.
+
+Resume Improvement Suggestions: 
+
+After calculating the Job Fit Score, the application will analyze the student's resume and provide suggestions for improving it.
+
+There can be situations where the student already possesses a required skill or has completed a relevant project but has not mentioned it properly in the resume.
+
+In such cases, the Resume Optimizer should identify that the required information already exists in the student's additional profile information and recommend that the student update the resume to include it.
+Along with that it should also give how much the score can be increased by doing the mentioned changes in the resume
+The application should provide suggestions about what relevant skills, projects, experience, or other information should be added or represented more clearly in the resume.
+
+The application should only recommend information that the student has actually provided. It should not create qualifications or experience that the student does not have.
+
+Skill Gap Identification:
+
+The application should also identify skills required by the job description that the student currently does not have.
+
+These should be treated differently from skills that the student already has but has simply forgotten to mention in the resume.
+
+For example:
+
+If a job requires Machine Learning and the student has Machine Learning experience in their projects but has not mentioned it properly in the resume, the application should recommend updating the resume.
+However, if the job requires Machine Learning and there is no evidence that the student has learned or worked with Machine Learning, the application should identify it as a skill gap.
+
+Learning Path:
+
+When genuine skill gaps are identified, the Resume Optimizer should help the student understand how to close those gaps.
+
+The application should provide a learning path explaining:
+
+•⁠  ⁠What the student should learn.
+•⁠  ⁠What should be learned first.
+•⁠  ⁠What should be learned afterward.
+•⁠  ⁠The appropriate order for learning the required concepts.
+•⁠  ⁠Useful resources or sources from which the student can learn those skills.
+
+The learning path should be connected to the requirements of the particular job the student is targeting.
+
+ The purpose is to help the student move from simply knowing that a skill is missing to understanding how to acquire that skill.
+
+Interview Preparation
+
+After the resume analysis, improvements, and learning recommendations, the application should contain a button called:
+
+“Prepare Me for Interview”
+
+This feature will help the student prepare for interviews for the particular role.
+
+The interview preparation should take the student's profile as well as the target job description into consideration.
+
+Types of Interview Questions
+
+The interview preparation section should contain different categories of questions.
+
+Personal and Background Questions
+
+Questions should be related to the student's own profile, including:
+
+•⁠  ⁠Education
+•⁠  ⁠Academic background
+•⁠  ⁠Projects: IT SHOULD BE VERY DEEP. LIKE ASKING MINUTES DETAILS OF THE PROJECT.
+•⁠  ⁠Experience
+•⁠  ⁠Skills
+•⁠  ⁠Other relevant information available in the student's profile
+
+Job-Specific Technical Questions
+
+ Questions should also be based on the provided job description.
+
+For example, if the student is applying for a Machine Learning Engineer position and the job description requires Machine Learning, the interview preparation should contain relevant Machine Learning questions.
+
+Similarly, the questions should change according to the role and technologies mentioned in each job description.
+
+General Interview Questions
+
+The application should also include common interview questions covering areas such as:
+
+•⁠  ⁠Strengths
+•⁠  ⁠Weaknesses
+•⁠  ⁠Career goals
+•⁠  ⁠Personal qualities
+•⁠  ⁠Work-related situations
+•⁠  ⁠Other commonly asked interview questions
+
+The application primarily needs to provide the questions. Providing answers to those questions is not required.
+
+Interview Question Sources
+
+Interview questions should not simply be generated by an LLM.
+
+The project should use existing interview-question sources instead.
+
+Questions can be obtained through:
+
+•⁠  ⁠RAG, using documents containing interview questions.
+•⁠  ⁠MCP tools/servers, where suitable sources are available.
+•⁠  ⁠Sources such as relevant GitHub repositories or other platforms containing interview questions.
+
+The application should retrieve appropriate questions based on the student's profile and the requirements of the job.
+
+Application Requirements: 
+
+Resume Optimizer should be a complete application with both frontend and backend components.
+
+The intended deployment/services are:
+
+•⁠  ⁠Frontend: Vercel
+•⁠  ⁠Backend: Railway, if a separate backend is required
+•⁠  ⁠Database and related application services: Supabase
+* deployment : github
+
+The goal is to keep the application as close to free or very low-cost as possible.
+
+Multi-Agent Requirement: 
+
+The Resume Optimizer is intended to be a multi-agent application.
+
+Multiple LLM agents should be used for different responsibilities instead of depending entirely on one large agent.
+
+A major objective is to make the agent system efficient in terms of token consumption and cost.
+
+The application should minimize unnecessary LLM usage so that it remains affordable while still providing useful analysis to students.
+It should use python or any other language if LLM is not required. Using LLM in all the cases is not suggested but it should have multiple agents, RAG and MCP.
+
+Overall Objective
+
+The main purpose of Resume Optimizer is to help a student move through the complete process of preparing for a particular job.
+
+The application should help the student understand:
+
+How suitable am I for this job?
+
+What relevant skills or projects do I already have but have not represented properly in my resume?
+
+How should I improve my resume for this job?
+
+What required skills am I actually missing?
+
+What should I learn, and in what order should I learn it?
+
+Where can I learn those skills?
+
+What interview questions should I prepare for based on my profile and this particular job?
+
+In this way, Resume Optimizer is intended to act as a complete job-readiness and interview-preparation application for students, starting from resume analysis and continuing through skill development and interview preparation.
+
