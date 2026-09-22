@@ -11,5 +11,5 @@ COPY app ./app
 RUN uv sync --locked
 
 ENV PATH="/app/.venv/bin:$PATH"
-# Railway injects PORT.
+# Render injects PORT.
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

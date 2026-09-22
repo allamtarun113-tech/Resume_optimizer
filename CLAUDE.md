@@ -34,13 +34,13 @@ It produces:
 | Layer | Choice |
 |---|---|
 | Frontend | **Next.js (App Router) + TypeScript + Tailwind CSS + shadcn/ui**, deployed on **Vercel** |
-| Backend | **Python 3.12 + FastAPI**, deployed on **Railway** (single service) |
+| Backend | **Python 3.12 + FastAPI**, deployed on **Render** free web service (single Docker service; sleeps when idle, so the first request after ~15 min is slow) |
 | Agent orchestration | **Plain Python async orchestrator** (no LangGraph/CrewAI). Each agent is a small class with a typed input/output |
 | LLM | **OpenAI API** through the official `openai` SDK, with **Structured Outputs** (JSON schema / Pydantic) |
 | Embeddings | **OpenAI `text-embedding-3-small`** (1536 dims) |
 | DB / Auth / Storage | **Supabase**: Postgres + **pgvector**, Supabase Auth (email + Google), Supabase Storage for uploaded files |
 | MCP | Our own **FastMCP server** (Python, mounted in the FastAPI app) + the **GitHub MCP server** for ingesting question repos |
-| Source control / CI / CD | **GitHub** repo. GitHub Actions for lint and tests. Vercel and Railway auto-deploy from `main` |
+| Source control / CI / CD | **GitHub** repo. GitHub Actions for lint and tests. Vercel and Render auto-deploy from `main` |
 | Python tooling | `uv` for dependencies, `ruff` (lint + format), `mypy`, `pytest` |
 | Frontend tooling | `pnpm`, ESLint, Prettier, Vitest (unit), Playwright (optional e2e) |
 
@@ -62,7 +62,7 @@ resume-optimizer/
 │   ├── components/               # shadcn/ui + feature components
 │   ├── lib/                      # supabase client, api client, types
 │   └── ...
-├── backend/                      # FastAPI app (Railway root dir = backend)
+├── backend/                      # FastAPI app (Render root dir = backend, see render.yaml)
 │   ├── app/
 │   │   ├── main.py               # FastAPI app, routers, MCP mount
 │   │   ├── api/                  # routers: uploads, analyses, interview, resources, health
@@ -170,7 +170,7 @@ Tools:
 - `get_learning_resources(skill_ids)`: curated resources from the `learning_resources` table
 - `get_skill_prerequisites(skill_id)`: prerequisite graph from the taxonomy
 
-The InterviewPrep and LearningPathPlanner agents call these through an **MCP client**. That keeps the data sources swappable and lets the same tools be used from Claude Desktop or other MCP clients for debugging. The MCP server is in-process, so it adds no extra Railway cost.
+The InterviewPrep and LearningPathPlanner agents call these through an **MCP client**. That keeps the data sources swappable and lets the same tools be used from Claude Desktop or other MCP clients for debugging. The MCP server is in-process, so it adds no extra hosting cost.
 
 ### Learning resources
 - The `learning_resources` table is seeded from `ingestion/resources_seed.yaml`. It prefers free, reputable sources: official docs, freeCodeCamp, MIT OCW, fast.ai, Kaggle Learn, roadmap.sh, CS50, Google/Microsoft free courses.
@@ -234,7 +234,7 @@ Each phase ends with working, deployed software plus tests. **Don't start a phas
 - Supabase project, first migration (profiles, documents, analyses), RLS, Storage bucket.
 - Supabase Auth (email + Google) in the frontend. JWT verification in the backend.
 - CI: ruff + mypy + pytest, and eslint + typecheck + vitest.
-- Deploy the skeleton: Vercel (frontend) and Railway (backend) connected to GitHub.
+- Deploy the skeleton: Vercel (frontend) and Render (backend) connected to GitHub.
 - **Exit:** a logged-in user hits an authenticated `/health/me` from the deployed frontend.
 
 ### Phase 1: Input and extraction

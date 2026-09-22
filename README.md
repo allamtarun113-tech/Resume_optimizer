@@ -6,7 +6,7 @@ Architecture, decisions and phases: see [CLAUDE.md](CLAUDE.md).
 | Part | Stack | Deploys to |
 |---|---|---|
 | `frontend/` | Next.js 16 + Tailwind + shadcn/ui | Vercel |
-| `backend/` | FastAPI (Python 3.12, uv) | Railway (Dockerfile) |
+| `backend/` | FastAPI (Python 3.12, uv) | Render free tier (Dockerfile, `render.yaml`) |
 | `supabase/` | Postgres, Auth, Storage migrations | Supabase |
 
 ## Local development
@@ -53,16 +53,16 @@ git remote add origin https://github.com/<you>/resume-optimizer.git
 git push -u origin main
 ```
 
-### 3. Railway (backend)
-New Project → Deploy from GitHub repo → set **Root Directory** to `backend`.
-Railway builds with `backend/Dockerfile` and health-checks `/health`.
-Variables:
+### 3. Render (backend)
+Dashboard → **New → Blueprint** → connect the GitHub repo. Render reads `render.yaml`,
+builds `backend/Dockerfile` on the free plan and health-checks `/health`.
+When prompted, set:
 ```
-SUPABASE_URL=https://<project-ref>.supabase.co
 ALLOWED_ORIGINS=["https://<your-vercel-domain>","http://localhost:3000"]
 ```
 (`SUPABASE_JWT_SECRET` only if your project still uses legacy HS256 JWT signing.)
-Then **Settings → Networking → Generate Domain**.
+The service URL looks like `https://resume-optimizer-api.onrender.com`.
+Free services sleep after ~15 min idle; the first request afterwards takes ~30–60 s.
 
 ### 4. Vercel (frontend)
 Add New Project → import the repo → set **Root Directory** to `frontend`.
@@ -70,7 +70,7 @@ Environment variables:
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon or publishable key>
-NEXT_PUBLIC_API_BASE_URL=https://<your-railway-domain>
+NEXT_PUBLIC_API_BASE_URL=https://<your-render-domain>
 NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=false   # true once step 1.4 is done
 ```
 
