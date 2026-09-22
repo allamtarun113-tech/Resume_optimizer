@@ -17,7 +17,8 @@ Buckets (GapClassifier): resume strength 1.0 = strong_in_resume; >0 = weak_in_re
 
 from fractions import Fraction
 
-SCORING_VERSION = "1"
+# 2: requirements with alternatives ("Java, C++ or R") match any known alternative.
+SCORING_VERSION = "2"
 
 IMPORTANCE_WEIGHTS: dict[str, Fraction] = {"must": Fraction(3), "nice": Fraction(1)}
 

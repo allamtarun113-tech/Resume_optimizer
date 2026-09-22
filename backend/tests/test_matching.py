@@ -161,6 +161,33 @@ def test_normalizer_run_covers_mentions_projects_and_jobs() -> None:
     assert out.project_ids == [["nextjs", "tailwind"]]
     assert out.experience_ids == [["go", "grpc"]]
     assert out.requirement_ids == ["postgresql", "teamwork"]
+    assert out.requirement_alternatives == [[], []]
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("Java, C++, or R", ["java", "cpp", "r"]),
+        ("AWS, GCP or Azure", ["aws", "gcp", "azure"]),
+        ("Experience with Python or Go", ["python", "go"]),
+        ("Python", []),  # no alternatives
+        ("Bachelor's or Master's degree", []),  # not skills
+        ("Rust or something else", []),  # only one known alternative
+    ],
+)
+def test_normalizer_alternatives(name: str, expected: list[str]) -> None:
+    assert NORMALIZER.resolve_alternatives(name) == expected
+
+
+async def test_any_alternative_is_direct_evidence() -> None:
+    p = profile(skills=[skill("Java")], projects=[project("Bank app", ["Java"])])
+    evidence, model = await _match(p, reqs(req("Java, C++, or R", importance="nice")))
+    assert evidence[0].method == "taxonomy"
+    assert {(r.kind, r.direct) for r in evidence[0].evidence} == {
+        ("skill", True),
+        ("project", True),
+    }
+    assert model.requests == []
 
 
 # -- Matcher ---------------------------------------------------------------------------

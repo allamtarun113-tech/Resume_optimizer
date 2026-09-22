@@ -226,7 +226,7 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-**Status:** Phase 0 ✅ and Phase 1 ✅ done (2026-09-23). Phase 2 code complete (2026-09-23); exit check pending a live run. Next up: Phase 3.
+**Status:** Phases 0, 1 and 2 ✅ done (2026-09-23). Next up: Phase 3.
 Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
@@ -254,12 +254,12 @@ Implementation notes (decided during Phase 1):
 - ProfileExtractor + JDAnalyzer agents with Pydantic schemas and prompt files.
 - **Exit:** uploading a resume and JD shows the extracted profile and requirements JSON in a debug view. A second identical run is 100% cache hits.
 
-### Phase 2: Matching and deterministic Job Fit Score
+### Phase 2: Matching and deterministic Job Fit Score ✅
 Implementation notes (decided during Phase 2):
 - The taxonomy lives at `backend/app/skills/data/skills_taxonomy.json` (inside the Docker build context), not `data/`. Each skill has `aliases`, `prerequisites` (for Phase 4) and `implies` (PostgreSQL implies SQL). `Taxonomy` validates it on load: unique ids and aliases, known references, no prerequisite cycles.
 - **No embeddings in the Matcher (for now).** Order: taxonomy id (direct, then `implies` = implied) → fuzzy name → one batched `evidence_matcher` LLM call for every requirement without direct evidence, plus all `experience` requirements. The LLM cites catalog ids (K/P/X/E/C); Python maps them back and computes strength. Embeddings arrive with RAG in Phase 5.
 - The strength rules, including category overrides (education, soft skills, years) and the fact that demonstrated-only also scores 0.7, are documented in `app/scoring/weights.py`. Years count only jobs the matcher cites as direct evidence; "present" resolves to the analysis date.
-- Requirements with alternatives ("Python or Java") are kept as one requirement (jd_analyzer prompt v2) and always go to the LLM matcher.
+- Requirements with alternatives ("Java, C++ or R") are kept as one requirement (jd_analyzer prompt v2). If at least two alternatives are known skills, any one of them matches through the taxonomy; otherwise the requirement goes to the LLM matcher (scoring v2).
 - Golden cases are in `backend/tests/golden/` (inputs in `cases.py`, snapshots in `*.json`). After an intended change, regenerate with `UPDATE_GOLDEN=1 uv run pytest tests/test_golden.py` and review the diff. CI enforces 100% line and branch coverage on `app/scoring`.
 - `skills_taxonomy.json` (start with ~300–500 common tech skills, aliases and prerequisites).
 - SkillNormalizer, Matcher (with embedding + batched LLM fallback), Scorer, GapClassifier.

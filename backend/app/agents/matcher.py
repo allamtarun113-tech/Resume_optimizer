@@ -196,8 +196,15 @@ class Matcher:
         for i, req in enumerate(requirements.requirements):
             skill_id = normalized.requirement_ids[i]
             method: MatchMethod
+            alternatives = normalized.requirement_alternatives[i]
             if skill_id:
                 refs, method = self.taxonomy_refs(skill_id, profile, normalized), "taxonomy"
+            elif alternatives:
+                # Any one alternative satisfies the requirement.
+                refs = _dedupe(
+                    [r for a in alternatives for r in self.taxonomy_refs(a, profile, normalized)]
+                )
+                method = "taxonomy"
             else:
                 refs, method = self.name_refs(req, profile), "fuzzy"
             has_direct = any(r.direct for r in refs)

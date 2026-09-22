@@ -9,6 +9,7 @@ from app.schemas.requirements import JobRequirements
 from app.skills.taxonomy import Taxonomy
 
 _ALTERNATIVES_RE = re.compile(r"\bor\b", re.IGNORECASE)
+_ALTERNATIVE_SPLIT_RE = re.compile(r"\s*(?:,|/|\bor\b)\s*", re.IGNORECASE)
 _SPLIT_RE = re.compile(r"\s*(?:[/,;|()]|\band\b|&)\s*")
 # Requirement phrasing the JD analyzer sometimes keeps ("Experience with Docker").
 _PREFIX_RE = re.compile(
@@ -24,6 +25,8 @@ class NormalizedSkills(BaseModel):
     project_ids: list[list[str]]  # per project, from its technologies
     experience_ids: list[list[str]]  # per job, from its technologies
     requirement_ids: list[str | None]  # per requirement; None if not (uniquely) known
+    # Per requirement: known ids of its alternatives ("Java, C++ or R"), else empty.
+    requirement_alternatives: list[list[str]]
 
 
 class SkillNormalizer:
@@ -58,6 +61,14 @@ class SkillNormalizer:
                 return ids[0]
         return None
 
+    def resolve_alternatives(self, name: str) -> list[str]:
+        """Ids for "X, Y or Z" when at least two alternatives are known skills."""
+        if not _ALTERNATIVES_RE.search(name):
+            return []
+        parts = [_PREFIX_RE.sub("", p) for p in _ALTERNATIVE_SPLIT_RE.split(name) if p.strip()]
+        ids = list(dict.fromkeys(i for p in parts if (i := self._single(p))))
+        return ids if len(ids) >= 2 else []
+
     def _resolve_all(self, names: list[str]) -> list[str]:
         return list(dict.fromkeys(i for n in names for i in self.resolve(n)))
 
@@ -67,4 +78,7 @@ class SkillNormalizer:
             project_ids=[self._resolve_all(p.technologies) for p in profile.projects],
             experience_ids=[self._resolve_all(x.technologies) for x in profile.experience],
             requirement_ids=[self.resolve_requirement(r.name) for r in requirements.requirements],
+            requirement_alternatives=[
+                self.resolve_alternatives(r.name) for r in requirements.requirements
+            ],
         )
