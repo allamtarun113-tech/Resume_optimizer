@@ -1,7 +1,9 @@
+import json
 from functools import lru_cache
+from typing import Annotated, Any
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -23,8 +25,20 @@ class Settings(BaseSettings):
     openai_embedding_model: str = "text-embedding-3-small"
 
     mcp_service_token: str = ""
-    allowed_origins: list[str] = Field(default=["http://localhost:3000"])
+    # Accepts a JSON list or a comma-separated string.
+    allowed_origins: Annotated[list[str], NoDecode] = Field(default=["http://localhost:3000"])
     daily_analysis_limit: int = 10
+
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def _parse_origins(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            value = value.strip()
+            value = json.loads(value) if value.startswith("[") else value.split(",")
+        if isinstance(value, list):
+            # Browsers send origins without a trailing slash.
+            return [str(v).strip().rstrip("/") for v in value if str(v).strip()]
+        return value
 
     @property
     def supabase_jwks_url(self) -> str:

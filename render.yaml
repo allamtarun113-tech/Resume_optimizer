@@ -12,6 +12,6 @@ services:
     envVars:
       - key: SUPABASE_URL
         value: https://toesvlmefyvghivevjie.supabase.co
-      # JSON list, e.g. ["https://<app>.vercel.app","http://localhost:3000"]
+      # Comma-separated, e.g. https://<app>.vercel.app,http://localhost:3000
       - key: ALLOWED_ORIGINS
         sync: false

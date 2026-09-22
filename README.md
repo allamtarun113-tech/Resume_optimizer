@@ -58,7 +58,7 @@ Dashboard → **New → Blueprint** → connect the GitHub repo. Render reads `r
 builds `backend/Dockerfile` on the free plan and health-checks `/health`.
 When prompted, set:
 ```
-ALLOWED_ORIGINS=["https://<your-vercel-domain>","http://localhost:3000"]
+ALLOWED_ORIGINS=https://<your-vercel-domain>,http://localhost:3000
 ```
 (`SUPABASE_JWT_SECRET` only if your project still uses legacy HS256 JWT signing.)
 The service URL looks like `https://resume-optimizer-api.onrender.com`.
