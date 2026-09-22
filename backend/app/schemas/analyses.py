@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.schemas.advice import Gap, RejectedSuggestion, Suggestion
 from app.schemas.matching import RequirementMatch
 from app.schemas.profile import StudentProfile
 from app.schemas.requirements import JobRequirements
@@ -63,4 +64,7 @@ class AnalysisResponse(BaseModel):
     student_profile: StudentProfile | None
     job_requirements: JobRequirements | None
     matches: list[RequirementMatch] | None
+    suggestions: list[Suggestion] | None
+    rejected_suggestions: list[RejectedSuggestion] | None
+    gaps: list[Gap] | None
     llm_usage: LLMUsage

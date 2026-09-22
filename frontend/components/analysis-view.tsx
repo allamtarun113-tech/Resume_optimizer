@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RequirementBreakdown } from "@/components/requirement-breakdown";
 import { ScoreGauge } from "@/components/score-gauge";
+import { GapList, SuggestionList } from "@/components/suggestion-list";
 import {
   Card,
   CardContent,
@@ -23,7 +24,7 @@ const STATUS_TEXT: Record<AnalysisStatus, string> = {
   parsing: "Reading your documents",
   extracting: "Extracting your profile and the job requirements",
   scoring: "Scoring your fit",
-  advising: "Writing suggestions",
+  advising: "Writing resume suggestions",
   done: "Done",
   failed: "Failed",
 };
@@ -127,7 +128,27 @@ export function AnalysisView({ id }: { id: string }) {
         </CardContent>
       </Card>
 
-      {analysis.matches && <RequirementBreakdown matches={analysis.matches} />}
+      {analysis.suggestions && (
+        <SuggestionList
+          suggestions={analysis.suggestions}
+          rejectedCount={analysis.rejected_suggestions?.length ?? 0}
+          fitScore={analysis.fit_score}
+          potentialScore={analysis.potential_score}
+        />
+      )}
+      {analysis.gaps && <GapList gaps={analysis.gaps} />}
+
+      {analysis.matches && (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold tracking-tight">
+            Requirement by requirement
+          </h2>
+          <RequirementBreakdown
+            matches={analysis.matches}
+            skip={analysis.gaps ? ["true_gap"] : []}
+          />
+        </section>
+      )}
 
       {(requirements || profile) && (
         <details className="rounded-xl border p-4 text-sm">

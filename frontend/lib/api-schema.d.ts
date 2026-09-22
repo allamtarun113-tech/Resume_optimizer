@@ -131,6 +131,8 @@ export interface components {
             error: string | null;
             /** Fit Score */
             fit_score: number | null;
+            /** Gaps */
+            gaps: components["schemas"]["Gap"][] | null;
             /** Id */
             id: string;
             job_requirements: components["schemas"]["JobRequirements"] | null;
@@ -143,6 +145,8 @@ export interface components {
             prompt_versions: {
                 [key: string]: unknown;
             };
+            /** Rejected Suggestions */
+            rejected_suggestions: components["schemas"]["RejectedSuggestion"][] | null;
             /** Scoring Version */
             scoring_version: string | null;
             /**
@@ -151,6 +155,8 @@ export interface components {
              */
             status: "queued" | "parsing" | "extracting" | "scoring" | "advising" | "done" | "failed";
             student_profile: components["schemas"]["StudentProfile"] | null;
+            /** Suggestions */
+            suggestions: components["schemas"]["Suggestion"][] | null;
             /**
              * Updated At
              * Format: date-time
@@ -303,6 +309,25 @@ export interface components {
             /** Title */
             title: string;
         };
+        /** Gap */
+        Gap: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "skill" | "domain" | "experience" | "education" | "soft_skill";
+            /**
+             * Importance
+             * @enum {string}
+             */
+            importance: "must" | "nice";
+            /** Name */
+            name: string;
+            /** Requirement Index */
+            requirement_index: number;
+            /** Skill Id */
+            skill_id: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -401,6 +426,13 @@ export interface components {
             technologies: string[];
             /** Url */
             url: string | null;
+        };
+        /** RejectedSuggestion */
+        RejectedSuggestion: {
+            /** Reason */
+            reason: string;
+            /** Suggested Text */
+            suggested_text: string;
         };
         /** Requirement */
         Requirement: {
@@ -526,6 +558,41 @@ export interface components {
              * @description One entry per place a skill appears; the same skill may repeat.
              */
             skills: components["schemas"]["SkillMention"][];
+        };
+        /** Suggestion */
+        Suggestion: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "add_skill" | "add_project" | "expand_project" | "add_experience" | "expand_experience" | "add_certification" | "add_education_detail";
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Id */
+            id: string;
+            /** Quote */
+            quote: string;
+            /** Quote Source */
+            quote_source: string;
+            /** Quote Source Label */
+            quote_source_label: string;
+            /** Rationale */
+            rationale: string;
+            /** Requirement Indexes */
+            requirement_indexes: number[];
+            /** Requirement Names */
+            requirement_names: string[];
+            /**
+             * Section
+             * @enum {string}
+             */
+            section: "skills" | "projects" | "experience" | "education" | "certifications" | "summary";
+            /** Suggested Text */
+            suggested_text: string;
+            /** Target */
+            target: string | null;
+            /** Uplift */
+            uplift: number;
         };
         /** ValidationError */
         ValidationError: {

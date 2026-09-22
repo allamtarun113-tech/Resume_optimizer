@@ -158,12 +158,14 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
         "parsing",
         "extracting",
         "scoring",
+        "advising",
         "done",
     ]
     assert body["prompt_versions"] == {
         "profile_extractor": "1",
         "jd_analyzer": "2",
         "evidence_matcher": "1",
+        "resume_advisor": "1",
     }
     assert body["job_requirements"]["role_title"] == "Backend Engineer"
 
@@ -186,6 +188,10 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
         "AWS": "weak_in_resume",
         "Communication": "true_gap",
     }
+    # Nothing in the supporting docs beats the resume for these requirements, so the
+    # advisor has nothing to suggest and makes no LLM call.
+    assert body["suggestions"] == []
+    assert [g["name"] for g in body["gaps"]] == ["Docker", "Communication"]
 
     # The profile prompt carried the resume, the supporting doc and the extra text.
     profile_prompt = next(
@@ -285,3 +291,52 @@ def test_openai_quota_error_gets_a_specific_message() -> None:
 
     assert "run out of credit" in user_message(rate_limit("insufficient_quota"))
     assert "busy" in user_message(rate_limit("rate_limit_exceeded"))
+
+
+def test_suggestions_flow_through_the_pipeline(h: Harness) -> None:
+    from app.schemas.advice import ResumeAdvice, SuggestionDraft
+    from tests.builders import req, reqs
+    from tests.test_advice import qid
+
+    h.model.responses["JobRequirements"] = reqs(req("Kubernetes"))
+
+    def advise(model: str, prompt: str) -> ResumeAdvice:
+        return ResumeAdvice(
+            suggestions=[
+                SuggestionDraft(
+                    requirement_ids=["R1"],
+                    evidence_ids=[qid(prompt, "3-node k3s")],
+                    section="projects",
+                    action="expand_project",
+                    target="Campus Food Ordering App",
+                    suggested_text="Deployed the backend on a 3-node Kubernetes (k3s) cluster.",
+                    quote="deployed it on a 3-node k3s cluster",
+                    rationale="The job requires Kubernetes.",
+                ),
+                SuggestionDraft(
+                    requirement_ids=["R1"],
+                    evidence_ids=[qid(prompt, "3-node k3s")],
+                    section="skills",
+                    action="add_skill",
+                    target=None,
+                    suggested_text="Kubernetes",
+                    quote="managed a 50-node production cluster",  # not in any document
+                    rationale="Invented.",
+                ),
+            ]
+        )
+
+    h.model.responses["ResumeAdvice"] = advise
+    created = h.analyze(h.upload_resume().json()["id"], [h.paste_supporting().json()["id"]])
+    body = h.client.get(f"/analyses/{created.json()['id']}").json()
+
+    assert body["status"] == "done", body["error"]
+    assert body["fit_score"] == 0 and body["potential_score"] == 70
+    (suggestion,) = body["suggestions"]
+    assert suggestion["quote_source_label"] == "your pasted text"
+    assert suggestion["uplift"] == 70
+    assert suggestion["requirement_names"] == ["Kubernetes"]
+    assert [r["reason"] for r in body["rejected_suggestions"]] == [
+        "Its quote isn't in your documents."
+    ]
+    assert body["gaps"] == []

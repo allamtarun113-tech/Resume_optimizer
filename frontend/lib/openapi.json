@@ -99,6 +99,20 @@
             ],
             "title": "Fit Score"
           },
+          "gaps": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Gap"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gaps"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -146,6 +160,20 @@
             "title": "Prompt Versions",
             "type": "object"
           },
+          "rejected_suggestions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RejectedSuggestion"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejected Suggestions"
+          },
           "scoring_version": {
             "anyOf": [
               {
@@ -180,6 +208,20 @@
               }
             ]
           },
+          "suggestions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Suggestion"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestions"
+          },
           "updated_at": {
             "format": "date-time",
             "title": "Updated At",
@@ -199,6 +241,9 @@
           "student_profile",
           "job_requirements",
           "matches",
+          "suggestions",
+          "rejected_suggestions",
+          "gaps",
           "llm_usage"
         ],
         "title": "AnalysisResponse",
@@ -570,6 +615,57 @@
         "title": "Experience",
         "type": "object"
       },
+      "Gap": {
+        "properties": {
+          "category": {
+            "enum": [
+              "skill",
+              "domain",
+              "experience",
+              "education",
+              "soft_skill"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "importance": {
+            "enum": [
+              "must",
+              "nice"
+            ],
+            "title": "Importance",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "requirement_index": {
+            "title": "Requirement Index",
+            "type": "integer"
+          },
+          "skill_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill Id"
+          }
+        },
+        "required": [
+          "requirement_index",
+          "name",
+          "category",
+          "importance",
+          "skill_id"
+        ],
+        "title": "Gap",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -829,6 +925,24 @@
           "evidence"
         ],
         "title": "Project",
+        "type": "object"
+      },
+      "RejectedSuggestion": {
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "suggested_text": {
+            "title": "Suggested Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggested_text",
+          "reason"
+        ],
+        "title": "RejectedSuggestion",
         "type": "object"
       },
       "Requirement": {
@@ -1134,6 +1248,112 @@
           "certifications"
         ],
         "title": "StudentProfile",
+        "type": "object"
+      },
+      "Suggestion": {
+        "properties": {
+          "action": {
+            "enum": [
+              "add_skill",
+              "add_project",
+              "expand_project",
+              "add_experience",
+              "expand_experience",
+              "add_certification",
+              "add_education_detail"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "quote_source": {
+            "title": "Quote Source",
+            "type": "string"
+          },
+          "quote_source_label": {
+            "title": "Quote Source Label",
+            "type": "string"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "requirement_indexes": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Requirement Indexes",
+            "type": "array"
+          },
+          "requirement_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Requirement Names",
+            "type": "array"
+          },
+          "section": {
+            "enum": [
+              "skills",
+              "projects",
+              "experience",
+              "education",
+              "certifications",
+              "summary"
+            ],
+            "title": "Section",
+            "type": "string"
+          },
+          "suggested_text": {
+            "title": "Suggested Text",
+            "type": "string"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          },
+          "uplift": {
+            "title": "Uplift",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "requirement_indexes",
+          "requirement_names",
+          "section",
+          "action",
+          "target",
+          "suggested_text",
+          "rationale",
+          "quote",
+          "quote_source",
+          "quote_source_label",
+          "evidence",
+          "uplift"
+        ],
+        "title": "Suggestion",
         "type": "object"
       },
       "ValidationError": {

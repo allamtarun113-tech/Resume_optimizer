@@ -31,24 +31,29 @@ export const BUCKETS: {
   },
 ];
 
-export function groupMatches(matches: RequirementMatch[]): {
+export function groupMatches(
+  matches: RequirementMatch[],
+  skip: Bucket[] = [],
+): {
   bucket: Bucket;
   title: string;
   description: string;
   items: RequirementMatch[];
 }[] {
-  return BUCKETS.map((b) => ({
-    ...b,
-    // Must-haves first, then heavier weights, then the job's original order.
-    items: matches
-      .filter((m) => m.bucket === b.bucket)
-      .sort(
-        (a, c) =>
-          Number(c.importance === "must") - Number(a.importance === "must") ||
-          c.weight - a.weight ||
-          a.requirement_index - c.requirement_index,
-      ),
-  })).filter((g) => g.items.length > 0);
+  return BUCKETS.filter((b) => !skip.includes(b.bucket))
+    .map((b) => ({
+      ...b,
+      // Must-haves first, then heavier weights, then the job's original order.
+      items: matches
+        .filter((m) => m.bucket === b.bucket)
+        .sort(
+          (a, c) =>
+            Number(c.importance === "must") - Number(a.importance === "must") ||
+            c.weight - a.weight ||
+            a.requirement_index - c.requirement_index,
+        ),
+    }))
+    .filter((g) => g.items.length > 0);
 }
 
 export function strengthLabel(strength: number): string {
@@ -66,4 +71,18 @@ export function scoreTone(score: number): "good" | "ok" | "low" {
 
 export function sourceLabel(source: string): string {
   return source === "resume" ? "resume" : "other docs";
+}
+
+export const SECTION_LABEL: Record<string, string> = {
+  skills: "Skills",
+  projects: "Projects",
+  experience: "Experience",
+  education: "Education",
+  certifications: "Certifications",
+  summary: "Summary",
+};
+
+export function whereToAdd(section: string, target: string | null): string {
+  const label = SECTION_LABEL[section] ?? section;
+  return target ? `${label} → ${target}` : label;
 }

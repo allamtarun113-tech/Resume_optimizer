@@ -1,5 +1,10 @@
 import type { RequirementMatch } from "@/lib/types";
-import { groupMatches, sourceLabel, strengthLabel } from "@/lib/results";
+import {
+  type Bucket,
+  groupMatches,
+  sourceLabel,
+  strengthLabel,
+} from "@/lib/results";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -80,12 +85,14 @@ function MatchRow({ match }: { match: RequirementMatch }) {
 
 export function RequirementBreakdown({
   matches,
+  skip = [],
 }: {
   matches: RequirementMatch[];
+  skip?: Bucket[];
 }) {
   return (
     <div className="flex flex-col gap-6">
-      {groupMatches(matches).map((group) => (
+      {groupMatches(matches, skip).map((group) => (
         <Card key={group.bucket}>
           <CardHeader>
             <CardTitle>

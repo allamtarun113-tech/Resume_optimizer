@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { groupMatches, scoreTone, sourceLabel, strengthLabel } from "./results";
+import {
+  groupMatches,
+  scoreTone,
+  sourceLabel,
+  strengthLabel,
+  whereToAdd,
+} from "./results";
 import type { RequirementMatch } from "./types";
 
 function match(
@@ -39,6 +45,14 @@ describe("groupMatches", () => {
     ]);
   });
 
+  it("can skip buckets", () => {
+    const groups = groupMatches(
+      [match("Rust", "true_gap"), match("Python", "strong_in_resume")],
+      ["true_gap"],
+    );
+    expect(groups.map((g) => g.bucket)).toEqual(["strong_in_resume"]);
+  });
+
   it("puts must-haves first, then heavier weights, then JD order", () => {
     const [group] = groupMatches([
       match("AWS", "true_gap", "nice", 1, 0),
@@ -69,5 +83,12 @@ describe("labels", () => {
     expect(scoreTone(49)).toBe("low");
     expect(sourceLabel("resume")).toBe("resume");
     expect(sourceLabel("supplementary:abc")).toBe("other docs");
+  });
+
+  it("describes where to add a suggestion", () => {
+    expect(whereToAdd("projects", "Campus Food App")).toBe(
+      "Projects → Campus Food App",
+    );
+    expect(whereToAdd("skills", null)).toBe("Skills");
   });
 });

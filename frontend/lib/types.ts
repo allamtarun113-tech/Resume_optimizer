@@ -15,3 +15,5 @@ export type StudentProfile = Schemas["StudentProfile"];
 export type JobRequirements = Schemas["JobRequirements"];
 export type RequirementMatch = Schemas["RequirementMatch"];
 export type EvidenceRef = Schemas["EvidenceRef"];
+export type Suggestion = Schemas["Suggestion"];
+export type Gap = Schemas["Gap"];

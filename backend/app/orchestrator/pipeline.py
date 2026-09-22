@@ -1,7 +1,7 @@
 """Analysis pipeline. Runs as a background task and records progress in analyses.status.
 
 Parser (at upload) -> ProfileExtractor || JDAnalyzer -> SkillNormalizer -> Matcher ->
-Scorer (+ GapClassifier) -> store results and scores.
+Scorer (+ GapClassifier) -> ResumeAdvisor (+ EvidenceValidator) -> store everything.
 """
 
 import asyncio
@@ -12,6 +12,7 @@ import openai
 from app.agents.jd_analyzer import JDAnalyzer
 from app.agents.matcher import Matcher
 from app.agents.profile_extractor import ProfileExtractor, ProfileExtractorInput, SourceDocument
+from app.agents.resume_advisor import AdvisorInput, ResumeAdvisor, SourceDoc
 from app.agents.scorer import Scorer
 from app.agents.skill_normalizer import SkillNormalizer
 from app.db.repository import Repository
@@ -45,6 +46,12 @@ def _source(doc: DocumentRecord) -> SourceDocument:
     )
 
 
+def _source_label(doc: DocumentRecord) -> str:
+    if doc.kind == "extra_text":
+        return "your notes"
+    return doc.filename or "your pasted text"
+
+
 class AnalysisPipeline:
     def __init__(self, repo: Repository, llm: LLMClient) -> None:
         self._repo = repo
@@ -54,6 +61,7 @@ class AnalysisPipeline:
         self._normalizer = SkillNormalizer(taxonomy)
         self._matcher = Matcher(llm, taxonomy)
         self._scorer = Scorer()
+        self._advisor = ResumeAdvisor(llm, taxonomy)
 
     @property
     def prompt_versions(self) -> dict[str, str]:
@@ -61,6 +69,7 @@ class AnalysisPipeline:
             self._profile_extractor.name: self._profile_extractor.prompt.version,
             self._jd_analyzer.name: self._jd_analyzer.prompt.version,
             self._matcher.name: self._matcher.prompt.version,
+            self._advisor.name: self._advisor.prompt.version,
         }
 
     async def run(self, analysis_id: str, user_id: str) -> None:
@@ -113,8 +122,25 @@ class AnalysisPipeline:
             profile, requirements, normalized, analysis_id=analysis_id, user_id=user_id
         )
         score = self._scorer.run(requirements, evidence, profile, as_of=analysis.created_at.date())
+
+        await self._repo.update_analysis(analysis_id, status="advising")
+        sources = {"resume": SourceDoc(label="your resume", text=resume.extracted_text or "")}
+        for doc_id in analysis.supporting_doc_ids:
+            if doc_id in docs:
+                doc = docs[doc_id]
+                sources[f"supplementary:{doc_id}"] = SourceDoc(
+                    label=_source_label(doc), text=doc.extracted_text or ""
+                )
+        advice = await self._advisor.run(
+            AdvisorInput(profile=profile, score=score, sources=sources),
+            analysis_id=analysis_id,
+            user_id=user_id,
+        )
         await self._repo.save_analysis_results(
-            analysis_id, matches=[m.model_dump(mode="json") for m in score.matches]
+            analysis_id,
+            matches=[m.model_dump(mode="json") for m in score.matches],
+            suggestions=advice.model_dump(mode="json", include={"suggestions", "rejected"}),
+            gaps=[g.model_dump(mode="json") for g in advice.gaps],
         )
         await self._repo.update_analysis(
             analysis_id,

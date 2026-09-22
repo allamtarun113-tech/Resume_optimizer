@@ -11,6 +11,7 @@ from app.db.repository import Repository
 from app.llm.client import LLMClient
 from app.orchestrator.pipeline import AnalysisPipeline
 from app.parsing.text import normalize_text, text_hash
+from app.schemas.advice import Gap, RejectedSuggestion, Suggestion
 from app.schemas.analyses import AnalysisCreate, AnalysisCreated, AnalysisResponse
 from app.schemas.matching import RequirementMatch
 from app.schemas.profile import StudentProfile
@@ -87,6 +88,8 @@ async def get_analysis(analysis_id: UUID, user: User, repo: Repo) -> AnalysisRes
     profile = results.get("student_profile")
     requirements = results.get("job_requirements")
     matches = results.get("matches")
+    advice = results.get("suggestions") or {}
+    gaps = results.get("gaps")
     return AnalysisResponse(
         id=analysis.id,
         status=analysis.status,
@@ -100,5 +103,14 @@ async def get_analysis(analysis_id: UUID, user: User, repo: Repo) -> AnalysisRes
         student_profile=StudentProfile.model_validate(profile) if profile else None,
         job_requirements=JobRequirements.model_validate(requirements) if requirements else None,
         matches=[RequirementMatch.model_validate(m) for m in matches] if matches else None,
+        suggestions=[Suggestion.model_validate(x) for x in advice.get("suggestions", [])]
+        if gaps is not None
+        else None,
+        rejected_suggestions=[
+            RejectedSuggestion.model_validate(x) for x in advice.get("rejected", [])
+        ]
+        if gaps is not None
+        else None,
+        gaps=[Gap.model_validate(g) for g in gaps] if gaps is not None else None,
         llm_usage=await repo.get_llm_usage(analysis.id),
     )

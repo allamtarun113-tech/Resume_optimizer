@@ -81,6 +81,26 @@ def test_java_and_javascript_are_distinct() -> None:
     assert TAXONOMY.fuzzy_lookup("Javas") is None
 
 
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "Deployed FastAPI on a k3s cluster with Docker and GitHub Actions CI/CD.",
+            {"fastapi", "kubernetes", "docker", "github", "github-actions", "ci-cd"},
+        ),
+        ("Terraform-managed AWS infra; front-end in React.js", {"terraform", "aws", "react"}),
+        (
+            "Used scikit-learn, HTML/CSS, C++ and .NET",
+            {"scikit-learn", "html", "css", "cpp", "dotnet"},
+        ),
+        # Everyday words and soft skills are not detected.
+        ("I go to meetups, rest, and move work to the cloud; strong communication", set()),
+    ],
+)
+def test_find_in_text(text: str, expected: set[str]) -> None:
+    assert TAXONOMY.find_in_text(text) == expected
+
+
 def test_implied_closure_is_transitive() -> None:
     assert {"sql", "relational-databases", "databases"} <= TAXONOMY.implied_by("postgresql")
     assert "machine-learning" in TAXONOMY.implied_by("pytorch")  # via deep-learning

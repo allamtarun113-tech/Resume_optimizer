@@ -36,6 +36,67 @@ def skill_key(name: str) -> str:
     return key
 
 
+# Categories whose names are specific enough to detect in free text.
+TECHNICAL_CATEGORIES = frozenset(
+    {
+        "language",
+        "frontend",
+        "backend",
+        "database",
+        "cloud",
+        "devops",
+        "data",
+        "ml",
+        "mobile",
+        "testing",
+        "tool",
+        "security",
+    }
+)
+# Keys that are also everyday words or too short to detect reliably in prose.
+_AMBIGUOUS_KEYS = frozenset(
+    {
+        "go",
+        "r",
+        "c",
+        "rest",
+        "express",
+        "spring",
+        "shell",
+        "sh",
+        "swift",
+        "rust",
+        "dart",
+        "lambda",
+        "node",
+        "next",
+        "cloud",
+        "security",
+        "api",
+        "apis",
+        "excel",
+        "gin",
+        "tf",
+        "ts",
+        "js",
+        "py",
+        "ml",
+        "dl",
+        "rn",
+        "cv",
+        "os",
+        "ds",
+        "rl",
+        "sql queries",
+        "hosting",
+    }
+)
+# Hyphens split tokens ("Terraform-managed"); keys ignore them, so "scikit-learn" and
+# "front-end" still match as two-word spans.
+_TOKEN_RE = re.compile(r"\.?[A-Za-z0-9][A-Za-z0-9+#./]*")
+MAX_NGRAM = 4
+
+
 class SkillEntry(BaseModel):
     id: str
     name: str
@@ -100,6 +161,27 @@ class Taxonomy:
             key, self._fuzzy_keys, scorer=fuzz.ratio, score_cutoff=FUZZY_CUTOFF
         )
         return self._keys[best[0]] if best else None
+
+    def find_in_text(self, text: str) -> set[str]:
+        """Technical skills named in free text (exact alias matches on 1-4 word spans)."""
+        tokens = _TOKEN_RE.findall(text)
+        found: set[str] = set()
+        for size in range(1, MAX_NGRAM + 1):
+            for start in range(len(tokens) - size + 1):
+                span = " ".join(tokens[start : start + size])
+                candidates = [span]
+                if size == 1 and "/" in span:
+                    candidates += span.split("/")
+                for candidate in candidates:
+                    key = skill_key(candidate)
+                    skill_id = self._keys.get(key)
+                    if (
+                        skill_id
+                        and key not in _AMBIGUOUS_KEYS
+                        and self.skills[skill_id].category in TECHNICAL_CATEGORIES
+                    ):
+                        found.add(skill_id)
+        return found
 
     def implied_by(self, skill_id: str) -> frozenset[str]:
         """Skills that evidence of `skill_id` implies (transitively), excluding itself."""
