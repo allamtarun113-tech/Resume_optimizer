@@ -136,6 +136,7 @@ export interface components {
             /** Id */
             id: string;
             job_requirements: components["schemas"]["JobRequirements"] | null;
+            learning_path: components["schemas"]["LearningPath"] | null;
             llm_usage: components["schemas"]["LLMUsage"];
             /** Matches */
             matches: components["schemas"]["RequirementMatch"][] | null;
@@ -365,6 +366,60 @@ export interface components {
             input_tokens: number;
             /** Output Tokens */
             output_tokens: number;
+        };
+        /** LearningPath */
+        LearningPath: {
+            /** Steps */
+            steps: components["schemas"]["LearningStep"][];
+            /** Total Hours */
+            total_hours: number;
+        };
+        /** LearningResource */
+        LearningResource: {
+            /** Est Hours */
+            est_hours: number | null;
+            /** Free */
+            free: boolean;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "beginner" | "intermediate" | "advanced";
+            /** Skill Id */
+            skill_id: string;
+            /** Title */
+            title: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "docs" | "course" | "video" | "book" | "practice";
+            /** Url */
+            url: string;
+        };
+        /** LearningStep */
+        LearningStep: {
+            /** Est Hours */
+            est_hours: number | null;
+            /** For Requirements */
+            for_requirements: string[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "gap" | "prerequisite";
+            /** Name */
+            name: string;
+            /** Resources */
+            resources: components["schemas"]["LearningResource"][];
+            /** Skill Id */
+            skill_id: string | null;
+            /** Step */
+            step: number;
+            /** Unlocks */
+            unlocks: string[];
+            /** Why */
+            why: string;
         };
         /** MeResponse */
         MeResponse: {

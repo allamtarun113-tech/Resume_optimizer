@@ -1,0 +1,221 @@
+# Curated learning resources, loaded into the learning_resources table by
+# `uv run python -m scripts.seed_resources` (run in backend/).
+# Rules: free and reputable first (official docs, freeCodeCamp, MIT OCW, fast.ai,
+# Kaggle Learn, roadmap.sh, CS50...). skill_id must exist in
+# backend/app/skills/data/skills_taxonomy.json. The LLM never writes URLs; these are
+# the only links the app shows.
+# Fields: skill_id, title, url, type (docs|course|video|book|practice),
+#         level (beginner|intermediate|advanced), est_hours, free
+
+resources:
+  # --- programming foundations
+  - {skill_id: programming, title: "CS50x: Introduction to Computer Science", url: "https://cs50.harvard.edu/x/", type: course, level: beginner, est_hours: 100, free: true}
+  - {skill_id: python, title: "The Python Tutorial (official)", url: "https://docs.python.org/3/tutorial/", type: docs, level: beginner, est_hours: 15, free: true}
+  - {skill_id: python, title: "Kaggle Learn: Python", url: "https://www.kaggle.com/learn/python", type: course, level: beginner, est_hours: 5, free: true}
+  - {skill_id: java, title: "Dev.java: Learn Java", url: "https://dev.java/learn/", type: docs, level: beginner, est_hours: 30, free: true}
+  - {skill_id: javascript, title: "MDN: JavaScript Guide", url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide", type: docs, level: beginner, est_hours: 20, free: true}
+  - {skill_id: javascript, title: "The Modern JavaScript Tutorial", url: "https://javascript.info/", type: docs, level: beginner, est_hours: 30, free: true}
+  - {skill_id: typescript, title: "TypeScript Handbook", url: "https://www.typescriptlang.org/docs/handbook/intro.html", type: docs, level: intermediate, est_hours: 12, free: true}
+  - {skill_id: c, title: "CS50x: Introduction to Computer Science (C weeks)", url: "https://cs50.harvard.edu/x/", type: course, level: beginner, est_hours: 40, free: true}
+  - {skill_id: cpp, title: "LearnCpp.com", url: "https://www.learncpp.com/", type: docs, level: beginner, est_hours: 40, free: true}
+  - {skill_id: csharp, title: "Microsoft Learn: C# documentation", url: "https://learn.microsoft.com/en-us/dotnet/csharp/", type: docs, level: beginner, est_hours: 25, free: true}
+  - {skill_id: go, title: "A Tour of Go", url: "https://go.dev/tour/", type: practice, level: beginner, est_hours: 8, free: true}
+  - {skill_id: rust, title: "The Rust Programming Language (book)", url: "https://doc.rust-lang.org/book/", type: book, level: intermediate, est_hours: 40, free: true}
+  - {skill_id: kotlin, title: "Kotlin docs: Getting started", url: "https://kotlinlang.org/docs/getting-started.html", type: docs, level: beginner, est_hours: 15, free: true}
+  - {skill_id: swift, title: "The Swift Programming Language", url: "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/", type: book, level: beginner, est_hours: 25, free: true}
+  - {skill_id: r, title: "R for Data Science (2e)", url: "https://r4ds.hadley.nz/", type: book, level: beginner, est_hours: 30, free: true}
+  - {skill_id: sql, title: "Kaggle Learn: Intro to SQL", url: "https://www.kaggle.com/learn/intro-to-sql", type: course, level: beginner, est_hours: 3, free: true}
+  - {skill_id: sql, title: "SQLBolt: interactive SQL lessons", url: "https://sqlbolt.com/", type: practice, level: beginner, est_hours: 5, free: true}
+  - {skill_id: bash, title: "The Linux Command Line (book)", url: "https://linuxcommand.org/tlcl.php", type: book, level: beginner, est_hours: 20, free: true}
+  - {skill_id: shell-scripting, title: "MIT Missing Semester: Shell Tools and Scripting", url: "https://missing.csail.mit.edu/2020/shell-tools/", type: video, level: beginner, est_hours: 3, free: true}
+  - {skill_id: html, title: "MDN: Learn web development — HTML", url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content", type: docs, level: beginner, est_hours: 10, free: true}
+  - {skill_id: css, title: "MDN: Learn web development — CSS styling", url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics", type: docs, level: beginner, est_hours: 12, free: true}
+  - {skill_id: css, title: "web.dev: Learn CSS", url: "https://web.dev/learn/css", type: course, level: beginner, est_hours: 15, free: true}
+  # --- CS fundamentals
+  - {skill_id: oop, title: "Python docs: Classes", url: "https://docs.python.org/3/tutorial/classes.html", type: docs, level: beginner, est_hours: 4, free: true}
+  - {skill_id: data-structures, title: "MIT 6.006 Introduction to Algorithms (OCW)", url: "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/", type: course, level: intermediate, est_hours: 60, free: true}
+  - {skill_id: algorithms, title: "MIT 6.006 Introduction to Algorithms (OCW)", url: "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/", type: course, level: intermediate, est_hours: 60, free: true}
+  - {skill_id: dsa, title: "roadmap.sh: Data Structures and Algorithms", url: "https://roadmap.sh/datastructures-and-algorithms", type: docs, level: beginner, est_hours: 40, free: true}
+  - {skill_id: competitive-programming, title: "USACO Guide", url: "https://usaco.guide/", type: practice, level: intermediate, est_hours: 60, free: true}
+  - {skill_id: operating-systems, title: "Operating Systems: Three Easy Pieces", url: "https://pages.cs.wisc.edu/~remzi/OSTEP/", type: book, level: intermediate, est_hours: 40, free: true}
+  - {skill_id: computer-networks, title: "Computer Networking: A Top-Down Approach — author resources", url: "https://gaia.cs.umass.edu/kurose_ross/online_lectures.htm", type: video, level: intermediate, est_hours: 30, free: true}
+  - {skill_id: computer-architecture, title: "Nand2Tetris", url: "https://www.nand2tetris.org/", type: course, level: intermediate, est_hours: 50, free: true}
+  - {skill_id: databases, title: "CMU 15-445 Database Systems", url: "https://15445.courses.cs.cmu.edu/", type: course, level: intermediate, est_hours: 50, free: true}
+  - {skill_id: relational-databases, title: "PostgreSQL Tutorial (official docs)", url: "https://www.postgresql.org/docs/current/tutorial.html", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: dbms, title: "CMU 15-445 Database Systems", url: "https://15445.courses.cs.cmu.edu/", type: course, level: intermediate, est_hours: 50, free: true}
+  - {skill_id: system-design, title: "The System Design Primer", url: "https://github.com/donnemartin/system-design-primer", type: docs, level: intermediate, est_hours: 25, free: true}
+  - {skill_id: distributed-systems, title: "MIT 6.824 Distributed Systems", url: "https://pdos.csail.mit.edu/6.824/", type: course, level: advanced, est_hours: 80, free: true}
+  - {skill_id: design-patterns, title: "Refactoring.Guru: Design Patterns", url: "https://refactoring.guru/design-patterns", type: docs, level: intermediate, est_hours: 10, free: true}
+  - {skill_id: concurrency, title: "Python docs: asyncio", url: "https://docs.python.org/3/library/asyncio.html", type: docs, level: intermediate, est_hours: 6, free: true}
+  - {skill_id: discrete-math, title: "MIT 6.042J Mathematics for Computer Science (OCW)", url: "https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-fall-2010/", type: course, level: intermediate, est_hours: 60, free: true}
+  - {skill_id: linear-algebra, title: "MIT 18.06 Linear Algebra (OCW)", url: "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/", type: course, level: intermediate, est_hours: 40, free: true}
+  - {skill_id: linear-algebra, title: "3Blue1Brown: Essence of Linear Algebra", url: "https://www.3blue1brown.com/topics/linear-algebra", type: video, level: beginner, est_hours: 4, free: true}
+  - {skill_id: calculus, title: "3Blue1Brown: Essence of Calculus", url: "https://www.3blue1brown.com/topics/calculus", type: video, level: beginner, est_hours: 4, free: true}
+  - {skill_id: calculus, title: "MIT 18.01 Single Variable Calculus (OCW)", url: "https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/", type: course, level: beginner, est_hours: 40, free: true}
+  - {skill_id: probability, title: "Harvard Stat 110: Probability", url: "https://projects.iq.harvard.edu/stat110/home", type: course, level: intermediate, est_hours: 40, free: true}
+  - {skill_id: statistics, title: "Khan Academy: Statistics and Probability", url: "https://www.khanacademy.org/math/statistics-probability", type: course, level: beginner, est_hours: 30, free: true}
+  - {skill_id: statistics, title: "OpenIntro Statistics (free textbook)", url: "https://www.openintro.org/book/os/", type: book, level: beginner, est_hours: 40, free: true}
+  - {skill_id: software-engineering, title: "MIT Missing Semester of Your CS Education", url: "https://missing.csail.mit.edu/", type: video, level: beginner, est_hours: 15, free: true}
+  - {skill_id: debugging, title: "MIT Missing Semester: Debugging and Profiling", url: "https://missing.csail.mit.edu/2020/debugging-profiling/", type: video, level: beginner, est_hours: 2, free: true}
+  # --- web frontend
+  - {skill_id: frontend-development, title: "roadmap.sh: Frontend Developer", url: "https://roadmap.sh/frontend", type: docs, level: beginner, est_hours: 80, free: true}
+  - {skill_id: frontend-development, title: "freeCodeCamp: Responsive Web Design", url: "https://www.freecodecamp.org/learn/2022/responsive-web-design/", type: course, level: beginner, est_hours: 30, free: true}
+  - {skill_id: react, title: "React docs: Learn React", url: "https://react.dev/learn", type: docs, level: beginner, est_hours: 15, free: true}
+  - {skill_id: nextjs, title: "Next.js Learn course", url: "https://nextjs.org/learn", type: course, level: intermediate, est_hours: 12, free: true}
+  - {skill_id: angular, title: "Angular docs: Tutorials", url: "https://angular.dev/tutorials", type: docs, level: beginner, est_hours: 15, free: true}
+  - {skill_id: vue, title: "Vue.js Guide", url: "https://vuejs.org/guide/introduction.html", type: docs, level: beginner, est_hours: 12, free: true}
+  - {skill_id: svelte, title: "Svelte interactive tutorial", url: "https://svelte.dev/tutorial", type: practice, level: beginner, est_hours: 8, free: true}
+  - {skill_id: redux, title: "Redux Essentials tutorial", url: "https://redux.js.org/tutorials/essentials/part-1-overview-concepts", type: docs, level: intermediate, est_hours: 8, free: true}
+  - {skill_id: tailwind, title: "Tailwind CSS documentation", url: "https://tailwindcss.com/docs", type: docs, level: beginner, est_hours: 5, free: true}
+  - {skill_id: responsive-design, title: "web.dev: Learn Responsive Design", url: "https://web.dev/learn/design", type: course, level: beginner, est_hours: 8, free: true}
+  - {skill_id: web-accessibility, title: "web.dev: Learn Accessibility", url: "https://web.dev/learn/accessibility", type: course, level: beginner, est_hours: 8, free: true}
+  - {skill_id: web-performance, title: "web.dev: Learn Performance", url: "https://web.dev/learn/performance", type: course, level: intermediate, est_hours: 6, free: true}
+  - {skill_id: ui-ux, title: "Google UX Design (Coursera, audit free)", url: "https://www.coursera.org/professional-certificates/google-ux-design", type: course, level: beginner, est_hours: 100, free: false}
+  - {skill_id: figma, title: "Figma Learn", url: "https://help.figma.com/hc/en-us/categories/360002051613", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: graphql, title: "Learn GraphQL (official)", url: "https://graphql.org/learn/", type: docs, level: intermediate, est_hours: 6, free: true}
+  # --- backend
+  - {skill_id: backend-development, title: "roadmap.sh: Backend Developer", url: "https://roadmap.sh/backend", type: docs, level: beginner, est_hours: 80, free: true}
+  - {skill_id: fullstack, title: "The Odin Project: Full Stack JavaScript", url: "https://www.theodinproject.com/paths/full-stack-javascript", type: course, level: beginner, est_hours: 200, free: true}
+  - {skill_id: apis, title: "MDN: Introduction to web APIs", url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Client-side_APIs/Introduction", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: rest-api, title: "Microsoft: RESTful web API design", url: "https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design", type: docs, level: intermediate, est_hours: 3, free: true}
+  - {skill_id: http, title: "MDN: An overview of HTTP", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: nodejs, title: "Node.js: Learn", url: "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs", type: docs, level: beginner, est_hours: 12, free: true}
+  - {skill_id: express, title: "Express: Getting started", url: "https://expressjs.com/en/starter/installing.html", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: django, title: "Django: Writing your first app", url: "https://docs.djangoproject.com/en/stable/intro/tutorial01/", type: docs, level: beginner, est_hours: 10, free: true}
+  - {skill_id: flask, title: "Flask Tutorial (official)", url: "https://flask.palletsprojects.com/en/stable/tutorial/", type: docs, level: beginner, est_hours: 8, free: true}
+  - {skill_id: fastapi, title: "FastAPI Tutorial - User Guide", url: "https://fastapi.tiangolo.com/tutorial/", type: docs, level: beginner, est_hours: 10, free: true}
+  - {skill_id: spring-boot, title: "Spring Guides: Building an Application with Spring Boot", url: "https://spring.io/guides/gs/spring-boot", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: spring, title: "Spring Guides", url: "https://spring.io/guides", type: docs, level: intermediate, est_hours: 20, free: true}
+  - {skill_id: dotnet, title: "Microsoft Learn: ASP.NET Core", url: "https://learn.microsoft.com/en-us/aspnet/core/", type: docs, level: beginner, est_hours: 20, free: true}
+  - {skill_id: microservices, title: "microservices.io patterns", url: "https://microservices.io/patterns/", type: docs, level: intermediate, est_hours: 10, free: true}
+  - {skill_id: authentication, title: "OWASP Authentication Cheat Sheet", url: "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html", type: docs, level: intermediate, est_hours: 2, free: true}
+  - {skill_id: caching, title: "Redis docs: Get started", url: "https://redis.io/docs/latest/get-started/", type: docs, level: beginner, est_hours: 4, free: true}
+  - {skill_id: message-queues, title: "RabbitMQ Tutorials", url: "https://www.rabbitmq.com/tutorials", type: docs, level: intermediate, est_hours: 6, free: true}
+  - {skill_id: kafka, title: "Apache Kafka Quickstart", url: "https://kafka.apache.org/quickstart", type: docs, level: intermediate, est_hours: 6, free: true}
+  - {skill_id: rabbitmq, title: "RabbitMQ Tutorials", url: "https://www.rabbitmq.com/tutorials", type: docs, level: intermediate, est_hours: 6, free: true}
+  - {skill_id: websockets, title: "MDN: The WebSocket API", url: "https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API", type: docs, level: intermediate, est_hours: 3, free: true}
+  - {skill_id: orm, title: "SQLAlchemy Unified Tutorial", url: "https://docs.sqlalchemy.org/en/20/tutorial/", type: docs, level: intermediate, est_hours: 8, free: true}
+  # --- databases
+  - {skill_id: postgresql, title: "PostgreSQL Tutorial (official docs)", url: "https://www.postgresql.org/docs/current/tutorial.html", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: mysql, title: "MySQL Tutorial (official docs)", url: "https://dev.mysql.com/doc/refman/8.4/en/tutorial.html", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: mongodb, title: "MongoDB University", url: "https://learn.mongodb.com/", type: course, level: beginner, est_hours: 10, free: true}
+  - {skill_id: redis, title: "Redis docs: Get started", url: "https://redis.io/docs/latest/get-started/", type: docs, level: beginner, est_hours: 4, free: true}
+  - {skill_id: nosql, title: "MongoDB University", url: "https://learn.mongodb.com/", type: course, level: beginner, est_hours: 10, free: true}
+  - {skill_id: elasticsearch, title: "Elasticsearch: Getting started", url: "https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started.html", type: docs, level: intermediate, est_hours: 6, free: true}
+  - {skill_id: firebase, title: "Firebase documentation", url: "https://firebase.google.com/docs", type: docs, level: beginner, est_hours: 8, free: true}
+  - {skill_id: vector-databases, title: "pgvector README", url: "https://github.com/pgvector/pgvector", type: docs, level: intermediate, est_hours: 2, free: true}
+  - {skill_id: query-optimization, title: "Use The Index, Luke!", url: "https://use-the-index-luke.com/", type: book, level: intermediate, est_hours: 10, free: true}
+  # --- cloud
+  - {skill_id: cloud-computing, title: "AWS Skill Builder: Cloud Practitioner Essentials", url: "https://skillbuilder.aws/", type: course, level: beginner, est_hours: 6, free: true}
+  - {skill_id: aws, title: "AWS Skill Builder", url: "https://skillbuilder.aws/", type: course, level: beginner, est_hours: 10, free: true}
+  - {skill_id: aws, title: "AWS Getting Started Resource Center", url: "https://aws.amazon.com/getting-started/", type: docs, level: beginner, est_hours: 8, free: true}
+  - {skill_id: aws-lambda, title: "AWS Lambda Developer Guide", url: "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html", type: docs, level: intermediate, est_hours: 5, free: true}
+  - {skill_id: aws-s3, title: "Amazon S3 User Guide", url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: aws-ec2, title: "Amazon EC2 User Guide", url: "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html", type: docs, level: beginner, est_hours: 4, free: true}
+  - {skill_id: gcp, title: "Google Cloud Skills Boost", url: "https://www.cloudskillsboost.google/", type: course, level: beginner, est_hours: 10, free: true}
+  - {skill_id: bigquery, title: "BigQuery documentation: Introduction", url: "https://cloud.google.com/bigquery/docs/introduction", type: docs, level: beginner, est_hours: 4, free: true}
+  - {skill_id: azure, title: "Microsoft Learn: Azure Fundamentals (AZ-900) path", url: "https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/", type: course, level: beginner, est_hours: 6, free: true}
+  - {skill_id: serverless, title: "AWS Lambda Developer Guide", url: "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html", type: docs, level: intermediate, est_hours: 5, free: true}
+  # --- devops
+  - {skill_id: devops, title: "roadmap.sh: DevOps", url: "https://roadmap.sh/devops", type: docs, level: beginner, est_hours: 80, free: true}
+  - {skill_id: linux, title: "The Linux Command Line (book)", url: "https://linuxcommand.org/tlcl.php", type: book, level: beginner, est_hours: 20, free: true}
+  - {skill_id: git, title: "Pro Git (book)", url: "https://git-scm.com/book/en/v2", type: book, level: beginner, est_hours: 10, free: true}
+  - {skill_id: git, title: "Learn Git Branching", url: "https://learngitbranching.js.org/", type: practice, level: beginner, est_hours: 3, free: true}
+  - {skill_id: github, title: "GitHub Skills", url: "https://skills.github.com/", type: practice, level: beginner, est_hours: 4, free: true}
+  - {skill_id: docker, title: "Docker docs: Get started", url: "https://docs.docker.com/get-started/", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: containers, title: "Docker docs: What is a container?", url: "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/", type: docs, level: beginner, est_hours: 1, free: true}
+  - {skill_id: kubernetes, title: "Kubernetes Basics (official tutorial)", url: "https://kubernetes.io/docs/tutorials/kubernetes-basics/", type: docs, level: intermediate, est_hours: 6, free: true}
+  - {skill_id: kubernetes, title: "Kubernetes docs: Concepts", url: "https://kubernetes.io/docs/concepts/", type: docs, level: intermediate, est_hours: 15, free: true}
+  - {skill_id: ci-cd, title: "GitHub Actions: Understanding GitHub Actions", url: "https://docs.github.com/en/actions/get-started/understand-github-actions", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: github-actions, title: "GitHub Actions documentation", url: "https://docs.github.com/en/actions", type: docs, level: beginner, est_hours: 5, free: true}
+  - {skill_id: jenkins, title: "Jenkins User Handbook", url: "https://www.jenkins.io/doc/book/", type: docs, level: intermediate, est_hours: 8, free: true}
+  - {skill_id: terraform, title: "HashiCorp Developer: Terraform tutorials", url: "https://developer.hashicorp.com/terraform/tutorials", type: docs, level: beginner, est_hours: 10, free: true}
+  - {skill_id: infrastructure-as-code, title: "HashiCorp Developer: Terraform tutorials", url: "https://developer.hashicorp.com/terraform/tutorials", type: docs, level: beginner, est_hours: 10, free: true}
+  - {skill_id: ansible, title: "Ansible: Getting started", url: "https://docs.ansible.com/ansible/latest/getting_started/index.html", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: monitoring, title: "Prometheus: Getting started", url: "https://prometheus.io/docs/prometheus/latest/getting_started/", type: docs, level: intermediate, est_hours: 4, free: true}
+  - {skill_id: prometheus, title: "Prometheus: Getting started", url: "https://prometheus.io/docs/prometheus/latest/getting_started/", type: docs, level: intermediate, est_hours: 4, free: true}
+  - {skill_id: grafana, title: "Grafana: Get started", url: "https://grafana.com/docs/grafana/latest/getting-started/", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: nginx, title: "NGINX Beginner's Guide", url: "https://nginx.org/en/docs/beginners_guide.html", type: docs, level: beginner, est_hours: 2, free: true}
+  - {skill_id: sre, title: "Google SRE Book", url: "https://sre.google/sre-book/table-of-contents/", type: book, level: intermediate, est_hours: 30, free: true}
+  # --- testing
+  - {skill_id: testing, title: "Martin Fowler: The Practical Test Pyramid", url: "https://martinfowler.com/articles/practical-test-pyramid.html", type: docs, level: beginner, est_hours: 2, free: true}
+  - {skill_id: unit-testing, title: "Martin Fowler: The Practical Test Pyramid", url: "https://martinfowler.com/articles/practical-test-pyramid.html", type: docs, level: beginner, est_hours: 2, free: true}
+  - {skill_id: pytest, title: "pytest: Get started", url: "https://docs.pytest.org/en/stable/getting-started.html", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: jest, title: "Jest: Getting started", url: "https://jestjs.io/docs/getting-started", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: junit, title: "JUnit 5 User Guide", url: "https://junit.org/junit5/docs/current/user-guide/", type: docs, level: beginner, est_hours: 4, free: true}
+  - {skill_id: selenium, title: "Selenium documentation", url: "https://www.selenium.dev/documentation/", type: docs, level: beginner, est_hours: 6, free: true}
+  - {skill_id: cypress, title: "Cypress: Your first test", url: "https://docs.cypress.io/app/end-to-end-testing/writing-your-first-end-to-end-test", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: playwright, title: "Playwright: Getting started", url: "https://playwright.dev/docs/intro", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: integration-testing, title: "Playwright: Getting started", url: "https://playwright.dev/docs/intro", type: docs, level: intermediate, est_hours: 3, free: true}
+  - {skill_id: test-automation, title: "Playwright: Getting started", url: "https://playwright.dev/docs/intro", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: tdd, title: "Martin Fowler: Test-Driven Development", url: "https://martinfowler.com/bliki/TestDrivenDevelopment.html", type: docs, level: beginner, est_hours: 1, free: true}
+  # --- data
+  - {skill_id: data-analysis, title: "Kaggle Learn: Pandas", url: "https://www.kaggle.com/learn/pandas", type: course, level: beginner, est_hours: 4, free: true}
+  - {skill_id: pandas, title: "Kaggle Learn: Pandas", url: "https://www.kaggle.com/learn/pandas", type: course, level: beginner, est_hours: 4, free: true}
+  - {skill_id: pandas, title: "pandas: 10 minutes to pandas", url: "https://pandas.pydata.org/docs/user_guide/10min.html", type: docs, level: beginner, est_hours: 2, free: true}
+  - {skill_id: numpy, title: "NumPy: the absolute basics for beginners", url: "https://numpy.org/doc/stable/user/absolute_beginners.html", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: data-visualization, title: "Kaggle Learn: Data Visualization", url: "https://www.kaggle.com/learn/data-visualization", type: course, level: beginner, est_hours: 4, free: true}
+  - {skill_id: matplotlib, title: "Matplotlib: Quick start guide", url: "https://matplotlib.org/stable/users/explain/quick_start.html", type: docs, level: beginner, est_hours: 2, free: true}
+  - {skill_id: excel, title: "Microsoft Excel help & learning", url: "https://support.microsoft.com/en-us/excel", type: docs, level: beginner, est_hours: 10, free: true}
+  - {skill_id: tableau, title: "Tableau free training videos", url: "https://www.tableau.com/learn/training", type: video, level: beginner, est_hours: 8, free: true}
+  - {skill_id: power-bi, title: "Microsoft Learn: Power BI training", url: "https://learn.microsoft.com/en-us/training/powerplatform/power-bi", type: course, level: beginner, est_hours: 10, free: true}
+  - {skill_id: jupyter, title: "Project Jupyter documentation", url: "https://docs.jupyter.org/en/latest/", type: docs, level: beginner, est_hours: 1, free: true}
+  - {skill_id: data-engineering, title: "DataTalksClub Data Engineering Zoomcamp", url: "https://github.com/DataTalksClub/data-engineering-zoomcamp", type: course, level: intermediate, est_hours: 80, free: true}
+  - {skill_id: data-warehousing, title: "dbt Learn: Fundamentals", url: "https://learn.getdbt.com/", type: course, level: intermediate, est_hours: 6, free: true}
+  - {skill_id: spark, title: "Spark: Quick Start", url: "https://spark.apache.org/docs/latest/quick-start.html", type: docs, level: intermediate, est_hours: 4, free: true}
+  - {skill_id: airflow, title: "Airflow: Tutorials", url: "https://airflow.apache.org/docs/apache-airflow/stable/tutorial/index.html", type: docs, level: intermediate, est_hours: 5, free: true}
+  - {skill_id: dbt, title: "dbt Learn", url: "https://learn.getdbt.com/", type: course, level: beginner, est_hours: 6, free: true}
+  - {skill_id: snowflake, title: "Snowflake Quickstarts", url: "https://quickstarts.snowflake.com/", type: practice, level: beginner, est_hours: 5, free: true}
+  - {skill_id: web-scraping, title: "Beautiful Soup documentation", url: "https://www.crummy.com/software/BeautifulSoup/bs4/doc/", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: a-b-testing, title: "Udacity: A/B Testing by Google", url: "https://www.udacity.com/course/ab-testing--ud257", type: course, level: intermediate, est_hours: 20, free: true}
+  # --- AI / ML
+  - {skill_id: machine-learning, title: "Kaggle Learn: Intro to Machine Learning", url: "https://www.kaggle.com/learn/intro-to-machine-learning", type: course, level: beginner, est_hours: 3, free: true}
+  - {skill_id: machine-learning, title: "Google Machine Learning Crash Course", url: "https://developers.google.com/machine-learning/crash-course", type: course, level: beginner, est_hours: 15, free: true}
+  - {skill_id: deep-learning, title: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/", type: course, level: intermediate, est_hours: 50, free: true}
+  - {skill_id: deep-learning, title: "Dive into Deep Learning (book)", url: "https://d2l.ai/", type: book, level: intermediate, est_hours: 60, free: true}
+  - {skill_id: scikit-learn, title: "scikit-learn: Getting started", url: "https://scikit-learn.org/stable/getting_started.html", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: pytorch, title: "PyTorch: Learn the Basics", url: "https://pytorch.org/tutorials/beginner/basics/intro.html", type: docs, level: intermediate, est_hours: 8, free: true}
+  - {skill_id: tensorflow, title: "TensorFlow tutorials", url: "https://www.tensorflow.org/tutorials", type: docs, level: intermediate, est_hours: 10, free: true}
+  - {skill_id: keras, title: "Keras: Getting started", url: "https://keras.io/getting_started/", type: docs, level: intermediate, est_hours: 5, free: true}
+  - {skill_id: xgboost, title: "Kaggle Learn: Intermediate Machine Learning (XGBoost)", url: "https://www.kaggle.com/learn/intermediate-machine-learning", type: course, level: intermediate, est_hours: 4, free: true}
+  - {skill_id: nlp, title: "Hugging Face LLM Course", url: "https://huggingface.co/learn/llm-course", type: course, level: intermediate, est_hours: 20, free: true}
+  - {skill_id: computer-vision, title: "Kaggle Learn: Computer Vision", url: "https://www.kaggle.com/learn/computer-vision", type: course, level: intermediate, est_hours: 4, free: true}
+  - {skill_id: opencv, title: "OpenCV-Python Tutorials", url: "https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html", type: docs, level: beginner, est_hours: 8, free: true}
+  - {skill_id: cnn, title: "Stanford CS231n: CNNs for Visual Recognition", url: "https://cs231n.github.io/", type: course, level: advanced, est_hours: 40, free: true}
+  - {skill_id: transformers, title: "The Illustrated Transformer", url: "https://jalammar.github.io/illustrated-transformer/", type: docs, level: intermediate, est_hours: 2, free: true}
+  - {skill_id: hugging-face, title: "Hugging Face LLM Course", url: "https://huggingface.co/learn/llm-course", type: course, level: intermediate, est_hours: 20, free: true}
+  - {skill_id: llms, title: "Hugging Face LLM Course", url: "https://huggingface.co/learn/llm-course", type: course, level: intermediate, est_hours: 20, free: true}
+  - {skill_id: prompt-engineering, title: "OpenAI: Prompt engineering guide", url: "https://platform.openai.com/docs/guides/prompt-engineering", type: docs, level: beginner, est_hours: 2, free: true}
+  - {skill_id: rag, title: "LangChain docs: Build a RAG app", url: "https://python.langchain.com/docs/tutorials/rag/", type: docs, level: intermediate, est_hours: 4, free: true}
+  - {skill_id: langchain, title: "LangChain docs: Tutorials", url: "https://python.langchain.com/docs/tutorials/", type: docs, level: intermediate, est_hours: 8, free: true}
+  - {skill_id: ai-agents, title: "Hugging Face Agents Course", url: "https://huggingface.co/learn/agents-course", type: course, level: intermediate, est_hours: 20, free: true}
+  - {skill_id: embeddings, title: "OpenAI: Embeddings guide", url: "https://platform.openai.com/docs/guides/embeddings", type: docs, level: intermediate, est_hours: 2, free: true}
+  - {skill_id: reinforcement-learning, title: "OpenAI Spinning Up in Deep RL", url: "https://spinningup.openai.com/", type: docs, level: advanced, est_hours: 30, free: true}
+  - {skill_id: recommender-systems, title: "Google: Recommendation Systems course", url: "https://developers.google.com/machine-learning/recommendation", type: course, level: intermediate, est_hours: 4, free: true}
+  - {skill_id: time-series, title: "Kaggle Learn: Time Series", url: "https://www.kaggle.com/learn/time-series", type: course, level: intermediate, est_hours: 5, free: true}
+  - {skill_id: feature-engineering, title: "Kaggle Learn: Feature Engineering", url: "https://www.kaggle.com/learn/feature-engineering", type: course, level: intermediate, est_hours: 5, free: true}
+  - {skill_id: mlops, title: "DataTalksClub MLOps Zoomcamp", url: "https://github.com/DataTalksClub/mlops-zoomcamp", type: course, level: intermediate, est_hours: 60, free: true}
+  - {skill_id: mlops, title: "Made With ML: MLOps", url: "https://madewithml.com/", type: course, level: intermediate, est_hours: 30, free: true}
+  - {skill_id: data-science, title: "Kaggle Learn", url: "https://www.kaggle.com/learn", type: course, level: beginner, est_hours: 30, free: true}
+  - {skill_id: generative-models, title: "Hugging Face Diffusion Models Course", url: "https://huggingface.co/learn/diffusion-course", type: course, level: advanced, est_hours: 20, free: true}
+  # --- mobile
+  - {skill_id: android, title: "Android Basics with Compose", url: "https://developer.android.com/courses/android-basics-compose/course", type: course, level: beginner, est_hours: 60, free: true}
+  - {skill_id: jetpack-compose, title: "Android Basics with Compose", url: "https://developer.android.com/courses/android-basics-compose/course", type: course, level: beginner, est_hours: 60, free: true}
+  - {skill_id: ios, title: "Apple: Develop in Swift Tutorials", url: "https://developer.apple.com/tutorials/develop-in-swift", type: course, level: beginner, est_hours: 30, free: true}
+  - {skill_id: react-native, title: "React Native: Getting started", url: "https://reactnative.dev/docs/getting-started", type: docs, level: intermediate, est_hours: 10, free: true}
+  - {skill_id: flutter, title: "Flutter: Get started", url: "https://docs.flutter.dev/get-started", type: docs, level: beginner, est_hours: 12, free: true}
+  - {skill_id: mobile-development, title: "Android Basics with Compose", url: "https://developer.android.com/courses/android-basics-compose/course", type: course, level: beginner, est_hours: 60, free: true}
+  # --- security
+  - {skill_id: cybersecurity, title: "TryHackMe: Pre Security path (free rooms)", url: "https://tryhackme.com/path/outline/presecurity", type: practice, level: beginner, est_hours: 40, free: false}
+  - {skill_id: web-security, title: "PortSwigger Web Security Academy", url: "https://portswigger.net/web-security", type: practice, level: intermediate, est_hours: 40, free: true}
+  - {skill_id: web-security, title: "OWASP Top 10", url: "https://owasp.org/www-project-top-ten/", type: docs, level: beginner, est_hours: 3, free: true}
+  - {skill_id: penetration-testing, title: "PortSwigger Web Security Academy", url: "https://portswigger.net/web-security", type: practice, level: intermediate, est_hours: 40, free: true}
+  - {skill_id: cryptography, title: "Dan Boneh: Cryptography I (Coursera, audit free)", url: "https://www.coursera.org/learn/crypto", type: course, level: intermediate, est_hours: 30, free: true}
+  # --- ways of working
+  - {skill_id: agile, title: "The Scrum Guide", url: "https://scrumguides.org/scrum-guide.html", type: docs, level: beginner, est_hours: 1, free: true}
+  - {skill_id: technical-writing, title: "Google Technical Writing courses", url: "https://developers.google.com/tech-writing", type: course, level: beginner, est_hours: 6, free: true}
+  - {skill_id: command-line, title: "MIT Missing Semester: The Shell", url: "https://missing.csail.mit.edu/2020/course-shell/", type: video, level: beginner, est_hours: 2, free: true}
+  - {skill_id: embedded-systems, title: "Arduino: Getting started", url: "https://docs.arduino.cc/learn/starting-guide/getting-started-arduino/", type: docs, level: beginner, est_hours: 5, free: true}
+  - {skill_id: iot, title: "Arduino: Getting started", url: "https://docs.arduino.cc/learn/starting-guide/getting-started-arduino/", type: docs, level: beginner, est_hours: 5, free: true}
+  - {skill_id: blockchain, title: "ethereum.org: Developer resources", url: "https://ethereum.org/en/developers/docs/", type: docs, level: intermediate, est_hours: 10, free: true}
+  - {skill_id: game-development, title: "Unity Learn", url: "https://learn.unity.com/", type: course, level: beginner, est_hours: 20, free: true}

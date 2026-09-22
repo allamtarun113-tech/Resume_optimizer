@@ -17,3 +17,5 @@ export type RequirementMatch = Schemas["RequirementMatch"];
 export type EvidenceRef = Schemas["EvidenceRef"];
 export type Suggestion = Schemas["Suggestion"];
 export type Gap = Schemas["Gap"];
+export type LearningPath = Schemas["LearningPath"];
+export type LearningStep = Schemas["LearningStep"];

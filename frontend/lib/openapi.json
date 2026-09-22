@@ -127,6 +127,16 @@
               }
             ]
           },
+          "learning_path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LearningPath"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "llm_usage": {
             "$ref": "#/components/schemas/LLMUsage"
           },
@@ -244,6 +254,7 @@
           "suggestions",
           "rejected_suggestions",
           "gaps",
+          "learning_path",
           "llm_usage"
         ],
         "title": "AnalysisResponse",
@@ -783,6 +794,169 @@
           "output_tokens"
         ],
         "title": "LLMUsage",
+        "type": "object"
+      },
+      "LearningPath": {
+        "properties": {
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/LearningStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "total_hours": {
+            "title": "Total Hours",
+            "type": "number"
+          }
+        },
+        "required": [
+          "steps",
+          "total_hours"
+        ],
+        "title": "LearningPath",
+        "type": "object"
+      },
+      "LearningResource": {
+        "properties": {
+          "est_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Est Hours"
+          },
+          "free": {
+            "title": "Free",
+            "type": "boolean"
+          },
+          "level": {
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "docs",
+              "course",
+              "video",
+              "book",
+              "practice"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id",
+          "title",
+          "url",
+          "type",
+          "level",
+          "est_hours",
+          "free"
+        ],
+        "title": "LearningResource",
+        "type": "object"
+      },
+      "LearningStep": {
+        "properties": {
+          "est_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Est Hours"
+          },
+          "for_requirements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "For Requirements",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "gap",
+              "prerequisite"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/LearningResource"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "skill_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill Id"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          },
+          "unlocks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unlocks",
+            "type": "array"
+          },
+          "why": {
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "skill_id",
+          "name",
+          "kind",
+          "for_requirements",
+          "unlocks",
+          "why",
+          "resources",
+          "est_hours"
+        ],
+        "title": "LearningStep",
         "type": "object"
       },
       "MeResponse": {

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { RequirementBreakdown } from "@/components/requirement-breakdown";
 import { ScoreGauge } from "@/components/score-gauge";
 import { GapList, SuggestionList } from "@/components/suggestion-list";
+import { LearningPathView } from "@/components/learning-path";
 import {
   Card,
   CardContent,
@@ -24,7 +25,7 @@ const STATUS_TEXT: Record<AnalysisStatus, string> = {
   parsing: "Reading your documents",
   extracting: "Extracting your profile and the job requirements",
   scoring: "Scoring your fit",
-  advising: "Writing resume suggestions",
+  advising: "Writing suggestions and your learning path",
   done: "Done",
   failed: "Failed",
 };
@@ -137,6 +138,9 @@ export function AnalysisView({ id }: { id: string }) {
         />
       )}
       {analysis.gaps && <GapList gaps={analysis.gaps} />}
+      {analysis.learning_path && (
+        <LearningPathView path={analysis.learning_path} />
+      )}
 
       {analysis.matches && (
         <section className="flex flex-col gap-4">

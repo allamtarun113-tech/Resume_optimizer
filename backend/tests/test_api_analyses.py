@@ -166,6 +166,7 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
         "jd_analyzer": "2",
         "evidence_matcher": "1",
         "resume_advisor": "1",
+        "learning_path_planner": "1",
     }
     assert body["job_requirements"]["role_title"] == "Backend Engineer"
 
@@ -192,6 +193,9 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
     # advisor has nothing to suggest and makes no LLM call.
     assert body["suggestions"] == []
     assert [g["name"] for g in body["gaps"]] == ["Docker", "Communication"]
+    # Kubernetes (in the notes) builds on Docker, so Docker isn't something to learn;
+    # Communication is a soft skill. Nothing to plan, so no planner LLM call.
+    assert body["learning_path"] == {"steps": [], "total_hours": 0.0}
 
     # The profile prompt carried the resume, the supporting doc and the extra text.
     profile_prompt = next(

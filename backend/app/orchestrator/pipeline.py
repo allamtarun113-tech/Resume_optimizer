@@ -1,7 +1,8 @@
 """Analysis pipeline. Runs as a background task and records progress in analyses.status.
 
 Parser (at upload) -> ProfileExtractor || JDAnalyzer -> SkillNormalizer -> Matcher ->
-Scorer (+ GapClassifier) -> ResumeAdvisor (+ EvidenceValidator) -> store everything.
+Scorer (+ GapClassifier) -> ResumeAdvisor (+ EvidenceValidator) || LearningPathPlanner
+-> store everything.
 """
 
 import asyncio
@@ -10,6 +11,7 @@ import logging
 import openai
 
 from app.agents.jd_analyzer import JDAnalyzer
+from app.agents.learning_path_planner import LearningPathPlanner, PlannerInput
 from app.agents.matcher import Matcher
 from app.agents.profile_extractor import ProfileExtractor, ProfileExtractorInput, SourceDocument
 from app.agents.resume_advisor import AdvisorInput, ResumeAdvisor, SourceDoc
@@ -17,6 +19,7 @@ from app.agents.scorer import Scorer
 from app.agents.skill_normalizer import SkillNormalizer
 from app.db.repository import Repository
 from app.llm.client import LLMClient, LLMError
+from app.mcp_server.server import create_mcp_server, open_tools
 from app.parsing.extract import ExtractionError
 from app.schemas.documents import DocumentRecord
 from app.skills.taxonomy import load_taxonomy
@@ -62,6 +65,8 @@ class AnalysisPipeline:
         self._matcher = Matcher(llm, taxonomy)
         self._scorer = Scorer()
         self._advisor = ResumeAdvisor(llm, taxonomy)
+        mcp = create_mcp_server(lambda: repo, taxonomy)
+        self._planner = LearningPathPlanner(llm, taxonomy, lambda: open_tools(mcp))
 
     @property
     def prompt_versions(self) -> dict[str, str]:
@@ -70,6 +75,7 @@ class AnalysisPipeline:
             self._jd_analyzer.name: self._jd_analyzer.prompt.version,
             self._matcher.name: self._matcher.prompt.version,
             self._advisor.name: self._advisor.prompt.version,
+            self._planner.name: self._planner.prompt.version,
         }
 
     async def run(self, analysis_id: str, user_id: str) -> None:
@@ -131,16 +137,24 @@ class AnalysisPipeline:
                 sources[f"supplementary:{doc_id}"] = SourceDoc(
                     label=_source_label(doc), text=doc.extracted_text or ""
                 )
-        advice = await self._advisor.run(
-            AdvisorInput(profile=profile, score=score, sources=sources),
-            analysis_id=analysis_id,
-            user_id=user_id,
+        advice, learning_path = await asyncio.gather(
+            self._advisor.run(
+                AdvisorInput(profile=profile, score=score, sources=sources),
+                analysis_id=analysis_id,
+                user_id=user_id,
+            ),
+            self._planner.run(
+                PlannerInput(score=score, normalized=normalized),
+                analysis_id=analysis_id,
+                user_id=user_id,
+            ),
         )
         await self._repo.save_analysis_results(
             analysis_id,
             matches=[m.model_dump(mode="json") for m in score.matches],
             suggestions=advice.model_dump(mode="json", include={"suggestions", "rejected"}),
             gaps=[g.model_dump(mode="json") for g in advice.gaps],
+            learning_path=learning_path.model_dump(mode="json"),
         )
         await self._repo.update_analysis(
             analysis_id,

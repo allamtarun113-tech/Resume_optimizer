@@ -187,6 +187,10 @@ class Taxonomy:
         """Skills that evidence of `skill_id` implies (transitively), excluding itself."""
         return self._implied.get(skill_id, frozenset())
 
+    def prerequisite_closure(self, skill_id: str) -> frozenset[str]:
+        """All direct and indirect prerequisites of `skill_id`."""
+        return self._closure(skill_id, "prerequisites") if skill_id in self.skills else frozenset()
+
     def name(self, skill_id: str) -> str:
         return self.skills[skill_id].name
 

@@ -25,3 +25,6 @@ services:
         sync: false
       - key: OPENAI_MODEL_LARGE
         sync: false
+      # Optional: exposes our MCP server at /mcp for external MCP clients.
+      - key: MCP_SERVICE_TOKEN
+        sync: false

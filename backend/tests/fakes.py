@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from app.llm.client import Completion, LLMCallRecord
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
+from app.schemas.learning import LearningResource
 
 
 class InMemoryRepository:
@@ -21,6 +22,7 @@ class InMemoryRepository:
         self.cache: dict[str, dict[str, Any]] = {}
         self.calls: list[LLMCallRecord] = []
         self.status_history: dict[str, list[str]] = {}
+        self.resources: list[LearningResource] = []
 
     async def upload_file(self, path: str, data: bytes, content_type: str) -> None:
         self.files[path] = data
@@ -118,6 +120,9 @@ class InMemoryRepository:
             input_tokens=sum(c.input_tokens for c in calls),
             output_tokens=sum(c.output_tokens for c in calls),
         )
+
+    async def get_learning_resources(self, skill_ids: list[str]) -> list[LearningResource]:
+        return [r for r in self.resources if r.skill_id in skill_ids]
 
 
 Responder = Callable[[str, str], BaseModel]

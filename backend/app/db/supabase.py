@@ -13,6 +13,7 @@ import httpx
 from app.llm.client import LLMCallRecord
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
+from app.schemas.learning import LearningResource
 
 logger = logging.getLogger(__name__)
 
@@ -226,3 +227,17 @@ class SupabaseRepository:
             input_tokens=sum(r["input_tokens"] for r in rows),
             output_tokens=sum(r["output_tokens"] for r in rows),
         )
+
+    # -- learning resources ----------------------------------------------------------------
+
+    async def get_learning_resources(self, skill_ids: list[str]) -> list[LearningResource]:
+        if not skill_ids:
+            return []
+        rows = await self._select(
+            "learning_resources",
+            {
+                "select": "skill_id,title,url,type,level,est_hours,free",
+                "skill_id": f"in.({','.join(skill_ids)})",
+            },
+        )
+        return [LearningResource.model_validate(r) for r in rows]

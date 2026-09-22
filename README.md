@@ -30,6 +30,9 @@ pnpm dev
 Checks: `uv run ruff check . && uv run mypy app tests && uv run pytest` (backend) and
 `pnpm lint && pnpm typecheck && pnpm test` (frontend).
 
+Learning resources live in `ingestion/resources_seed.yaml`. After editing it, sync the
+database with `uv run python -m scripts.seed_resources` (in `backend/`).
+
 After changing a backend API schema, regenerate the frontend types:
 `uv run python -m scripts.export_openapi` (in `backend/`), then `pnpm gen:api` (in `frontend/`).
 CI fails if they are out of date.

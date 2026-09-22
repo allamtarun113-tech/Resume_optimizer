@@ -6,6 +6,7 @@ from typing import Any, Protocol
 from app.llm.client import LLMStore
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
+from app.schemas.learning import LearningResource
 
 
 class Repository(LLMStore, Protocol):
@@ -44,3 +45,5 @@ class Repository(LLMStore, Protocol):
     async def get_analysis_results(self, analysis_id: str) -> dict[str, Any] | None: ...
 
     async def get_llm_usage(self, analysis_id: str) -> LLMUsage: ...
+
+    async def get_learning_resources(self, skill_ids: list[str]) -> list[LearningResource]: ...

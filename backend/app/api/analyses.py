@@ -13,6 +13,7 @@ from app.orchestrator.pipeline import AnalysisPipeline
 from app.parsing.text import normalize_text, text_hash
 from app.schemas.advice import Gap, RejectedSuggestion, Suggestion
 from app.schemas.analyses import AnalysisCreate, AnalysisCreated, AnalysisResponse
+from app.schemas.learning import LearningPath
 from app.schemas.matching import RequirementMatch
 from app.schemas.profile import StudentProfile
 from app.schemas.requirements import JobRequirements
@@ -90,6 +91,7 @@ async def get_analysis(analysis_id: UUID, user: User, repo: Repo) -> AnalysisRes
     matches = results.get("matches")
     advice = results.get("suggestions") or {}
     gaps = results.get("gaps")
+    learning_path = results.get("learning_path")
     return AnalysisResponse(
         id=analysis.id,
         status=analysis.status,
@@ -112,5 +114,6 @@ async def get_analysis(analysis_id: UUID, user: User, repo: Repo) -> AnalysisRes
         if gaps is not None
         else None,
         gaps=[Gap.model_validate(g) for g in gaps] if gaps is not None else None,
+        learning_path=LearningPath.model_validate(learning_path) if learning_path else None,
         llm_usage=await repo.get_llm_usage(analysis.id),
     )

@@ -5,6 +5,7 @@ import {
   sourceLabel,
   strengthLabel,
   whereToAdd,
+  formatHours,
 } from "./results";
 import type { RequirementMatch } from "./types";
 
@@ -90,5 +91,15 @@ describe("labels", () => {
       "Projects → Campus Food App",
     );
     expect(whereToAdd("skills", null)).toBe("Skills");
+  });
+});
+
+describe("formatHours", () => {
+  it("formats estimates", () => {
+    expect(formatHours(null)).toBeNull();
+    expect(formatHours(0)).toBeNull();
+    expect(formatHours(0.5)).toBe("under 1 hour");
+    expect(formatHours(1)).toBe("about 1 hour");
+    expect(formatHours(14.4)).toBe("about 14 hours");
   });
 });

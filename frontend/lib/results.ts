@@ -86,3 +86,10 @@ export function whereToAdd(section: string, target: string | null): string {
   const label = SECTION_LABEL[section] ?? section;
   return target ? `${label} → ${target}` : label;
 }
+
+export function formatHours(hours: number | null | undefined): string | null {
+  if (hours == null || hours <= 0) return null;
+  if (hours < 1) return "under 1 hour";
+  const rounded = Math.round(hours);
+  return `about ${rounded} hour${rounded === 1 ? "" : "s"}`;
+}
