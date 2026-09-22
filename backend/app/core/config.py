@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     # Sent to reasoning models only; dropped automatically for models that reject it.
     openai_reasoning_effort: str = "low"
     openai_timeout_seconds: float = 120
+    # USD per 1M tokens, for cost reporting (defaults: gpt-4o-mini list prices).
+    openai_price_input_per_m: float = 0.15
+    openai_price_output_per_m: float = 0.60
+    cost_target_per_analysis: float = 0.01
 
     mcp_service_token: str = ""
     # Offline question ingestion only (GitHub MCP server); never needed in production.
@@ -33,6 +37,7 @@ class Settings(BaseSettings):
     # Accepts a JSON list or a comma-separated string.
     allowed_origins: Annotated[list[str], NoDecode] = Field(default=["http://localhost:3000"])
     daily_analysis_limit: int = 10
+    daily_upload_limit: int = 40
 
     @field_validator("allowed_origins", mode="before")
     @classmethod

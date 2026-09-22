@@ -11,7 +11,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List Analyses */
+        get: operations["list_analyses_analyses_get"];
         put?: never;
         /** Create Analysis */
         post: operations["create_analysis_analyses_post"];
@@ -30,6 +31,27 @@ export interface paths {
         };
         /** Get Analysis */
         get: operations["get_analysis_analyses__analysis_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Analysis */
+        delete: operations["delete_analysis_analyses__analysis_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analyses/{analysis_id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Analysis
+         * @description The full report as Markdown (download).
+         */
+        get: operations["export_analysis_analyses__analysis_id__export_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -53,6 +75,27 @@ export interface paths {
          * @description "Prepare Me for Interview". Idempotent: returns the stored set if there is one.
          */
         post: operations["prepare_interview_analyses__analysis_id__interview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analyses/{analysis_id}/rerun": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rerun Analysis
+         * @description Same resume and documents, new job description. Extraction of the profile is
+         *     served from the LLM cache, so only the job side costs anything.
+         */
+        post: operations["rerun_analysis_analyses__analysis_id__rerun_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -141,6 +184,11 @@ export interface components {
              */
             status: "queued" | "parsing" | "extracting" | "scoring" | "advising" | "done" | "failed";
         };
+        /** AnalysisRerun */
+        AnalysisRerun: {
+            /** Jd Text */
+            jd_text: string;
+        };
         /** AnalysisResponse */
         AnalysisResponse: {
             /**
@@ -184,6 +232,29 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** AnalysisSummary */
+        AnalysisSummary: {
+            /** Company */
+            company: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Fit Score */
+            fit_score: number | null;
+            /** Id */
+            id: string;
+            /** Potential Score */
+            potential_score: number | null;
+            /** Role Title */
+            role_title: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "parsing" | "extracting" | "scoring" | "advising" | "done" | "failed";
         };
         /** Body_upload_document_documents_post */
         Body_upload_document_documents_post: {
@@ -743,6 +814,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_analyses_analyses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisSummary"][];
+                };
+            };
+        };
+    };
     create_analysis_analyses_post: {
         parameters: {
             query?: never;
@@ -807,6 +898,66 @@ export interface operations {
             };
         };
     };
+    delete_analysis_analyses__analysis_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_analysis_analyses__analysis_id__export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_interview_analyses__analysis_id__interview_get: {
         parameters: {
             query?: never;
@@ -856,6 +1007,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InterviewSet"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rerun_analysis_analyses__analysis_id__rerun_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalysisRerun"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisCreated"];
                 };
             };
             /** @description Validation Error */

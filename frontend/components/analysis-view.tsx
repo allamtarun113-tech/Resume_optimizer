@@ -11,6 +11,7 @@ import { ScoreGauge } from "@/components/score-gauge";
 import { GapList, SuggestionList } from "@/components/suggestion-list";
 import { LearningPathView } from "@/components/learning-path";
 import { InterviewPrep } from "@/components/interview-prep";
+import { ExportButtons, RerunForm } from "@/components/analysis-actions";
 import {
   Card,
   CardContent,
@@ -118,15 +119,7 @@ export function AnalysisView({ id }: { id: string }) {
               score.
             </p>
           )}
-          <div>
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={<Link href="/analyze" />}
-            >
-              New analysis
-            </Button>
-          </div>
+          {status === "done" && <ExportButtons analysisId={analysis.id} />}
         </CardContent>
       </Card>
 
@@ -143,6 +136,14 @@ export function AnalysisView({ id }: { id: string }) {
         <LearningPathView path={analysis.learning_path} />
       )}
       {status === "done" && <InterviewPrep analysisId={analysis.id} />}
+      {status === "done" && <RerunForm analysisId={analysis.id} />}
+      {status === "failed" && (
+        <div className="print:hidden">
+          <Button nativeButton={false} render={<Link href="/analyze" />}>
+            Start a new analysis
+          </Button>
+        </div>
+      )}
 
       {analysis.matches && (
         <section className="flex flex-col gap-4">
@@ -157,7 +158,7 @@ export function AnalysisView({ id }: { id: string }) {
       )}
 
       {(requirements || profile) && (
-        <details className="rounded-xl border p-4 text-sm">
+        <details className="rounded-xl border p-4 text-sm print:hidden">
           <summary className="cursor-pointer text-muted-foreground">
             Raw extraction data
             {usage.calls > 0 &&

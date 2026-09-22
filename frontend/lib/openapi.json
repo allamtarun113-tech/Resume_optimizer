@@ -70,6 +70,21 @@
         "title": "AnalysisCreated",
         "type": "object"
       },
+      "AnalysisRerun": {
+        "properties": {
+          "jd_text": {
+            "maxLength": 15000,
+            "minLength": 50,
+            "title": "Jd Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "jd_text"
+        ],
+        "title": "AnalysisRerun",
+        "type": "object"
+      },
       "AnalysisResponse": {
         "properties": {
           "created_at": {
@@ -258,6 +273,87 @@
           "llm_usage"
         ],
         "title": "AnalysisResponse",
+        "type": "object"
+      },
+      "AnalysisSummary": {
+        "properties": {
+          "company": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "fit_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit Score"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "potential_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potential Score"
+          },
+          "role_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Title"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "parsing",
+              "extracting",
+              "scoring",
+              "advising",
+              "done",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "created_at",
+          "fit_score",
+          "potential_score",
+          "role_title",
+          "company"
+        ],
+        "title": "AnalysisSummary",
         "type": "object"
       },
       "Body_upload_document_documents_post": {
@@ -1761,6 +1857,34 @@
   "openapi": "3.1.0",
   "paths": {
     "/analyses": {
+      "get": {
+        "operationId": "list_analyses_analyses_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnalysisSummary"
+                  },
+                  "title": "Response List Analyses Analyses Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Analyses",
+        "tags": [
+          "analyses"
+        ]
+      },
       "post": {
         "operationId": "create_analysis_analyses_post",
         "requestBody": {
@@ -1807,6 +1931,45 @@
       }
     },
     "/analyses/{analysis_id}": {
+      "delete": {
+        "operationId": "delete_analysis_analyses__analysis_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Analysis",
+        "tags": [
+          "analyses"
+        ]
+      },
       "get": {
         "operationId": "get_analysis_analyses__analysis_id__get",
         "parameters": [
@@ -1849,6 +2012,55 @@
           }
         ],
         "summary": "Get Analysis",
+        "tags": [
+          "analyses"
+        ]
+      }
+    },
+    "/analyses/{analysis_id}/export": {
+      "get": {
+        "description": "The full report as Markdown (download).",
+        "operationId": "export_analysis_analyses__analysis_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Export Analysis",
         "tags": [
           "analyses"
         ]
@@ -1946,6 +2158,65 @@
         "summary": "Prepare Interview",
         "tags": [
           "interview"
+        ]
+      }
+    },
+    "/analyses/{analysis_id}/rerun": {
+      "post": {
+        "description": "Same resume and documents, new job description. Extraction of the profile is\nserved from the LLM cache, so only the job side costs anything.",
+        "operationId": "rerun_analysis_analyses__analysis_id__rerun_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRerun"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Rerun Analysis",
+        "tags": [
+          "analyses"
         ]
       }
     },

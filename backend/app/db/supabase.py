@@ -142,6 +142,56 @@ class SupabaseRepository:
         # Content-Range: "*/<count>" or "0-4/<count>"
         return int(response.headers.get("content-range", "*/0").rsplit("/", 1)[-1])
 
+    async def count_uploads_since(self, user_id: str, since: datetime) -> int:
+        response = await self._request(
+            "HEAD",
+            "/rest/v1/documents",
+            params={
+                "select": "id",
+                "user_id": f"eq.{user_id}",
+                "kind": "in.(resume,supporting)",
+                "created_at": f"gte.{since.isoformat()}",
+            },
+            headers={"Prefer": "count=exact"},
+        )
+        return int(response.headers.get("content-range", "*/0").rsplit("/", 1)[-1])
+
+    async def list_analyses(self, user_id: str, limit: int) -> list[AnalysisRecord]:
+        rows = await self._select(
+            "analyses",
+            {
+                "select": "*",
+                "user_id": f"eq.{user_id}",
+                "order": "created_at.desc",
+                "limit": str(limit),
+            },
+        )
+        return [AnalysisRecord.model_validate(r) for r in rows]
+
+    async def get_role_titles(
+        self, analysis_ids: list[str]
+    ) -> dict[str, tuple[str | None, str | None]]:
+        if not analysis_ids:
+            return {}
+        rows = await self._select(
+            "analysis_results",
+            {
+                "select": "analysis_id,role:job_requirements->>role_title,"
+                "company:job_requirements->>company",
+                "analysis_id": f"in.({','.join(analysis_ids)})",
+            },
+        )
+        return {r["analysis_id"]: (r["role"], r["company"]) for r in rows}
+
+    async def delete_analysis(self, user_id: str, analysis_id: str) -> bool:
+        response = await self._request(
+            "DELETE",
+            "/rest/v1/analyses",
+            params={"id": f"eq.{analysis_id}", "user_id": f"eq.{user_id}"},
+            headers={"Prefer": "return=representation"},
+        )
+        return bool(response.json())
+
     async def insert_analysis(
         self,
         *,

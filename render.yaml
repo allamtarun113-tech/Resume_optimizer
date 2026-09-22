@@ -12,9 +12,10 @@ services:
     envVars:
       - key: SUPABASE_URL
         value: https://toesvlmefyvghivevjie.supabase.co
-      # Comma-separated list of frontend origins allowed to call the API.
+      # Comma-separated list of frontend origins allowed to call the API. Production only
+      # accepts the Vercel site; local development sets its own value in backend/.env.
       - key: ALLOWED_ORIGINS
-        value: https://resume-optimizer-ten-virid.vercel.app,http://localhost:3000
+        value: https://resume-optimizer-ten-virid.vercel.app
       # Secrets and per-environment choices: set in the Render dashboard
       # (sync: false means the Blueprint never overwrites them).
       - key: SUPABASE_SERVICE_ROLE_KEY

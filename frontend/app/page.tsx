@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { BackendCheck } from "@/components/backend-check";
-import { SignOutButton } from "@/components/sign-out-button";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -20,12 +18,19 @@ export default async function Home() {
       </p>
       {data?.claims ? (
         <div className="flex flex-col items-center gap-4">
-          <p className="text-sm">Signed in as {email}</p>
-          <Button nativeButton={false} render={<Link href="/analyze" />}>
-            New analysis
-          </Button>
-          <BackendCheck />
-          <SignOutButton />
+          <p className="text-sm text-muted-foreground">Signed in as {email}</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button nativeButton={false} render={<Link href="/analyze" />}>
+              New analysis
+            </Button>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href="/history" />}
+            >
+              Your analyses
+            </Button>
+          </div>
         </div>
       ) : (
         <Button nativeButton={false} render={<Link href="/login" />}>

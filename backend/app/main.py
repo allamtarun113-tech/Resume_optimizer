@@ -62,6 +62,8 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["Authorization", "Content-Type"],
+        # Lets the browser read the report's file name on download.
+        expose_headers=["Content-Disposition"],
     )
     app.include_router(health.router)
     app.include_router(documents.router)

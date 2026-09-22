@@ -226,7 +226,7 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-**Status:** Phases 0–4 ✅ done (2026-09-23). Phase 5 code complete and corpus ingested (4,956 questions from 24 repos, 2026-09-23); live check pending. Next up: Phase 6.
+**Status:** Phases 0–5 ✅ done (2026-09-23). Phase 6 in progress.
 Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
@@ -286,7 +286,7 @@ Implementation notes (decided during Phase 4):
 - UI: ordered steps timeline with resources, estimated hours and "why this first".
 - **Exit:** every resource URL in the output exists in the DB, and prerequisite order respects the taxonomy graph.
 
-### Phase 5: Interview preparation (RAG + MCP)
+### Phase 5: Interview preparation (RAG + MCP) ✅
 Implementation notes (decided during Phase 5):
 - Ingestion code lives in `backend/app/ingestion/` and one command runs every stage: `uv run python -m scripts.ingest_questions` (in backend/; `--dry-run` for fetch + parse only). The config stays in `ingestion/sources.yaml`, which lists 24 permissively licensed repos (MIT/Apache-2.0/CC0/CC-BY-4.0/Unlicense, checked via the GitHub API) with exact file paths and per-file topics. Files are fetched through GitHub's remote MCP server (`https://api.githubcopilot.com/mcp/readonly`, `get_file_contents`) and cached in `ingestion/.cache/` (gitignored). The parser handles headings, lists, tables, bold lines, links and `<summary>`; each source can restrict `markers`. Dedupe is by normalized-text hash, then embedding cosine > 0.95 (numpy, earlier sources win). Behavioral questions that name a company ("Why Amazon?") are dropped. Answers are never stored. Loading pages through existing rows (PostgREST caps responses at 1000 rows) and retries batches.
 - Tables: `interview_questions` (pgvector 1536, HNSW cosine index), RPC `match_interview_questions` (service role only), `embedding_cache` (query embeddings), `interview_sets` (one per analysis).
@@ -300,6 +300,11 @@ Implementation notes (decided during Phase 5):
 - **Exit:** 100% of questions have a `source`. Technical questions change according to the JD. Each resume project gets deep, specific questions.
 
 ### Phase 6: History, polish and hardening
+Implementation notes (decided during Phase 6):
+- API: `GET /analyses` (history with role title/company, newest first, max 50), `POST /analyses/{id}/rerun` (same resume and supporting docs incl. notes, new JD; profile extraction is a cache hit), `DELETE /analyses/{id}` (cascades results and the interview set; documents are kept because re-runs share them), `GET /analyses/{id}/export` (Markdown report incl. the interview set). PDF = browser print with `print:hidden` on UI chrome.
+- Limits: `DAILY_ANALYSIS_LIMIT` (re-runs count) and `DAILY_UPLOAD_LIMIT` (default 40 files/pasted texts per 24 h). Upload file names are reduced to a printable base name (display only; storage paths are UUIDs).
+- Cost: view `llm_usage_daily`; `uv run python -m scripts.cost_report` (prices from `OPENAI_PRICE_INPUT_PER_M` / `OPENAI_PRICE_OUTPUT_PER_M`, target `COST_TARGET_PER_ANALYSIS`). Live baseline on gpt-4o-mini: about $0.0012 per analysis including interview prep.
+- Security: RLS on all 10 public tables (audited with `supabase db query`); `handle_new_user` no longer executable via REST (`supabase db advisors --type security` is clean except "leaked password protection", which needs a paid plan). No secrets in git history. Production CORS allows only the Vercel origin. Frontend sends security headers (X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, HSTS).
 - History page, re-run an analysis against a new JD with the same profile, export results (PDF/markdown).
 - Rate limits, daily quotas, a cost dashboard query over `llm_calls`, error states, empty states, mobile layout.
 - Security pass: RLS audit, upload validation, secrets, CORS locked to the Vercel domain.

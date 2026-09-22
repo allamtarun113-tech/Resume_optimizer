@@ -28,6 +28,16 @@ class Repository(LLMStore, Protocol):
 
     async def count_analyses_since(self, user_id: str, since: datetime) -> int: ...
 
+    async def count_uploads_since(self, user_id: str, since: datetime) -> int: ...
+
+    async def list_analyses(self, user_id: str, limit: int) -> list[AnalysisRecord]: ...
+
+    async def get_role_titles(
+        self, analysis_ids: list[str]
+    ) -> dict[str, tuple[str | None, str | None]]: ...
+
+    async def delete_analysis(self, user_id: str, analysis_id: str) -> bool: ...
+
     async def insert_analysis(
         self,
         *,

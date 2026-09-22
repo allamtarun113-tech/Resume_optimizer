@@ -45,6 +45,7 @@ export async function apiFetch<T>(
       errorMessage(body.detail, res.statusText || "Request failed"),
     );
   }
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
@@ -59,4 +60,37 @@ export function apiPostJson<T>(path: string, body: unknown): Promise<T> {
 // multipart/form-data: the browser sets the Content-Type boundary itself.
 export function apiPostForm<T>(path: string, form: FormData): Promise<T> {
   return apiFetch<T>(path, { method: "POST", body: form });
+}
+
+// Authenticated file download (e.g. the Markdown report).
+export async function apiDownload(
+  path: string,
+  fallbackName: string,
+): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const headers = new Headers();
+  if (session) headers.set("Authorization", `Bearer ${session.access_token}`);
+  const res = await fetch(`${API_BASE_URL}${path}`, { headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(
+      res.status,
+      errorMessage(body.detail, "Download failed"),
+    );
+  }
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const name = /filename="([^"]+)"/.exec(disposition)?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export function apiDelete(path: string): Promise<void> {
+  return apiFetch<void>(path, { method: "DELETE" });
 }

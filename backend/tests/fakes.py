@@ -63,6 +63,36 @@ class InMemoryRepository:
             1 for a in self.analyses.values() if a.user_id == user_id and a.created_at >= since
         )
 
+    async def count_uploads_since(self, user_id: str, since: datetime) -> int:
+        return sum(
+            1
+            for d in self.documents.values()
+            if d.user_id == user_id and d.kind in ("resume", "supporting") and d.created_at >= since
+        )
+
+    async def list_analyses(self, user_id: str, limit: int) -> list[AnalysisRecord]:
+        mine = [a for a in self.analyses.values() if a.user_id == user_id]
+        return sorted(mine, key=lambda a: a.created_at, reverse=True)[:limit]
+
+    async def get_role_titles(
+        self, analysis_ids: list[str]
+    ) -> dict[str, tuple[str | None, str | None]]:
+        out: dict[str, tuple[str | None, str | None]] = {}
+        for aid in analysis_ids:
+            reqs = (self.results.get(aid) or {}).get("job_requirements")
+            if reqs:
+                out[aid] = (reqs.get("role_title"), reqs.get("company"))
+        return out
+
+    async def delete_analysis(self, user_id: str, analysis_id: str) -> bool:
+        analysis = self.analyses.get(analysis_id)
+        if analysis is None or analysis.user_id != user_id:
+            return False
+        del self.analyses[analysis_id]
+        self.results.pop(analysis_id, None)
+        self.interview_sets.pop(analysis_id, None)
+        return True
+
     async def insert_analysis(
         self,
         *,

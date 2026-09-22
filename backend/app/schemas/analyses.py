@@ -24,6 +24,20 @@ class AnalysisCreate(BaseModel):
     supporting_doc_ids: list[UUID] = Field(default_factory=list, max_length=MAX_SUPPORTING_DOCS)
 
 
+class AnalysisRerun(BaseModel):
+    jd_text: str = Field(min_length=50, max_length=MAX_JD_CHARS)
+
+
+class AnalysisSummary(BaseModel):
+    id: str
+    status: AnalysisStatus
+    created_at: datetime
+    fit_score: int | None
+    potential_score: int | None
+    role_title: str | None
+    company: str | None
+
+
 class AnalysisCreated(BaseModel):
     id: str
     status: AnalysisStatus

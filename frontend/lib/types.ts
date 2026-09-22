@@ -5,11 +5,12 @@ import type { components } from "./api-schema";
 type Schemas = components["schemas"];
 
 export type HealthResponse = Schemas["HealthResponse"];
-export type MeResponse = Schemas["MeResponse"];
 export type DocumentResponse = Schemas["DocumentResponse"];
 export type AnalysisCreate = Schemas["AnalysisCreate"];
 export type AnalysisCreated = Schemas["AnalysisCreated"];
 export type AnalysisResponse = Schemas["AnalysisResponse"];
+export type AnalysisSummary = Schemas["AnalysisSummary"];
+export type AnalysisRerun = Schemas["AnalysisRerun"];
 export type AnalysisStatus = AnalysisResponse["status"];
 export type StudentProfile = Schemas["StudentProfile"];
 export type JobRequirements = Schemas["JobRequirements"];

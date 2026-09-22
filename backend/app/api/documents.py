@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -7,6 +8,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from app.agents.document_parser import DocumentParser
 from app.api.deps import get_repository
 from app.core.auth import CurrentUser, get_current_user
+from app.core.config import Settings, get_settings
 from app.db.repository import Repository
 from app.parsing.extract import ExtractionError, FileType, detect_file_type
 from app.schemas.documents import DocumentResponse, ParsedDocument, UploadKind
@@ -27,10 +29,18 @@ _CONTENT_TYPES = {
 _parser = DocumentParser()
 
 
+def _safe_filename(name: str | None) -> str:
+    """Display name only (never used as a storage path): base name, printable, bounded."""
+    base = (name or "upload").replace("\\", "/").rsplit("/", 1)[-1]
+    cleaned = "".join(c for c in base if c.isprintable()).strip()
+    return (cleaned or "upload")[:200]
+
+
 @router.post("/documents", status_code=status.HTTP_201_CREATED)
 async def upload_document(
     user: Annotated[CurrentUser, Depends(get_current_user)],
     repo: Annotated[Repository, Depends(get_repository)],
+    settings: Annotated[Settings, Depends(get_settings)],
     kind: Annotated[UploadKind, Form()],
     file: Annotated[UploadFile | None, File()] = None,
     text: Annotated[str | None, Form(max_length=MAX_PASTED_CHARS)] = None,
@@ -41,6 +51,13 @@ async def upload_document(
     if kind == "resume" and file is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Upload the resume as a file.")
 
+    since = datetime.now(UTC) - timedelta(days=1)
+    if await repo.count_uploads_since(user.id, since) >= settings.daily_upload_limit:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"You've reached the limit of {settings.daily_upload_limit} uploads per day.",
+        )
+
     storage_path: str | None = None
     filename: str | None = None
     try:
@@ -50,7 +67,7 @@ async def upload_document(
                 raise HTTPException(
                     status.HTTP_413_CONTENT_TOO_LARGE, "Files must be 5 MB or smaller."
                 )
-            filename = (file.filename or "upload")[:200]
+            filename = _safe_filename(file.filename)
             content_type, ext = _CONTENT_TYPES[detect_file_type(data, filename)]
             # pdfminer is CPU-bound; keep the event loop free.
             parsed: ParsedDocument = await asyncio.to_thread(_parser.parse_file, data, filename)
