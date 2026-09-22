@@ -228,7 +228,8 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-**Status:** Phase 0 ✅ done (2026-09-23). Phase 1 code complete (2026-09-23); exit check pending a live run with the OpenAI key. Next up: Phase 2.
+**Status:** Phase 0 ✅ and Phase 1 ✅ done (2026-09-23). Next up: Phase 2.
+Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
 
@@ -241,7 +242,7 @@ Each phase ends with working, deployed software plus tests. **Don't start a phas
 - Deploy the skeleton: Vercel (frontend) and Render (backend) connected to GitHub.
 - **Exit:** a logged-in user hits an authenticated `/health/me` from the deployed frontend.
 
-### Phase 1: Input and extraction
+### Phase 1: Input and extraction ✅
 Implementation notes (decided during Phase 1):
 - The backend talks to Supabase through its REST APIs (PostgREST + Storage) with the secret key (`SUPABASE_SERVICE_ROLE_KEY`, an `sb_secret_...` key), via `app/db/supabase.py`. Every user-facing query filters by `user_id`. `DATABASE_URL` is unused so far.
 - Text is extracted at upload time (`POST /documents`), so scanned PDFs are rejected immediately. The JD and the extra-skills text are stored as `documents` rows (`jd`, `extra_text`); `extra_text` doc ids go into `analyses.supporting_doc_ids`.
