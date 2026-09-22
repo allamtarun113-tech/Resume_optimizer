@@ -17,14 +17,17 @@ from app.schemas.advice import SuggestionDraft
 from app.schemas.matching import EvidenceRef
 from app.skills.taxonomy import Taxonomy
 
-MIN_QUOTE_CHARS = 8
+# Quotes shorter than this must match whole words ("Git" but not "Go" inside "Google").
+WHOLE_WORD_BELOW = 8
+MIN_QUOTE_CHARS = 2
+_SPACE_BEFORE_PUNCT_RE = re.compile(r"\s+([,.;:!?)])")
 _ELLIPSIS_RE = re.compile(r"\.\.\.|…")
 _CHAR_MAP = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", "•": " "})
 
 
 def normalize_for_match(text: str) -> str:
     text = unicodedata.normalize("NFKC", text).translate(_CHAR_MAP).casefold()
-    return " ".join(text.split())
+    return _SPACE_BEFORE_PUNCT_RE.sub(r"\1", " ".join(text.split()))
 
 
 class RejectedDraft(ValueError):
@@ -97,7 +100,7 @@ class EvidenceValidator:
     def _find_quote(self, quote: str, sources: list[str]) -> str | None:
         fragments = [normalize_for_match(f) for f in _ELLIPSIS_RE.split(quote)]
         fragments = [f for f in fragments if f]
-        if not fragments or any(len(f) < MIN_QUOTE_CHARS for f in fragments):
+        if not fragments or any(len(f.strip(" ,.;:!?")) < MIN_QUOTE_CHARS for f in fragments):
             return None
         for source in dict.fromkeys(sources):
             text = self._sources.get(source, "")
@@ -109,6 +112,13 @@ class EvidenceValidator:
 def _contains_in_order(text: str, fragments: list[str]) -> bool:
     position = 0
     for fragment in fragments:
+        core = fragment.strip(" ,.;:!?")
+        if len(core) < WHOLE_WORD_BELOW:
+            match = re.compile(rf"(?<!\w){re.escape(core)}(?!\w)").search(text, position)
+            if match is None:
+                return False
+            position = match.end()
+            continue
         found = text.find(fragment, position)
         if found == -1:
             return False

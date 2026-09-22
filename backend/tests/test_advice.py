@@ -197,7 +197,8 @@ async def test_valid_suggestion_is_kept_with_uplift_and_source() -> None:
 ADVERSARIAL: list[tuple[str, dict[str, Any], str]] = [
     ("fabricated quote", {"quote": "Led a team of 10 engineers at Google"}, "quote isn't"),
     ("quote from the job description", {"quote": JD_TEXT_QUOTE}, "quote isn't"),
-    ("too-short quote", {"quote": "k3s"}, "quote isn't"),
+    ("one-letter quote", {"quote": "k"}, "quote isn't"),
+    ("short quote inside another word", {"quote": "Dep"}, "quote isn't"),  # only in "Deployed"
     ("quote from the wrong document", {"quote": "Built a FastAPI backend"}, "quote isn't"),
     ("gap requirement", {"requirement_ids": ["R5"]}, "doesn't address"),
     ("requirement with nothing to add", {"requirement_ids": ["R1"]}, "doesn't address"),
@@ -240,6 +241,8 @@ async def test_evidence_unrelated_to_the_requirement_is_rejected() -> None:
         "DEPLOYED IT ON A 3-NODE   K3S CLUSTER",  # case and spacing
         "containerized the FastAPI service with Docker and deployed it",  # spans a line break
         "containerized the FastAPI service … 3-node k3s cluster",  # ellipsis, in order
+        "k3s",  # short quotes match as whole words
+        "k3s cluster .",  # spacing before punctuation is ignored
     ],
 )
 async def test_quote_matching_tolerates_formatting(quote: str) -> None:

@@ -226,7 +226,7 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-**Status:** Phases 0, 1 and 2 ✅ done (2026-09-23). Phase 3 code complete (2026-09-23); exit check pending a live run with supporting docs. Next up: Phase 4.
+**Status:** Phases 0–3 ✅ done (2026-09-23). Next up: Phase 4.
 Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
@@ -266,7 +266,7 @@ Implementation notes (decided during Phase 2):
 - Results page: score gauge, per-requirement breakdown (matched / weak / missing).
 - **Exit:** the scoring engine has full unit and property tests. The same input gives the same score across 5 runs. Golden-file tests pass on 5+ sample resume/JD pairs.
 
-### Phase 3: Resume suggestions and skill gaps
+### Phase 3: Resume suggestions and skill gaps ✅
 Implementation notes (decided during Phase 3):
 - Eligible for advice: `weak_in_resume` / `missing_from_resume_but_evidenced` requirements whose `best_strength > resume_strength`. So every suggestion has a real, positive uplift; with nothing eligible the advisor makes no LLM call. Uplift = `scoring.engine.uplift` with the addressed requirements raised to `best_strength`.
 - The advisor sees numbered evidence (Q1…, supplementary first) with verbatim snippets. The `EvidenceValidator` (`app/agents/evidence_validator.py`) rejects drafts that: address no eligible requirement; cite unknown or unrelated evidence; quote text not found (case/space/quote-style-insensitive, `…` fragments in order) in the cited evidence's document; or name a technical skill (`Taxonomy.find_in_text`) not present in the student's raw documents or implied by them. Rejections are stored and their count shown in the UI.
