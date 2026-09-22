@@ -45,7 +45,16 @@ _PROMPT_START = re.compile(
 )
 _NOISE = re.compile(
     r"(table of contents|back to top|contributing|license|translations?|credits|"
-    r"^answers?$|^solution|click here|star this repo)",
+    r"^answers?\b|^solution|click here|star this repo)",
+    re.IGNORECASE,
+)
+# Behavioral questions tied to one company ("Why do you want to work for Amazon?") don't
+# transfer to the student's job; technical ones may name vendors (Amazon S3), so this only
+# applies to general questions.
+_COMPANY = re.compile(
+    r"\b(amazon|google|facebook|meta|airbnb|lyft|uber|microsoft|apple|netflix|stripe|"
+    r"twitter|dropbox|linkedin|coinbase|palantir|pinterest|snap(?:chat)?|slack|salesforce|"
+    r"shopify|spotify|tiktok|bytedance|yelp|square|robinhood|databricks|openai)\b",
     re.IGNORECASE,
 )
 # Behavioral questions about the candidate themselves.
@@ -179,6 +188,8 @@ def parse_file(
     for raw, heading in candidate_lines(markdown, source.markers):
         text = clean(raw)
         if not looks_like_question(text):
+            continue
+        if source.category == "general" and _COMPANY.search(text):
             continue
         key = question_hash(text)
         if key in records:

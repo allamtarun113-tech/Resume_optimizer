@@ -169,6 +169,17 @@ def test_behavioral_questions_about_the_candidate_are_personal() -> None:
     }
 
 
+def test_company_specific_behavioral_questions_are_dropped() -> None:
+    md = "1. Why do you want to work for Amazon?\n1. Why do you want to work here?\n"
+    assert [r.text for r in parse(md, category="general")] == ["Why do you want to work here?"]
+    # Technical questions may name vendors.
+    assert parse("- What is Amazon S3 used for?")
+
+
+def test_answer_lines_are_not_questions() -> None:
+    assert parse("- Answer: How does vLLM work? How does SGLang work?") == []
+
+
 def test_duplicates_within_a_file_are_dropped() -> None:
     md = "- What is Docker?\n## What is Docker?\n- what is docker ?"
     assert len(parse(md)) == 1

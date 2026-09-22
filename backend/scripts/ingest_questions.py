@@ -38,6 +38,8 @@ SOURCES_FILE = ROOT / "sources.yaml"
 CACHE = ROOT / ".cache"
 NEAR_DUPLICATE = 0.95
 LOAD_BATCH = 200
+PAGE = 1000  # PostgREST returns at most 1000 rows per request
+RETRIES = 3
 
 
 def load_sources() -> list[Source]:
@@ -118,15 +120,38 @@ async def load(records: list[QuestionRecord], vectors: dict[str, list[float]]) -
             rows = [
                 {**r.model_dump(), "embedding": json.dumps(vectors[r.text_hash])} for r in batch
             ]
-            response = await http.post(
-                base,
-                params={"on_conflict": "text_hash"},
-                json=rows,
-                headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
-            )
-            response.raise_for_status()
+            for attempt in range(RETRIES):
+                try:
+                    response = await http.post(
+                        base,
+                        params={"on_conflict": "text_hash"},
+                        json=rows,
+                        headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+                    )
+                    response.raise_for_status()
+                    break
+                except httpx.HTTPError as exc:
+                    if attempt == RETRIES - 1:
+                        raise
+                    print(f"load: batch at {start} failed ({exc}); retrying")
+                    await asyncio.sleep(2 * (attempt + 1))
         wanted = {r.text_hash for r in records}
-        existing = (await http.get(base, params={"select": "id,text_hash"})).json()
+        existing: list[dict[str, str]] = []
+        while True:
+            page = (
+                await http.get(
+                    base,
+                    params={
+                        "select": "id,text_hash",
+                        "order": "id",
+                        "limit": str(PAGE),
+                        "offset": str(len(existing)),
+                    },
+                )
+            ).json()
+            existing += page
+            if len(page) < PAGE:
+                break
         stale = [row["id"] for row in existing if row["text_hash"] not in wanted]
         for start in range(0, len(stale), LOAD_BATCH):
             ids = ",".join(stale[start : start + LOAD_BATCH])

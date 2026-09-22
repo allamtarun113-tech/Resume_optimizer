@@ -90,6 +90,23 @@ sources:
       - {path: topics/en/data-structures.md, topics: [data-structures]}
       - {path: topics/en/agile.md, topics: [agile]}
 
+  - repo: kh4sh3i/Python-Interview-Questions
+    ref: main
+    license: CC0-1.0
+    category: technical
+    role_tags: [backend, data, ml]
+    files:
+      - {path: README.md, topics: [python]}
+
+  - repo: PragatiVerma18/DRF-Interview-Prep
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [backend]
+    files:
+      - {path: README.md, topics: [django]}
+      - {path: django-celery-redis-interview-questions.md, topics: [django]}
+
   - repo: indy256/Full-stack-Developer-Interview-Questions-and-Answers
     ref: master
     license: Unlicense
