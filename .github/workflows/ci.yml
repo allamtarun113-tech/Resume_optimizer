@@ -20,7 +20,8 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy app tests
-      - run: uv run pytest -q
+      # app/scoring must stay at 100% line + branch coverage (CLAUDE.md §5).
+      - run: uv run pytest -q --cov=app/scoring --cov-branch --cov-fail-under=100
 
   frontend:
     runs-on: ubuntu-latest

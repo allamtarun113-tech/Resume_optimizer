@@ -1,0 +1,46 @@
+{
+  "fit_score": 68,
+  "potential_score": 75,
+  "requirements": [
+    {
+      "name": "2+ years machine learning experience",
+      "skill_id": null,
+      "method": "llm",
+      "resume_strength": 1.0,
+      "best_strength": 1.0,
+      "bucket": "strong_in_resume"
+    },
+    {
+      "name": "PyTorch",
+      "skill_id": "pytorch",
+      "method": "taxonomy",
+      "resume_strength": 1.0,
+      "best_strength": 1.0,
+      "bucket": "strong_in_resume"
+    },
+    {
+      "name": "Machine Learning",
+      "skill_id": "machine-learning",
+      "method": "implied",
+      "resume_strength": 0.4,
+      "best_strength": 0.4,
+      "bucket": "weak_in_resume"
+    },
+    {
+      "name": "MLOps",
+      "skill_id": "mlops",
+      "method": "taxonomy",
+      "resume_strength": 0.0,
+      "best_strength": 0.7,
+      "bucket": "missing_from_resume_but_evidenced"
+    },
+    {
+      "name": "Master's degree in CS or related",
+      "skill_id": null,
+      "method": "none",
+      "resume_strength": 0.0,
+      "best_strength": 0.0,
+      "bucket": "true_gap"
+    }
+  ]
+}

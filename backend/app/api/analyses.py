@@ -12,6 +12,7 @@ from app.llm.client import LLMClient
 from app.orchestrator.pipeline import AnalysisPipeline
 from app.parsing.text import normalize_text, text_hash
 from app.schemas.analyses import AnalysisCreate, AnalysisCreated, AnalysisResponse
+from app.schemas.matching import RequirementMatch
 from app.schemas.profile import StudentProfile
 from app.schemas.requirements import JobRequirements
 
@@ -85,6 +86,7 @@ async def get_analysis(analysis_id: UUID, user: User, repo: Repo) -> AnalysisRes
     results = await repo.get_analysis_results(analysis.id) or {}
     profile = results.get("student_profile")
     requirements = results.get("job_requirements")
+    matches = results.get("matches")
     return AnalysisResponse(
         id=analysis.id,
         status=analysis.status,
@@ -92,7 +94,11 @@ async def get_analysis(analysis_id: UUID, user: User, repo: Repo) -> AnalysisRes
         created_at=analysis.created_at,
         updated_at=analysis.updated_at,
         prompt_versions=analysis.prompt_versions,
+        fit_score=analysis.fit_score,
+        potential_score=analysis.potential_score,
+        scoring_version=analysis.scoring_version,
         student_profile=StudentProfile.model_validate(profile) if profile else None,
         job_requirements=JobRequirements.model_validate(requirements) if requirements else None,
+        matches=[RequirementMatch.model_validate(m) for m in matches] if matches else None,
         llm_usage=await repo.get_llm_usage(analysis.id),
     )

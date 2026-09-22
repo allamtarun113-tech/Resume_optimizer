@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.schemas.matching import RequirementMatch
 from app.schemas.profile import StudentProfile
 from app.schemas.requirements import JobRequirements
 
@@ -34,6 +35,9 @@ class AnalysisRecord(BaseModel):
     supporting_doc_ids: list[str]
     status: AnalysisStatus
     error: str | None
+    fit_score: int | None = None
+    potential_score: int | None = None
+    scoring_version: str | None = None
     prompt_versions: dict[str, Any]
     created_at: datetime
     updated_at: datetime
@@ -53,6 +57,10 @@ class AnalysisResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     prompt_versions: dict[str, Any]
+    fit_score: int | None
+    potential_score: int | None
+    scoring_version: str | None
     student_profile: StudentProfile | None
     job_requirements: JobRequirements | None
+    matches: list[RequirementMatch] | None
     llm_usage: LLMUsage

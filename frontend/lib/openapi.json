@@ -88,6 +88,17 @@
             ],
             "title": "Error"
           },
+          "fit_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit Score"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -105,10 +116,46 @@
           "llm_usage": {
             "$ref": "#/components/schemas/LLMUsage"
           },
+          "matches": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RequirementMatch"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matches"
+          },
+          "potential_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potential Score"
+          },
           "prompt_versions": {
             "additionalProperties": true,
             "title": "Prompt Versions",
             "type": "object"
+          },
+          "scoring_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Version"
           },
           "status": {
             "enum": [
@@ -146,8 +193,12 @@
           "created_at",
           "updated_at",
           "prompt_versions",
+          "fit_score",
+          "potential_score",
+          "scoring_version",
           "student_profile",
           "job_requirements",
+          "matches",
           "llm_usage"
         ],
         "title": "AnalysisResponse",
@@ -379,6 +430,57 @@
           "evidence"
         ],
         "title": "Education",
+        "type": "object"
+      },
+      "EvidenceRef": {
+        "description": "One piece of the student's evidence for a requirement.",
+        "properties": {
+          "context": {
+            "title": "Context",
+            "type": "string"
+          },
+          "direct": {
+            "title": "Direct",
+            "type": "boolean"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "skill",
+              "project",
+              "experience",
+              "education",
+              "certification"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "snippet": {
+            "title": "Snippet",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "index",
+          "context",
+          "source",
+          "label",
+          "snippet",
+          "direct"
+        ],
+        "title": "EvidenceRef",
         "type": "object"
       },
       "Experience": {
@@ -782,6 +884,140 @@
           "evidence"
         ],
         "title": "Requirement",
+        "type": "object"
+      },
+      "RequirementMatch": {
+        "description": "Scorer + GapClassifier output for one requirement.",
+        "properties": {
+          "best_strength": {
+            "title": "Best Strength",
+            "type": "number"
+          },
+          "bucket": {
+            "enum": [
+              "strong_in_resume",
+              "weak_in_resume",
+              "missing_from_resume_but_evidenced",
+              "true_gap"
+            ],
+            "title": "Bucket",
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "skill",
+              "domain",
+              "experience",
+              "education",
+              "soft_skill"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "importance": {
+            "enum": [
+              "must",
+              "nice"
+            ],
+            "title": "Importance",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "taxonomy",
+              "implied",
+              "fuzzy",
+              "llm",
+              "none"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "min_years": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Years"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "requirement_index": {
+            "title": "Requirement Index",
+            "type": "integer"
+          },
+          "resume_strength": {
+            "title": "Resume Strength",
+            "type": "number"
+          },
+          "resume_years": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resume Years"
+          },
+          "skill_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill Id"
+          },
+          "total_years": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Years"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "requirement_index",
+          "name",
+          "category",
+          "importance",
+          "min_years",
+          "skill_id",
+          "method",
+          "weight",
+          "resume_strength",
+          "best_strength",
+          "resume_years",
+          "total_years",
+          "bucket",
+          "evidence"
+        ],
+        "title": "RequirementMatch",
         "type": "object"
       },
       "SkillMention": {

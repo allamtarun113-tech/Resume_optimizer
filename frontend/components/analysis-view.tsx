@@ -6,6 +6,8 @@ import { apiFetch } from "@/lib/api";
 import type { AnalysisResponse, AnalysisStatus } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RequirementBreakdown } from "@/components/requirement-breakdown";
+import { ScoreGauge } from "@/components/score-gauge";
 import {
   Card,
   CardContent,
@@ -20,7 +22,7 @@ const STATUS_TEXT: Record<AnalysisStatus, string> = {
   queued: "Queued",
   parsing: "Reading your documents",
   extracting: "Extracting your profile and the job requirements",
-  scoring: "Scoring",
+  scoring: "Scoring your fit",
   advising: "Writing suggestions",
   done: "Done",
   failed: "Failed",
@@ -70,8 +72,8 @@ export function AnalysisView({ id }: { id: string }) {
     <div className="flex w-full flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            Analysis
+          <CardTitle className="flex flex-wrap items-center gap-3">
+            {requirements?.role_title ?? "Analysis"}
             <Badge
               variant={
                 status === "failed"
@@ -94,18 +96,23 @@ export function AnalysisView({ id }: { id: string }) {
           {analysis.error && (
             <p className="text-destructive">{analysis.error}</p>
           )}
-          {usage.calls > 0 && (
-            <p className="text-muted-foreground">
-              AI calls: {usage.calls} ({usage.cached_calls} from cache) · tokens
-              in {usage.input_tokens.toLocaleString()} / out{" "}
-              {usage.output_tokens.toLocaleString()}
-            </p>
+          {analysis.fit_score != null && (
+            <div className="flex flex-wrap items-center justify-center gap-10 py-2">
+              <ScoreGauge score={analysis.fit_score} label="Job fit (resume)" />
+              {analysis.potential_score != null &&
+                analysis.potential_score > analysis.fit_score && (
+                  <ScoreGauge
+                    score={analysis.potential_score}
+                    label="With what you already have"
+                  />
+                )}
+            </div>
           )}
-          {profile && requirements && (
-            <p>
-              Found {profile.skills.length} skill mentions,{" "}
-              {profile.projects.length} projects, {profile.experience.length}{" "}
-              roles, and {requirements.requirements.length} job requirements.
+          {analysis.fit_score != null && (
+            <p className="text-muted-foreground">
+              The score weighs each requirement by importance and by how clearly
+              your resume shows it. The same resume and job always get the same
+              score.
             </p>
           )}
           <div>
@@ -120,47 +127,35 @@ export function AnalysisView({ id }: { id: string }) {
         </CardContent>
       </Card>
 
-      {requirements && (
-        <JsonCard
-          title="Job requirements"
-          description={
-            requirements.role_title ?? "Extracted from the job description"
-          }
-          data={requirements}
-        />
-      )}
-      {profile && (
-        <JsonCard
-          title="Your profile"
-          description="Extracted from your resume and supporting documents"
-          data={profile}
-        />
+      {analysis.matches && <RequirementBreakdown matches={analysis.matches} />}
+
+      {(requirements || profile) && (
+        <details className="rounded-xl border p-4 text-sm">
+          <summary className="cursor-pointer text-muted-foreground">
+            Raw extraction data
+            {usage.calls > 0 &&
+              ` · AI calls: ${usage.calls} (${usage.cached_calls} from cache)`}
+          </summary>
+          <div className="mt-4 flex flex-col gap-4">
+            {requirements && (
+              <JsonCard title="Job requirements" data={requirements} />
+            )}
+            {profile && <JsonCard title="Your profile" data={profile} />}
+          </div>
+        </details>
       )}
     </div>
   );
 }
 
-// Phase 1 debug view: raw extraction output. Later phases replace it with real UI.
-function JsonCard({
-  title,
-  description,
-  data,
-}: {
-  title: string;
-  description: string;
-  data: unknown;
-}) {
+// Debug view of the raw extraction output.
+function JsonCard({ title, data }: { title: string; data: unknown }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <pre className="max-h-[32rem] overflow-auto rounded-md bg-muted p-4 text-xs">
-          {JSON.stringify(data, null, 2)}
-        </pre>
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-2">
+      <h3 className="font-medium">{title}</h3>
+      <pre className="max-h-[32rem] overflow-auto rounded-md bg-muted p-4 text-xs">
+        {JSON.stringify(data, null, 2)}
+      </pre>
+    </div>
   );
 }

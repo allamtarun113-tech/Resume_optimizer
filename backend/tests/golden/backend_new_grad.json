@@ -1,0 +1,86 @@
+{
+  "fit_score": 75,
+  "potential_score": 83,
+  "requirements": [
+    {
+      "name": "Python",
+      "skill_id": "python",
+      "method": "taxonomy",
+      "resume_strength": 0.7,
+      "best_strength": 0.7,
+      "bucket": "weak_in_resume"
+    },
+    {
+      "name": "FastAPI",
+      "skill_id": "fastapi",
+      "method": "taxonomy",
+      "resume_strength": 1.0,
+      "best_strength": 1.0,
+      "bucket": "strong_in_resume"
+    },
+    {
+      "name": "PostgreSQL",
+      "skill_id": "postgresql",
+      "method": "taxonomy",
+      "resume_strength": 1.0,
+      "best_strength": 1.0,
+      "bucket": "strong_in_resume"
+    },
+    {
+      "name": "REST APIs",
+      "skill_id": "rest-api",
+      "method": "llm",
+      "resume_strength": 1.0,
+      "best_strength": 1.0,
+      "bucket": "strong_in_resume"
+    },
+    {
+      "name": "Docker",
+      "skill_id": "docker",
+      "method": "taxonomy",
+      "resume_strength": 0.7,
+      "best_strength": 1.0,
+      "bucket": "weak_in_resume"
+    },
+    {
+      "name": "Kubernetes",
+      "skill_id": "kubernetes",
+      "method": "taxonomy",
+      "resume_strength": 0.0,
+      "best_strength": 0.7,
+      "bucket": "missing_from_resume_but_evidenced"
+    },
+    {
+      "name": "CI/CD",
+      "skill_id": "ci-cd",
+      "method": "implied",
+      "resume_strength": 0.0,
+      "best_strength": 0.4,
+      "bucket": "missing_from_resume_but_evidenced"
+    },
+    {
+      "name": "AWS",
+      "skill_id": "aws",
+      "method": "llm",
+      "resume_strength": 0.7,
+      "best_strength": 0.7,
+      "bucket": "weak_in_resume"
+    },
+    {
+      "name": "Bachelor's in Computer Science",
+      "skill_id": null,
+      "method": "llm",
+      "resume_strength": 1.0,
+      "best_strength": 1.0,
+      "bucket": "strong_in_resume"
+    },
+    {
+      "name": "Communication",
+      "skill_id": "communication",
+      "method": "none",
+      "resume_strength": 0.0,
+      "best_strength": 0.0,
+      "bucket": "true_gap"
+    }
+  ]
+}

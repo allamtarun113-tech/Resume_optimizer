@@ -13,3 +13,5 @@ export type AnalysisResponse = Schemas["AnalysisResponse"];
 export type AnalysisStatus = AnalysisResponse["status"];
 export type StudentProfile = Schemas["StudentProfile"];
 export type JobRequirements = Schemas["JobRequirements"];
+export type RequirementMatch = Schemas["RequirementMatch"];
+export type EvidenceRef = Schemas["EvidenceRef"];

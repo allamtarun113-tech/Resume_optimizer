@@ -129,14 +129,22 @@ export interface components {
             created_at: string;
             /** Error */
             error: string | null;
+            /** Fit Score */
+            fit_score: number | null;
             /** Id */
             id: string;
             job_requirements: components["schemas"]["JobRequirements"] | null;
             llm_usage: components["schemas"]["LLMUsage"];
+            /** Matches */
+            matches: components["schemas"]["RequirementMatch"][] | null;
+            /** Potential Score */
+            potential_score: number | null;
             /** Prompt Versions */
             prompt_versions: {
                 [key: string]: unknown;
             };
+            /** Scoring Version */
+            scoring_version: string | null;
             /**
              * Status
              * @enum {string}
@@ -232,6 +240,29 @@ export interface components {
              * @description "YYYY-MM", "YYYY", "present", or null if not stated.
              */
             start: string | null;
+        };
+        /**
+         * EvidenceRef
+         * @description One piece of the student's evidence for a requirement.
+         */
+        EvidenceRef: {
+            /** Context */
+            context: string;
+            /** Direct */
+            direct: boolean;
+            /** Index */
+            index: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "skill" | "project" | "experience" | "education" | "certification";
+            /** Label */
+            label: string;
+            /** Snippet */
+            snippet: string;
+            /** Source */
+            source: string;
         };
         /** Experience */
         Experience: {
@@ -399,6 +430,52 @@ export interface components {
              * @description One atomic requirement, e.g. 'Python', 'REST APIs', '2+ years backend experience', 'B.Tech in Computer Science'.
              */
             name: string;
+        };
+        /**
+         * RequirementMatch
+         * @description Scorer + GapClassifier output for one requirement.
+         */
+        RequirementMatch: {
+            /** Best Strength */
+            best_strength: number;
+            /**
+             * Bucket
+             * @enum {string}
+             */
+            bucket: "strong_in_resume" | "weak_in_resume" | "missing_from_resume_but_evidenced" | "true_gap";
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "skill" | "domain" | "experience" | "education" | "soft_skill";
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /**
+             * Importance
+             * @enum {string}
+             */
+            importance: "must" | "nice";
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "taxonomy" | "implied" | "fuzzy" | "llm" | "none";
+            /** Min Years */
+            min_years: number | null;
+            /** Name */
+            name: string;
+            /** Requirement Index */
+            requirement_index: number;
+            /** Resume Strength */
+            resume_strength: number;
+            /** Resume Years */
+            resume_years: number | null;
+            /** Skill Id */
+            skill_id: string | null;
+            /** Total Years */
+            total_years: number | null;
+            /** Weight */
+            weight: number;
         };
         /** SkillMention */
         SkillMention: {

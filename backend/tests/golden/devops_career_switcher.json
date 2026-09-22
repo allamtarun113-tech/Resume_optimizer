@@ -1,0 +1,62 @@
+{
+  "fit_score": 16,
+  "potential_score": 21,
+  "requirements": [
+    {
+      "name": "Kubernetes",
+      "skill_id": "kubernetes",
+      "method": "none",
+      "resume_strength": 0.0,
+      "best_strength": 0.0,
+      "bucket": "true_gap"
+    },
+    {
+      "name": "Terraform",
+      "skill_id": "terraform",
+      "method": "none",
+      "resume_strength": 0.0,
+      "best_strength": 0.0,
+      "bucket": "true_gap"
+    },
+    {
+      "name": "AWS",
+      "skill_id": "aws",
+      "method": "none",
+      "resume_strength": 0.0,
+      "best_strength": 0.0,
+      "bucket": "true_gap"
+    },
+    {
+      "name": "Linux",
+      "skill_id": "linux",
+      "method": "taxonomy",
+      "resume_strength": 0.7,
+      "best_strength": 0.7,
+      "bucket": "weak_in_resume"
+    },
+    {
+      "name": "CI/CD",
+      "skill_id": "ci-cd",
+      "method": "none",
+      "resume_strength": 0.0,
+      "best_strength": 0.0,
+      "bucket": "true_gap"
+    },
+    {
+      "name": "Containers",
+      "skill_id": "containers",
+      "method": "implied",
+      "resume_strength": 0.0,
+      "best_strength": 0.4,
+      "bucket": "missing_from_resume_but_evidenced"
+    },
+    {
+      "name": "1+ years DevOps experience",
+      "skill_id": null,
+      "method": "implied",
+      "resume_strength": 0.4,
+      "best_strength": 0.4,
+      "bucket": "weak_in_resume"
+    }
+  ]
+}

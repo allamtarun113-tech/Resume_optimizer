@@ -9,6 +9,7 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.config import Settings, get_settings
 from app.llm.client import LLMClient
 from app.main import create_app
+from tests.builders import judged
 from tests.fakes import FakeModel, InMemoryRepository
 from tests.samples import (
     JOB_DESCRIPTION,
@@ -28,7 +29,11 @@ class Harness:
     def __init__(self, settings: Settings) -> None:
         self.repo = InMemoryRepository()
         self.model = FakeModel(
-            {"StudentProfile": PROFILE_FIXTURE, "JobRequirements": REQUIREMENTS_FIXTURE}
+            {
+                "StudentProfile": PROFILE_FIXTURE,
+                "JobRequirements": REQUIREMENTS_FIXTURE,
+                "EvidenceJudgements": judged(("R4", "direct", ["C1"])),
+            }
         )
         self.user = USER
         self.settings = settings.model_copy(
@@ -148,15 +153,39 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
     assert res.status_code == 200
     body = res.json()
     assert body["status"] == "done", body["error"]
-    assert h.repo.status_history[analysis_id] == ["queued", "parsing", "extracting", "done"]
-    assert body["prompt_versions"] == {"profile_extractor": "1", "jd_analyzer": "1"}
+    assert h.repo.status_history[analysis_id] == [
+        "queued",
+        "parsing",
+        "extracting",
+        "scoring",
+        "done",
+    ]
+    assert body["prompt_versions"] == {
+        "profile_extractor": "1",
+        "jd_analyzer": "2",
+        "evidence_matcher": "1",
+    }
     assert body["job_requirements"]["role_title"] == "Backend Engineer"
 
     skills = {s["name"]: s["source"] for s in body["student_profile"]["skills"]}
     assert skills["Python"] == "resume"
     assert skills["Kubernetes"].startswith("supplementary:")
-    assert body["llm_usage"]["calls"] == 2
+    assert body["llm_usage"]["calls"] == 3
     assert body["llm_usage"]["cached_calls"] == 0
+
+    # Requirements (deduped): Python, FastAPI, Docker (must), AWS (nice), Communication.
+    # Python listed only 0.7; FastAPI shown in a project 0.7; AWS via certification 0.7.
+    # 100 × (2.1 + 2.1 + 0 + 0.7 + 0) / (3 + 3 + 3 + 1 + 1.2) = 43.75 -> 44
+    assert body["fit_score"] == 44
+    assert body["scoring_version"] == "1"
+    buckets = {m["name"]: m["bucket"] for m in body["matches"]}
+    assert buckets == {
+        "Python": "weak_in_resume",
+        "FastAPI": "weak_in_resume",
+        "Docker": "true_gap",
+        "AWS": "weak_in_resume",
+        "Communication": "true_gap",
+    }
 
     # The profile prompt carried the resume, the supporting doc and the extra text.
     profile_prompt = next(
@@ -178,10 +207,12 @@ def test_identical_second_run_is_fully_cached(h: Harness) -> None:
 
     first_body = h.client.get(f"/analyses/{first.json()['id']}").json()
     second_body = h.client.get(f"/analyses/{second.json()['id']}").json()
-    assert len(h.model.requests) == 2  # only the first run reached the model
+    assert len(h.model.requests) == 3  # only the first run reached the model
+    assert second_body["fit_score"] == first_body["fit_score"]
+    assert second_body["matches"] is not None
     assert second_body["llm_usage"] == {
-        "calls": 2,
-        "cached_calls": 2,
+        "calls": 3,
+        "cached_calls": 3,
         "input_tokens": 0,
         "output_tokens": 0,
     }

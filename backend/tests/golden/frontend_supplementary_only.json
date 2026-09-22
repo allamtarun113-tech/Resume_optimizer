@@ -1,0 +1,54 @@
+{
+  "fit_score": 50,
+  "potential_score": 73,
+  "requirements": [
+    {
+      "name": "React",
+      "skill_id": "react",
+      "method": "taxonomy",
+      "resume_strength": 1.0,
+      "best_strength": 1.0,
+      "bucket": "strong_in_resume"
+    },
+    {
+      "name": "TypeScript",
+      "skill_id": "typescript",
+      "method": "taxonomy",
+      "resume_strength": 0.0,
+      "best_strength": 0.7,
+      "bucket": "missing_from_resume_but_evidenced"
+    },
+    {
+      "name": "Jest",
+      "skill_id": "jest",
+      "method": "taxonomy",
+      "resume_strength": 0.0,
+      "best_strength": 0.7,
+      "bucket": "missing_from_resume_but_evidenced"
+    },
+    {
+      "name": "Web accessibility",
+      "skill_id": "web-accessibility",
+      "method": "none",
+      "resume_strength": 0.0,
+      "best_strength": 0.0,
+      "bucket": "true_gap"
+    },
+    {
+      "name": "CSS",
+      "skill_id": "css",
+      "method": "taxonomy",
+      "resume_strength": 1.0,
+      "best_strength": 1.0,
+      "bucket": "strong_in_resume"
+    },
+    {
+      "name": "Next.js",
+      "skill_id": "nextjs",
+      "method": "none",
+      "resume_strength": 0.0,
+      "best_strength": 0.0,
+      "bucket": "true_gap"
+    }
+  ]
+}
