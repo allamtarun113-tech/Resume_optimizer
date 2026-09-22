@@ -38,6 +38,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analyses/{analysis_id}/interview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Interview */
+        get: operations["get_interview_analyses__analysis_id__interview_get"];
+        put?: never;
+        /**
+         * Prepare Interview
+         * @description "Prepare Me for Interview". Idempotent: returns the stored set if there is one.
+         */
+        post: operations["prepare_interview_analyses__analysis_id__interview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -345,6 +366,32 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** InterviewQuestion */
+        InterviewQuestion: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "technical" | "general" | "personal" | "project";
+            /** Dimension */
+            dimension?: string | null;
+            source: components["schemas"]["QuestionSource"];
+            /** Text */
+            text: string;
+            /** Topic */
+            topic?: string | null;
+        };
+        /** InterviewSet */
+        InterviewSet: {
+            /** General */
+            general: components["schemas"]["InterviewQuestion"][];
+            /** Personal */
+            personal: components["schemas"]["InterviewQuestion"][];
+            /** Projects */
+            projects: components["schemas"]["ProjectQuestions"][];
+            /** Technical */
+            technical: components["schemas"]["InterviewQuestion"][];
+        };
         /** JobRequirements */
         JobRequirements: {
             /** Company */
@@ -479,6 +526,31 @@ export interface components {
             summary: string;
             /** Technologies */
             technologies: string[];
+            /** Url */
+            url: string | null;
+        };
+        /** ProjectQuestions */
+        ProjectQuestions: {
+            /** Project */
+            project: string;
+            /** Questions */
+            questions: components["schemas"]["InterviewQuestion"][];
+            /** Technologies */
+            technologies: string[];
+        };
+        /** QuestionSource */
+        QuestionSource: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "github" | "template";
+            /** Label */
+            label: string;
+            /** License */
+            license: string | null;
+            /** Template Id */
+            template_id?: string | null;
             /** Url */
             url: string | null;
         };
@@ -722,6 +794,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnalysisResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_interview_analyses__analysis_id__interview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewSet"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prepare_interview_analyses__analysis_id__interview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewSet"];
                 };
             };
             /** @description Validation Error */

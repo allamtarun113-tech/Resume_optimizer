@@ -3,6 +3,7 @@
 The secret key bypasses RLS, so every user-facing query here filters by user_id.
 """
 
+import json
 import logging
 from dataclasses import asdict
 from datetime import datetime
@@ -13,6 +14,7 @@ import httpx
 from app.llm.client import LLMCallRecord
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
+from app.schemas.interview import BankQuestion
 from app.schemas.learning import LearningResource
 
 logger = logging.getLogger(__name__)
@@ -241,3 +243,76 @@ class SupabaseRepository:
             },
         )
         return [LearningResource.model_validate(r) for r in rows]
+
+    # -- interview prep ----------------------------------------------------------------------
+
+    async def get_cached_embeddings(self, keys: list[str]) -> dict[str, list[float]]:
+        if not keys:
+            return {}
+        rows = await self._select(
+            "embedding_cache", {"select": "key,embedding", "key": f"in.({','.join(keys)})"}
+        )
+        # pgvector values come back as "[0.1,0.2,...]" strings.
+        return {r["key"]: json.loads(r["embedding"]) for r in rows}
+
+    async def put_cached_embeddings(self, model: str, vectors: dict[str, list[float]]) -> None:
+        if not vectors:
+            return
+        await self._request(
+            "POST",
+            "/rest/v1/embedding_cache",
+            params={"on_conflict": "key"},
+            json=[
+                {"key": k, "model": model, "embedding": json.dumps(v)} for k, v in vectors.items()
+            ],
+            headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+        )
+
+    async def match_interview_questions(
+        self,
+        embedding: list[float],
+        *,
+        k: int,
+        category: str | None,
+        topics: list[str] | None,
+        role_tags: list[str] | None,
+    ) -> list[BankQuestion]:
+        response = await self._request(
+            "POST",
+            "/rest/v1/rpc/match_interview_questions",
+            json={
+                "query_embedding": json.dumps(embedding),
+                "match_count": k,
+                "filter_category": category,
+                "filter_topics": topics,
+                "filter_roles": role_tags,
+            },
+        )
+        return [BankQuestion.model_validate({**r, "id": str(r["id"])}) for r in response.json()]
+
+    async def list_bank_questions(self, categories: list[str]) -> list[BankQuestion]:
+        rows = await self._select(
+            "interview_questions",
+            {
+                "select": "id,text,category,topics,role_tags,difficulty,source_repo,"
+                "source_path,source_url,license",
+                "category": f"in.({','.join(categories)})",
+                "order": "text_hash",
+            },
+        )
+        return [BankQuestion.model_validate(r) for r in rows]
+
+    async def get_interview_set(self, analysis_id: str) -> dict[str, Any] | None:
+        rows = await self._select(
+            "interview_sets", {"select": "questions", "analysis_id": f"eq.{analysis_id}"}
+        )
+        return rows[0]["questions"] if rows else None
+
+    async def save_interview_set(self, analysis_id: str, questions: dict[str, Any]) -> None:
+        await self._request(
+            "POST",
+            "/rest/v1/interview_sets",
+            params={"on_conflict": "analysis_id"},
+            json={"analysis_id": analysis_id, "questions": questions},
+            headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+        )

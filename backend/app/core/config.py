@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     openai_timeout_seconds: float = 120
 
     mcp_service_token: str = ""
+    # Offline question ingestion only (GitHub MCP server); never needed in production.
+    github_personal_access_token: str = ""
     # Accepts a JSON list or a comma-separated string.
     allowed_origins: Annotated[list[str], NoDecode] = Field(default=["http://localhost:3000"])
     daily_analysis_limit: int = 10

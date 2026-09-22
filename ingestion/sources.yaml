@@ -1,0 +1,230 @@
+# Allow-listed public GitHub repos of interview questions (CLAUDE.md §6).
+# Only permissive licenses (MIT, Apache-2.0, BSD, CC0-1.0, CC-BY-4.0, Unlicense), checked
+# via the GitHub API when added. Fetched with the GitHub MCP server by
+# `uv run python -m scripts.ingest_questions` (run in backend/). Only question text is
+# stored, with its source and license; answers are never stored.
+#
+# Per source: category (technical | general), role_tags, and per-file default topics
+# (taxonomy skill ids). Section headings and the question text add more topics.
+# Order matters: when two sources have the same question, the earlier one is kept.
+
+sources:
+  # --- general / behavioral ---------------------------------------------------------
+  - repo: yangshun/tech-interview-handbook
+    ref: main
+    license: MIT
+    category: general
+    role_tags: [all]
+    files:
+      - {path: apps/website/contents/behavioral-interview-questions.md, topics: []}
+
+  - repo: DataTalksClub/data-analytics-interviews
+    ref: main
+    license: CC-BY-4.0
+    category: general
+    role_tags: [data]
+    files:
+      - {path: behavioral.md, topics: []}
+
+  # --- frontend -------------------------------------------------------------------------
+  - repo: h5bp/Front-end-Developer-Interview-Questions
+    ref: main
+    license: MIT
+    category: technical
+    role_tags: [frontend]
+    files:
+      - {path: src/questions/general-questions.md, topics: [frontend-development]}
+      - {path: src/questions/html-questions.md, topics: [html]}
+      - {path: src/questions/css-questions.md, topics: [css]}
+      - {path: src/questions/javascript-questions.md, topics: [javascript]}
+      - {path: src/questions/testing-questions.md, topics: [testing]}
+      - {path: src/questions/performance-questions.md, topics: [web-performance]}
+      - {path: src/questions/network-questions.md, topics: [http]}
+      - {path: src/questions/coding-questions.md, topics: [javascript]}
+
+  - repo: Chalarangelo/30-seconds-of-interviews
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [frontend]
+    files:
+      - {path: README.md, topics: [javascript]}
+
+  - repo: sudheerj/reactjs-interview-questions
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [frontend]
+    files:
+      - {path: README.md, topics: [react]}
+
+  # --- general software / backend (FAQGURU covers many stacks) -------------------------
+  - repo: FAQGURU/FAQGURU
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [backend, frontend]
+    files:
+      - {path: topics/en/java.md, topics: [java]}
+      - {path: topics/en/sql.md, topics: [sql]}
+      - {path: topics/en/javascript.md, topics: [javascript]}
+      - {path: topics/en/typeScript.md, topics: [typescript]}
+      - {path: topics/en/nodejs.md, topics: [nodejs]}
+      - {path: topics/en/react.md, topics: [react]}
+      - {path: topics/en/redux.md, topics: [redux]}
+      - {path: topics/en/angular.md, topics: [angular]}
+      - {path: topics/en/vuejs.md, topics: [vue]}
+      - {path: topics/en/html5.md, topics: [html]}
+      - {path: topics/en/css.md, topics: [css]}
+      - {path: topics/en/sass.md, topics: [sass]}
+      - {path: topics/en/bootstrap.md, topics: [bootstrap]}
+      - {path: topics/en/webpack.md, topics: [webpack]}
+      - {path: topics/en/graphql.md, topics: [graphql]}
+      - {path: topics/en/golang.md, topics: [go]}
+      - {path: topics/en/c.md, topics: [c]}
+      - {path: topics/en/mongodb.md, topics: [mongodb]}
+      - {path: topics/en/git.md, topics: [git]}
+      - {path: topics/en/aws.md, topics: [aws]}
+      - {path: topics/en/azure.md, topics: [azure]}
+      - {path: topics/en/design-patterns.md, topics: [design-patterns]}
+      - {path: topics/en/data-structures.md, topics: [data-structures]}
+      - {path: topics/en/agile.md, topics: [agile]}
+
+  - repo: indy256/Full-stack-Developer-Interview-Questions-and-Answers
+    ref: master
+    license: Unlicense
+    category: technical
+    role_tags: [backend, frontend]
+    files:
+      - {path: README.md, topics: []}
+
+  - repo: Gauthamjm007/Backend-NodeJS-Golang-Interview_QA
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [backend]
+    files:
+      - {path: README.md, topics: [backend-development]}
+
+  - repo: in28minutes/spring-interview-guide
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [backend]
+    files:
+      - {path: readme.md, topics: [spring]}
+      - {path: notes.md, topics: [spring]}
+
+  - repo: OpesanyaAdebayo/systems-design
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [backend]
+    files:
+      - {path: README.md, topics: [system-design]}
+
+  # --- DevOps / cloud / SRE -------------------------------------------------------------
+  - repo: trimstray/test-your-sysadmin-skills
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [devops]
+    files:
+      - {path: README.md, topics: [linux]}
+
+  - repo: chassing/linux-sysadmin-interview-questions
+    ref: master
+    license: Unlicense
+    category: technical
+    role_tags: [devops]
+    files:
+      - {path: README.md, topics: [linux]}
+
+  - repo: moabukar/tech-vault
+    ref: main
+    license: Apache-2.0
+    category: technical
+    role_tags: [devops]
+    files:
+      - {path: README.md, topics: [devops]}
+
+  - repo: DNXLabs/DevOps-Interview-Questions
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [devops]
+    files:
+      - {path: README.md, topics: [devops]}
+
+  - repo: michaelkkehoe/sre-interview
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [devops]
+    files:
+      - {path: linux-systems.md, topics: [linux]}
+      - {path: networking.md, topics: [computer-networks]}
+      - {path: observability.md, topics: [monitoring]}
+
+  # --- data / ML / AI ---------------------------------------------------------------------
+  - repo: alexeygrigorev/data-science-interviews
+    ref: master
+    license: CC-BY-4.0
+    category: technical
+    role_tags: [data, ml]
+    difficulty_markers: true
+    files:
+      - {path: theory.md, topics: [machine-learning]}
+      - {path: technical.md, topics: [data-science]}
+
+  - repo: DataTalksClub/data-analytics-interviews
+    ref: main
+    license: CC-BY-4.0
+    category: technical
+    role_tags: [data]
+    files:
+      - {path: conceptual.md, topics: [data-analysis]}
+
+  - repo: iamtodor/data-science-interview-questions-and-answers
+    ref: master
+    license: MIT
+    category: technical
+    role_tags: [data, ml]
+    markers: [heading]  # list items are answer bullets
+    files:
+      - {path: README.md, topics: [data-science]}
+
+  - repo: amitshekhariitbhu/machine-learning-interview-questions
+    ref: main
+    license: Apache-2.0
+    category: technical
+    role_tags: [ml]
+    files:
+      - {path: README.md, topics: [machine-learning]}
+
+  - repo: amitshekhariitbhu/ai-engineering-interview-questions
+    ref: main
+    license: Apache-2.0
+    category: technical
+    role_tags: [ml]
+    files:
+      - {path: README.md, topics: [llms]}
+
+  - repo: KalyanKS-NLP/LLM-Interview-Questions-and-Answers-Hub
+    ref: main
+    license: Apache-2.0
+    category: technical
+    role_tags: [ml]
+    files:
+      - {path: README.md, topics: [llms]}
+
+  - repo: SepidehHosseinian/MLOPs-Interview-Questions
+    ref: main
+    license: CC0-1.0
+    category: technical
+    role_tags: [ml, devops]
+    files:
+      - {path: General MLOps/README.md, topics: [mlops]}
+      - {path: Model Deployment/README.md, topics: [mlops]}
+      - {path: Model Testing and Validation/README.md, topics: [mlops, model-evaluation]}
+      - {path: Model Monitoring/README.md, topics: [mlops, monitoring]}

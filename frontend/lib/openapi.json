@@ -709,6 +709,96 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "InterviewQuestion": {
+        "properties": {
+          "category": {
+            "enum": [
+              "technical",
+              "general",
+              "personal",
+              "project"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "dimension": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dimension"
+          },
+          "source": {
+            "$ref": "#/components/schemas/QuestionSource"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
+          }
+        },
+        "required": [
+          "text",
+          "category",
+          "source"
+        ],
+        "title": "InterviewQuestion",
+        "type": "object"
+      },
+      "InterviewSet": {
+        "properties": {
+          "general": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewQuestion"
+            },
+            "title": "General",
+            "type": "array"
+          },
+          "personal": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewQuestion"
+            },
+            "title": "Personal",
+            "type": "array"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectQuestions"
+            },
+            "title": "Projects",
+            "type": "array"
+          },
+          "technical": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewQuestion"
+            },
+            "title": "Technical",
+            "type": "array"
+          }
+        },
+        "required": [
+          "personal",
+          "projects",
+          "technical",
+          "general"
+        ],
+        "title": "InterviewSet",
+        "type": "object"
+      },
       "JobRequirements": {
         "properties": {
           "company": {
@@ -1099,6 +1189,92 @@
           "evidence"
         ],
         "title": "Project",
+        "type": "object"
+      },
+      "ProjectQuestions": {
+        "properties": {
+          "project": {
+            "title": "Project",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewQuestion"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "technologies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Technologies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project",
+          "technologies",
+          "questions"
+        ],
+        "title": "ProjectQuestions",
+        "type": "object"
+      },
+      "QuestionSource": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "github",
+              "template"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License"
+          },
+          "template_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Id"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "url",
+          "license"
+        ],
+        "title": "QuestionSource",
         "type": "object"
       },
       "RejectedSuggestion": {
@@ -1675,6 +1851,101 @@
         "summary": "Get Analysis",
         "tags": [
           "analyses"
+        ]
+      }
+    },
+    "/analyses/{analysis_id}/interview": {
+      "get": {
+        "operationId": "get_interview_analyses__analysis_id__interview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Interview",
+        "tags": [
+          "interview"
+        ]
+      },
+      "post": {
+        "description": "\"Prepare Me for Interview\". Idempotent: returns the stored set if there is one.",
+        "operationId": "prepare_interview_analyses__analysis_id__interview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Prepare Interview",
+        "tags": [
+          "interview"
         ]
       }
     },

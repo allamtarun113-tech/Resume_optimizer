@@ -33,6 +33,11 @@ Checks: `uv run ruff check . && uv run mypy app tests && uv run pytest` (backend
 Learning resources live in `ingestion/resources_seed.yaml`. After editing it, sync the
 database with `uv run python -m scripts.seed_resources` (in `backend/`).
 
+The interview question bank is built offline from `ingestion/sources.yaml`:
+`uv run python -m scripts.ingest_questions` (in `backend/`). It needs
+`GITHUB_PERSONAL_ACCESS_TOKEN` (fine-grained, public repositories read-only) and
+`OPENAI_API_KEY` in `backend/.env`.
+
 After changing a backend API schema, regenerate the frontend types:
 `uv run python -m scripts.export_openapi` (in `backend/`), then `pnpm gen:api` (in `frontend/`).
 CI fails if they are out of date.

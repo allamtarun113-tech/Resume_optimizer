@@ -6,6 +6,8 @@ import {
   strengthLabel,
   whereToAdd,
   formatHours,
+  groupByTopic,
+  sourceText,
 } from "./results";
 import type { RequirementMatch } from "./types";
 
@@ -101,5 +103,34 @@ describe("formatHours", () => {
     expect(formatHours(0.5)).toBe("under 1 hour");
     expect(formatHours(1)).toBe("about 1 hour");
     expect(formatHours(14.4)).toBe("about 14 hours");
+  });
+});
+
+describe("interview helpers", () => {
+  const github = {
+    kind: "github",
+    label: "owner/repo",
+    url: "https://github.com/owner/repo",
+    license: "MIT",
+  };
+  it("groups technical questions by topic in first-seen order", () => {
+    const groups = groupByTopic([
+      { topic: "Docker", source: github },
+      { topic: "SQL", source: github },
+      { topic: "Docker", source: github },
+      { topic: null, source: github },
+    ]);
+    expect(groups.map((g) => [g.topic, g.questions.length])).toEqual([
+      ["Docker", 2],
+      ["SQL", 1],
+      ["Other", 1],
+    ]);
+  });
+
+  it("describes sources", () => {
+    expect(sourceText(github)).toBe("owner/repo (MIT)");
+    expect(sourceText({ kind: "template", label: "bank" })).toBe(
+      "Project deep-dive template",
+    );
   });
 });

@@ -10,6 +10,7 @@ import { RequirementBreakdown } from "@/components/requirement-breakdown";
 import { ScoreGauge } from "@/components/score-gauge";
 import { GapList, SuggestionList } from "@/components/suggestion-list";
 import { LearningPathView } from "@/components/learning-path";
+import { InterviewPrep } from "@/components/interview-prep";
 import {
   Card,
   CardContent,
@@ -141,6 +142,7 @@ export function AnalysisView({ id }: { id: string }) {
       {analysis.learning_path && (
         <LearningPathView path={analysis.learning_path} />
       )}
+      {status === "done" && <InterviewPrep analysisId={analysis.id} />}
 
       {analysis.matches && (
         <section className="flex flex-col gap-4">

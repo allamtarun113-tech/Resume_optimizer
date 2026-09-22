@@ -6,3 +6,5 @@
 .idea/
 supabase/.temp/
 supabase/.branches/
+# Ingestion caches (raw files, embeddings)
+ingestion/.cache/

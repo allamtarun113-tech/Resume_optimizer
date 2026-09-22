@@ -1,0 +1,68 @@
+# Project deep-dive template bank (hand-curated, CLAUDE.md §6).
+# Placeholders: {project}, {tech}, {tech2}, {metric}. facets: "any" or project facets
+# derived from the project's technologies (ml, data, backend, frontend, database,
+# deployment, mobile, testing, security).
+
+templates:
+  # --- overview / role
+  - {id: T1, dimension: overview, facets: [any], text: "Walk me through {project} end to end: what problem did it solve and who used it?"}
+  - {id: T2, dimension: overview, facets: [any], text: "What was your personal contribution to {project}, and what did others build?"}
+  - {id: T3, dimension: overview, facets: [any], text: "If you had to explain {project} to a non-technical person in one minute, what would you say?"}
+  # --- architecture
+  - {id: T4, dimension: architecture, facets: [any], text: "Draw the architecture of {project}. How do the main components talk to each other?"}
+  - {id: T5, dimension: architecture, facets: [any], text: "Why did you choose {tech} for {project}, and which alternatives did you consider?"}
+  - {id: T6, dimension: architecture, facets: [any], text: "How do {tech} and {tech2} fit together in {project}? What does each one own?"}
+  - {id: T7, dimension: architecture, facets: [backend], text: "How did you design the API of {project}? Walk me through one endpoint from request to response."}
+  - {id: T8, dimension: architecture, facets: [frontend], text: "How is state managed in the {project} frontend, and why that approach?"}
+  - {id: T9, dimension: architecture, facets: [ml], text: "Describe the model architecture you used in {project}. Why that model and not a simpler baseline?"}
+  - {id: T10, dimension: architecture, facets: [mobile], text: "How is the {project} app structured, and how does it handle offline use or slow networks?"}
+  # --- data
+  - {id: T11, dimension: data, facets: [database], text: "What does the data model of {project} look like? Which tables or collections matter most and why?"}
+  - {id: T12, dimension: data, facets: [database], text: "Which queries in {project} were the slowest, and how did you make them faster (indexes, caching, denormalization)?"}
+  - {id: T13, dimension: data, facets: [ml, data], text: "Where did the data for {project} come from, and how did you clean and label it?"}
+  - {id: T14, dimension: data, facets: [ml], text: "How did you split training, validation and test data in {project}, and how did you avoid leakage?"}
+  - {id: T15, dimension: data, facets: [data], text: "How does data flow through {project}, from source to the final table or dashboard?"}
+  - {id: T16, dimension: data, facets: [any], text: "What inputs can break {project}, and how do you validate data coming into it?"}
+  # --- trade-offs
+  - {id: T17, dimension: trade-offs, facets: [any], text: "What was the biggest trade-off you made in {project}, and what did it cost you?"}
+  - {id: T18, dimension: trade-offs, facets: [any], text: "What would have happened if you had built {project} without {tech}?"}
+  - {id: T19, dimension: trade-offs, facets: [ml], text: "How did you balance accuracy against latency or cost in {project}?"}
+  - {id: T20, dimension: trade-offs, facets: [backend, database], text: "Did {project} favour consistency or availability anywhere? Give a concrete example."}
+  # --- failures / debugging
+  - {id: T21, dimension: failures, facets: [any], text: "What was the hardest bug you hit in {project}? How did you find and fix it?"}
+  - {id: T22, dimension: failures, facets: [any], text: "What would break first in {project} if one of its dependencies went down, and how would users notice?"}
+  - {id: T23, dimension: failures, facets: [ml], text: "Where does the model in {project} fail? Show me a kind of input it gets wrong and explain why."}
+  - {id: T24, dimension: failures, facets: [deployment], text: "Tell me about a failed deployment or outage of {project}. What did you change afterwards?"}
+  # --- metrics / impact
+  - {id: T25, dimension: metrics, facets: [any], text: "You mention {metric} for {project}. How exactly did you measure it?"}
+  - {id: T26, dimension: metrics, facets: [any], text: "How did you know {project} was working well? Which numbers did you watch?"}
+  - {id: T27, dimension: metrics, facets: [ml], text: "Which evaluation metric did you optimise in {project}, and why is it the right one for the problem?"}
+  - {id: T28, dimension: metrics, facets: [frontend, backend], text: "What were the response times in {project}, and what was the slowest part of a request?"}
+  # --- testing
+  - {id: T29, dimension: testing, facets: [any], text: "How did you test {project}? What was not tested, and why?"}
+  - {id: T30, dimension: testing, facets: [backend], text: "How would you write an integration test for the most important flow in {project}?"}
+  - {id: T31, dimension: testing, facets: [ml], text: "How would you check that a new version of the model in {project} is better before shipping it?"}
+  - {id: T32, dimension: testing, facets: [frontend], text: "How did you test the user interface of {project} across browsers and screen sizes?"}
+  # --- deployment / operations
+  - {id: T33, dimension: deployment, facets: [any], text: "How is {project} built and deployed? Walk me through what happens after you push a change."}
+  - {id: T34, dimension: deployment, facets: [deployment], text: "How is {tech} configured for {project}, and how do you roll back a bad release?"}
+  - {id: T35, dimension: deployment, facets: [ml], text: "How is the model in {project} served, and how would you monitor it for drift?"}
+  - {id: T36, dimension: deployment, facets: [any], text: "How do you handle configuration and secrets in {project}?"}
+  # --- scale / performance
+  - {id: T37, dimension: scale, facets: [any], text: "What would break first if {project} had 100 times more users or data? How would you fix it?"}
+  - {id: T38, dimension: scale, facets: [backend, database], text: "Where would you add caching in {project}, and how would you keep the cache correct?"}
+  - {id: T39, dimension: scale, facets: [ml, data], text: "How long does training or processing take in {project}, and how would you speed it up?"}
+  - {id: T40, dimension: scale, facets: [frontend], text: "How would you make {project} load faster on a slow phone connection?"}
+  # --- security
+  - {id: T41, dimension: security, facets: [backend, frontend], text: "How are users authenticated in {project}, and how do you stop one user from seeing another user's data?"}
+  - {id: T42, dimension: security, facets: [any], text: "What is the most likely way someone could abuse {project}, and how would you prevent it?"}
+  # --- collaboration / process
+  - {id: T43, dimension: collaboration, facets: [any], text: "How did you split work and review code on {project}? Describe one disagreement and how it was resolved."}
+  - {id: T44, dimension: collaboration, facets: [any], text: "How did you plan {project}? What changed from the first plan, and why?"}
+  # --- reflection
+  - {id: T45, dimension: reflection, facets: [any], text: "If you started {project} again today, what would you do differently?"}
+  - {id: T46, dimension: reflection, facets: [any], text: "What did {project} teach you about {tech} that you did not know before?"}
+  - {id: T47, dimension: reflection, facets: [any], text: "What is the next feature you would add to {project}, and how would you build it?"}
+  - {id: T48, dimension: reflection, facets: [ml], text: "If you had ten times more data for {project}, what would you try?"}
+  - {id: T49, dimension: reflection, facets: [data], text: "What surprised you most in the data behind {project}?"}
+  - {id: T50, dimension: reflection, facets: [any], text: "Which part of {project} are you least proud of, and why?"}

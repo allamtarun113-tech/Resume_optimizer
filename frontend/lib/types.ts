@@ -19,3 +19,5 @@ export type Suggestion = Schemas["Suggestion"];
 export type Gap = Schemas["Gap"];
 export type LearningPath = Schemas["LearningPath"];
 export type LearningStep = Schemas["LearningStep"];
+export type InterviewSet = Schemas["InterviewSet"];
+export type InterviewQuestion = Schemas["InterviewQuestion"];

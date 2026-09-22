@@ -1,11 +1,12 @@
-"""Our MCP server (FastMCP): curated learning resources and the skill prerequisite graph.
+"""Our MCP server (FastMCP): learning resources, the skill prerequisite graph, and the
+interview question bank (vector search over the ingested corpus + project templates).
 
 Agents call it in-process through `McpTools` (an MCP client over the in-memory transport),
 so data sources stay swappable. The same server is mounted at /mcp over HTTP, behind a
-service token, for debugging from Claude Desktop or other MCP clients. Phase 5 adds the
-interview-question tools here.
+service token, for debugging from Claude Desktop or other MCP clients.
 """
 
+import hashlib
 import hmac
 import json
 from collections.abc import AsyncIterator, Callable
@@ -16,6 +17,9 @@ from fastmcp import Client, FastMCP
 from pydantic import BaseModel
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from app.rag.embeddings import Embedder
+from app.rag.templates import load_templates, matching_templates
+from app.schemas.interview import BankQuestion, ProjectTemplate
 from app.schemas.learning import LearningResource
 from app.skills.taxonomy import Taxonomy
 
@@ -23,8 +27,28 @@ MAX_RESOURCES_PER_SKILL = 3
 _LEVEL_ORDER = {"beginner": 0, "intermediate": 1, "advanced": 2}
 
 
-class ResourceStore(Protocol):
+class ToolStore(Protocol):
     async def get_learning_resources(self, skill_ids: list[str]) -> list[LearningResource]: ...
+
+    async def match_interview_questions(
+        self,
+        embedding: list[float],
+        *,
+        k: int,
+        category: str | None,
+        topics: list[str] | None,
+        role_tags: list[str] | None,
+    ) -> list[BankQuestion]: ...
+
+    async def list_bank_questions(self, categories: list[str]) -> list[BankQuestion]: ...
+
+
+class QuestionsResult(BaseModel):
+    questions: list[BankQuestion]
+
+
+class TemplatesResult(BaseModel):
+    templates: list[ProjectTemplate]
 
 
 class ResourcesResult(BaseModel):
@@ -57,12 +81,22 @@ def rank_resources(resources: list[LearningResource]) -> list[LearningResource]:
     )
 
 
-def create_mcp_server(store: Callable[[], ResourceStore], taxonomy: Taxonomy) -> FastMCP:
-    """`store` is called per tool call, so the server can outlive any one connection."""
+def seeded_order(items: list[BankQuestion], seed: str) -> list[BankQuestion]:
+    """Deterministic shuffle: the same seed always gives the same order."""
+    return sorted(items, key=lambda q: hashlib.sha256(f"{seed}:{q.id}".encode()).hexdigest())
+
+
+def create_mcp_server(
+    store: Callable[[], ToolStore],
+    taxonomy: Taxonomy,
+    embedder: Callable[[], Embedder] | None = None,
+) -> FastMCP:
+    """`store`/`embedder` are called per tool call, so the server can outlive any connection."""
     mcp = FastMCP(
         "resume-optimizer",
-        instructions="Curated learning resources and the skill prerequisite graph used by "
-        "Resume Optimizer. Skill ids come from its skills taxonomy (e.g. 'docker').",
+        instructions="Curated learning resources, the skill prerequisite graph and an "
+        "interview question bank used by Resume Optimizer. Skill ids come from its skills "
+        "taxonomy (e.g. 'docker'). Every question carries its source repo and license.",
     )
 
     @mcp.tool
@@ -93,6 +127,46 @@ def create_mcp_server(store: Callable[[], ResourceStore], taxonomy: Taxonomy) ->
             ],
         )
 
+    @mcp.tool
+    async def search_interview_questions(
+        query: str,
+        category: str | None = None,
+        topics: list[str] | None = None,
+        role_tags: list[str] | None = None,
+        k: int = 10,
+    ) -> QuestionsResult:
+        """Semantic search over the interview question bank with optional filters.
+        category: technical | general | personal. topics: taxonomy skill ids."""
+        if embedder is None:
+            raise ValueError("Question search is not configured on this server")
+        [vector] = await embedder().embed([query])
+        hits = await store().match_interview_questions(
+            vector,
+            k=max(1, min(k, 50)),
+            category=category,
+            topics=topics or None,
+            role_tags=role_tags or None,
+        )
+        return QuestionsResult(questions=hits)
+
+    @mcp.tool
+    def get_project_question_templates(project_facets: list[str]) -> TemplatesResult:
+        """Deep-dive question templates for a project with these facets (e.g. ["ml",
+        "backend"]). Placeholders: {project}, {tech}, {tech2}, {metric}."""
+        return TemplatesResult(templates=matching_templates(project_facets, load_templates()))
+
+    @mcp.tool
+    async def get_general_questions(k: int, seed: str) -> QuestionsResult:
+        """Behavioral (general) and background (personal) questions, k of each at most,
+        sampled deterministically by seed."""
+        k = max(1, min(k, 50))
+        bank = await store().list_bank_questions(["general", "personal"])
+        chosen: list[BankQuestion] = []
+        for category in ("general", "personal"):
+            items = [q for q in bank if q.category == category]
+            chosen += seeded_order(items, seed)[:k]
+        return QuestionsResult(questions=chosen)
+
     return mcp
 
 
@@ -114,6 +188,28 @@ class McpTools:
     async def prerequisites(self, skill_id: str) -> PrerequisitesResult:
         data = await self._call("get_skill_prerequisites", {"skill_id": skill_id})
         return PrerequisitesResult.model_validate(data)
+
+    async def search_questions(
+        self,
+        query: str,
+        *,
+        category: str | None = None,
+        topics: list[str] | None = None,
+        k: int = 10,
+    ) -> list[BankQuestion]:
+        data = await self._call(
+            "search_interview_questions",
+            {"query": query, "category": category, "topics": topics, "k": k},
+        )
+        return QuestionsResult.model_validate(data).questions
+
+    async def project_templates(self, facets: list[str]) -> list[ProjectTemplate]:
+        data = await self._call("get_project_question_templates", {"project_facets": facets})
+        return TemplatesResult.model_validate(data).templates
+
+    async def general_questions(self, k: int, seed: str) -> list[BankQuestion]:
+        data = await self._call("get_general_questions", {"k": k, "seed": seed})
+        return QuestionsResult.model_validate(data).questions
 
 
 @asynccontextmanager

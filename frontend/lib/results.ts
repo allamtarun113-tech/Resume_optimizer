@@ -93,3 +93,30 @@ export function formatHours(hours: number | null | undefined): string | null {
   const rounded = Math.round(hours);
   return `about ${rounded} hour${rounded === 1 ? "" : "s"}`;
 }
+
+type SourcedQuestion = {
+  topic?: string | null;
+  source: {
+    kind: string;
+    label: string;
+    url?: string | null;
+    license?: string | null;
+  };
+};
+
+// Technical questions grouped by the job requirement they were retrieved for.
+export function groupByTopic<T extends SourcedQuestion>(
+  questions: T[],
+): { topic: string; questions: T[] }[] {
+  const groups = new Map<string, T[]>();
+  for (const q of questions) {
+    const key = q.topic ?? "Other";
+    groups.set(key, [...(groups.get(key) ?? []), q]);
+  }
+  return [...groups].map(([topic, qs]) => ({ topic, questions: qs }));
+}
+
+export function sourceText(source: SourcedQuestion["source"]): string {
+  if (source.kind === "template") return "Project deep-dive template";
+  return source.license ? `${source.label} (${source.license})` : source.label;
+}

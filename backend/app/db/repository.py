@@ -6,6 +6,7 @@ from typing import Any, Protocol
 from app.llm.client import LLMStore
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
+from app.schemas.interview import BankQuestion
 from app.schemas.learning import LearningResource
 
 
@@ -47,3 +48,25 @@ class Repository(LLMStore, Protocol):
     async def get_llm_usage(self, analysis_id: str) -> LLMUsage: ...
 
     async def get_learning_resources(self, skill_ids: list[str]) -> list[LearningResource]: ...
+
+    # -- interview prep (Phase 5) --------------------------------------------------------
+
+    async def get_cached_embeddings(self, keys: list[str]) -> dict[str, list[float]]: ...
+
+    async def put_cached_embeddings(self, model: str, vectors: dict[str, list[float]]) -> None: ...
+
+    async def match_interview_questions(
+        self,
+        embedding: list[float],
+        *,
+        k: int,
+        category: str | None,
+        topics: list[str] | None,
+        role_tags: list[str] | None,
+    ) -> list[BankQuestion]: ...
+
+    async def list_bank_questions(self, categories: list[str]) -> list[BankQuestion]: ...
+
+    async def get_interview_set(self, analysis_id: str) -> dict[str, Any] | None: ...
+
+    async def save_interview_set(self, analysis_id: str, questions: dict[str, Any]) -> None: ...

@@ -6,6 +6,7 @@ from app.core.config import Settings, get_settings
 from app.db.repository import Repository
 from app.db.supabase import DatabaseError, SupabaseRepository
 from app.llm.client import LLMClient, OpenAIModel
+from app.rag.embeddings import CachedEmbedder, Embedder, OpenAIEmbedder
 
 
 def get_repository(
@@ -31,3 +32,18 @@ def get_llm_client(
     if model is None:
         model = request.app.state.openai_model = OpenAIModel(settings)
     return LLMClient(settings, repo, model)
+
+
+def get_embedder(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+    repo: Annotated[Repository, Depends(get_repository)],
+) -> Embedder:
+    if not settings.openai_api_key:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "AI model not configured")
+    inner = getattr(request.app.state, "openai_embedder", None)
+    if inner is None:
+        inner = request.app.state.openai_embedder = OpenAIEmbedder(
+            settings.openai_api_key, settings.openai_embedding_model
+        )
+    return CachedEmbedder(inner, repo)

@@ -226,7 +226,7 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-**Status:** Phases 0–4 ✅ done (2026-09-23). Next up: Phase 5.
+**Status:** Phases 0–4 ✅ done (2026-09-23). Phase 5 code complete (2026-09-23); the question corpus still has to be ingested (needs GITHUB_PERSONAL_ACCESS_TOKEN + OPENAI_API_KEY in backend/.env), then a live check. Next up: Phase 6.
 Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
@@ -287,6 +287,12 @@ Implementation notes (decided during Phase 4):
 - **Exit:** every resource URL in the output exists in the DB, and prerequisite order respects the taxonomy graph.
 
 ### Phase 5: Interview preparation (RAG + MCP)
+Implementation notes (decided during Phase 5):
+- Ingestion code lives in `backend/app/ingestion/` and one command runs every stage: `uv run python -m scripts.ingest_questions` (in backend/; `--dry-run` for fetch + parse only). The config stays in `ingestion/sources.yaml`, which lists 22 permissively licensed repos (MIT/Apache-2.0/CC0/CC-BY-4.0/Unlicense, checked via the GitHub API) with exact file paths and per-file topics. Files are fetched through GitHub's remote MCP server (`https://api.githubcopilot.com/mcp/readonly`, `get_file_contents`) and cached in `ingestion/.cache/` (gitignored). The parser handles headings, lists, tables, bold lines, links and `<summary>`; each source can restrict `markers`. Dedupe is by normalized-text hash, then embedding cosine > 0.95 (numpy, earlier sources win). Answers are never stored.
+- Tables: `interview_questions` (pgvector 1536, HNSW cosine index), RPC `match_interview_questions` (service role only), `embedding_cache` (query embeddings), `interview_sets` (one per analysis).
+- The project deep-dive bank is `backend/app/rag/data/project_templates.yaml`: 50 templates, 12 dimensions, with facets derived from the project's technologies. Placeholders are `{project}`, `{tech}`, `{tech2}` and `{metric}`.
+- MCP tools added: `search_interview_questions`, `get_project_question_templates`, `get_general_questions` (seeded by analysis id).
+- InterviewPrep (`POST /analyses/{id}/interview`, idempotent; `GET` returns the stored set) retrieves technical questions per top requirement (topic filter, then an unfiltered semantic fallback with similarity ≥ 0.35). One `large`-tier LLM call selects question ids and fills templates. Python drops unknown ids, rejects fills that aren't faithful to the template or don't mention the project/its tech, and pads each group to its minimum (technical 8, general 5, personal 3, per project 8 across dimensions). If the LLM fails, the whole set is selected deterministically.
 - `sources.yaml` + ingestion scripts using the GitHub MCP server. Parse, dedupe, embed, load into pgvector.
 - Project deep-dive template bank.
 - MCP tools: `search_interview_questions`, `get_project_question_templates`, `get_general_questions`.
@@ -350,8 +356,10 @@ supabase start                  # local stack (optional)
 supabase migration new <name>
 supabase db push
 
-# ingestion (Phase 5)
-cd ingestion && uv run python fetch_question_repos.py && uv run python parse_questions.py && uv run python embed_and_load.py
+# ingestion (Phase 5): fetch via GitHub MCP, parse, dedupe, embed, load
+cd backend && uv run python -m scripts.ingest_questions
+# learning resources (Phase 4)
+cd backend && uv run python -m scripts.seed_resources
 ```
 
 ---

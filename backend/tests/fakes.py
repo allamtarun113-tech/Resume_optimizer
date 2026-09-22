@@ -8,8 +8,10 @@ from typing import Any
 from pydantic import BaseModel
 
 from app.llm.client import Completion, LLMCallRecord
+from app.rag.embeddings import cosine
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
+from app.schemas.interview import BankQuestion
 from app.schemas.learning import LearningResource
 
 
@@ -23,6 +25,9 @@ class InMemoryRepository:
         self.calls: list[LLMCallRecord] = []
         self.status_history: dict[str, list[str]] = {}
         self.resources: list[LearningResource] = []
+        self.embedding_cache: dict[str, list[float]] = {}
+        self.bank: list[tuple[BankQuestion, list[float]]] = []  # (question, embedding)
+        self.interview_sets: dict[str, dict[str, Any]] = {}
 
     async def upload_file(self, path: str, data: bytes, content_type: str) -> None:
         self.files[path] = data
@@ -123,6 +128,40 @@ class InMemoryRepository:
 
     async def get_learning_resources(self, skill_ids: list[str]) -> list[LearningResource]:
         return [r for r in self.resources if r.skill_id in skill_ids]
+
+    async def get_cached_embeddings(self, keys: list[str]) -> dict[str, list[float]]:
+        return {k: self.embedding_cache[k] for k in keys if k in self.embedding_cache}
+
+    async def put_cached_embeddings(self, model: str, vectors: dict[str, list[float]]) -> None:
+        self.embedding_cache.update(vectors)
+
+    async def match_interview_questions(
+        self,
+        embedding: list[float],
+        *,
+        k: int,
+        category: str | None,
+        topics: list[str] | None,
+        role_tags: list[str] | None,
+    ) -> list[BankQuestion]:
+        hits = [
+            q.model_copy(update={"similarity": cosine(embedding, vector)})
+            for q, vector in self.bank
+            if (category is None or q.category == category)
+            and (topics is None or set(topics) & set(q.topics))
+            and (role_tags is None or set(role_tags) & set(q.role_tags))
+        ]
+        hits.sort(key=lambda q: -(q.similarity or 0))
+        return hits[:k]
+
+    async def list_bank_questions(self, categories: list[str]) -> list[BankQuestion]:
+        return [q for q, _ in self.bank if q.category in categories]
+
+    async def get_interview_set(self, analysis_id: str) -> dict[str, Any] | None:
+        return self.interview_sets.get(analysis_id)
+
+    async def save_interview_set(self, analysis_id: str, questions: dict[str, Any]) -> None:
+        self.interview_sets.setdefault(analysis_id, questions)
 
 
 Responder = Callable[[str, str], BaseModel]

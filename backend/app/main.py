@@ -6,10 +6,11 @@ import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analyses, documents, health
+from app.api import analyses, documents, health, interview
 from app.core.config import Settings, get_settings
 from app.db.supabase import SupabaseRepository
 from app.mcp_server.server import BearerTokenGuard, create_mcp_server
+from app.rag.embeddings import CachedEmbedder, OpenAIEmbedder
 from app.skills.taxonomy import load_taxonomy
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -23,9 +24,19 @@ def _mcp_http_app(app: FastAPI, settings: Settings) -> BearerTokenGuard:
             app.state.http, settings.supabase_url, settings.supabase_service_role_key
         )
 
-    mcp_app = create_mcp_server(store, load_taxonomy()).http_app(
-        path="/", stateless_http=True, json_response=True
+    inner = (
+        OpenAIEmbedder(settings.openai_api_key, settings.openai_embedding_model)
+        if settings.openai_api_key
+        else None
     )
+
+    def embedder() -> CachedEmbedder:
+        assert inner is not None
+        return CachedEmbedder(inner, store())
+
+    mcp_app = create_mcp_server(
+        store, load_taxonomy(), embedder if inner is not None else None
+    ).http_app(path="/", stateless_http=True, json_response=True)
     app.state.mcp_lifespan = mcp_app.lifespan
     return BearerTokenGuard(mcp_app, settings.mcp_service_token)
 
@@ -55,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(documents.router)
     app.include_router(analyses.router)
+    app.include_router(interview.router)
     # Only exposed when a service token is configured.
     if settings.mcp_service_token:
         app.mount("/mcp", _mcp_http_app(app, settings))
