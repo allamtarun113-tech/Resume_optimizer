@@ -25,6 +25,8 @@ class PipelineError(RuntimeError):
 def user_message(exc: Exception) -> str:
     if isinstance(exc, PipelineError | LLMError | ExtractionError):
         return str(exc)
+    if isinstance(exc, openai.RateLimitError) and exc.code == "insufficient_quota":
+        return "The server's OpenAI account has run out of credit. Please try again later."
     if isinstance(exc, openai.RateLimitError):
         return "The AI service is busy right now. Please try again in a minute."
     if isinstance(exc, openai.APIError):

@@ -237,3 +237,20 @@ def test_daily_analysis_limit(h: Harness) -> None:
 
 def test_unknown_analysis_is_404(h: Harness) -> None:
     assert h.client.get("/analyses/33333333-3333-4333-8333-333333333333").status_code == 404
+
+
+def test_openai_quota_error_gets_a_specific_message() -> None:
+    import httpx2
+    import openai
+
+    from app.orchestrator.pipeline import user_message
+
+    request = httpx2.Request("POST", "https://api.openai.com/v1/responses")
+
+    def rate_limit(code: str) -> openai.RateLimitError:
+        return openai.RateLimitError(
+            "429", response=httpx2.Response(429, request=request), body={"code": code}
+        )
+
+    assert "run out of credit" in user_message(rate_limit("insufficient_quota"))
+    assert "busy" in user_message(rate_limit("rate_limit_exceeded"))
