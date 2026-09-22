@@ -12,6 +12,6 @@ services:
     envVars:
       - key: SUPABASE_URL
         value: https://toesvlmefyvghivevjie.supabase.co
-      # Comma-separated, e.g. https://<app>.vercel.app,http://localhost:3000
+      # Comma-separated list of frontend origins allowed to call the API.
       - key: ALLOWED_ORIGINS
-        sync: false
+        value: https://resume-optimizer-ten-virid.vercel.app,http://localhost:3000
