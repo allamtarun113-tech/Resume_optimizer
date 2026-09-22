@@ -9,6 +9,8 @@ Architecture, decisions and phases: see [CLAUDE.md](CLAUDE.md).
 | `backend/` | FastAPI (Python 3.12, uv) | Render free tier (Dockerfile, `render.yaml`) |
 | `supabase/` | Postgres, Auth, Storage migrations | Supabase |
 
+**Live:** https://resume-optimizer-ten-virid.vercel.app (API: https://resume-optimizer-api-jzq4.onrender.com)
+
 ## Local development
 
 ```bash

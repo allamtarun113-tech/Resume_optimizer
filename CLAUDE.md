@@ -228,7 +228,11 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-### Phase 0: Foundation
+**Status:** Phase 0 ✅ done (2026-09-23). Next up: Phase 1.
+
+**Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
+
+### Phase 0: Foundation ✅
 - Monorepo scaffold (§3). `git init`, GitHub repo, `.gitignore`, `.env.example` files.
 - Next.js + Tailwind + shadcn scaffold. FastAPI scaffold with `/health`.
 - Supabase project, first migration (profiles, documents, analyses), RLS, Storage bucket.
