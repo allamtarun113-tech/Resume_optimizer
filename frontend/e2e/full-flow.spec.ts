@@ -1,8 +1,9 @@
 import path from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-// End-to-end on the deployed site: sign in, analyze, prepare for the interview, export,
-// then delete the analysis again. Inputs are fixed, so repeat runs are LLM cache hits.
+// End-to-end on the deployed site: sign in, make sure an OpenAI key is saved, analyze,
+// prepare for the interview, export, then delete the analysis again. Inputs are fixed,
+// so repeat runs are LLM cache hits.
 
 const JOB_DESCRIPTION = `Backend Engineer (New Grad)
 Requirements:
@@ -15,42 +16,67 @@ Nice to have: AWS, Redis
 const NOTES =
   "I containerized the Campus Food Ordering App with Docker and deployed it on a 3-node k3s cluster.";
 
+async function ensureOpenAiKey(page: Page, apiKey: string) {
+  await page.goto("/settings");
+  const connected = page.getByText("Connected", { exact: true });
+  const notConnected = page.getByText("Not connected", { exact: true });
+  await expect(connected.or(notConnected)).toBeVisible();
+  if (await connected.isVisible()) return;
+
+  await page.getByLabel("API key").fill(apiKey);
+  await page.getByRole("button", { name: "Check key" }).click();
+  await expect(page.getByText(/Key works/)).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(connected).toBeVisible();
+}
+
 test("student analyses a job end to end", async ({ page }) => {
   const email = process.env.E2E_EMAIL;
   const password = process.env.E2E_PASSWORD;
-  test.skip(!email || !password, "E2E_EMAIL / E2E_PASSWORD not set");
+  const apiKey = process.env.E2E_OPENAI_API_KEY;
+  test.skip(!email || !password || !apiKey, "E2E_* settings not set");
 
   // Sign in.
   await page.goto("/login");
   await page.getByLabel("Email").fill(email!);
   await page.getByLabel("Password").fill(password!);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
+  await page
+    .getByRole("main")
+    .getByRole("button", { name: "Sign in", exact: true })
+    .click();
+  await expect(page.getByText("Recent analyses")).toBeVisible();
+
+  await ensureOpenAiKey(page, apiKey!);
 
   // Start an analysis.
   await page.goto("/analyze");
   await page
-    .getByLabel("Resume")
+    .getByLabel("Drop your resume here, or click to choose")
     .setInputFiles(path.join(__dirname, "fixtures", "resume.pdf"));
   await page.getByLabel("Job description").fill(JOB_DESCRIPTION);
   await page.getByLabel("Additional skills or experience").fill(NOTES);
-  await page.getByRole("button", { name: "Analyze" }).click();
+  await page.getByRole("button", { name: "Analyze", exact: true }).click();
   await page.waitForURL(/\/analysis\/[0-9a-f-]{36}$/, { timeout: 120_000 });
   const analysisId = page.url().split("/").pop()!;
 
-  // Results: score, suggestions backed by the notes, the breakdown.
-  await expect(page.getByText("Done", { exact: true })).toBeVisible({
-    timeout: 180_000,
-  });
+  // Results: score and the tabs.
   await expect(
     page.getByRole("img", { name: /Job fit \(resume\): \d+%/ }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 180_000 });
+  await expect(page.getByText("Strong matches")).toBeVisible();
+
+  await page.getByRole("tab", { name: /Improve resume/ }).click();
   await expect(
     page.getByText("Already have it? Add it to your resume"),
   ).toBeVisible();
-  await expect(page.getByText("Requirement by requirement")).toBeVisible();
+
+  await page.getByRole("tab", { name: /Learn/ }).click();
+  await expect(
+    page.getByText(/Skill gaps|Nothing to learn/).first(),
+  ).toBeVisible();
 
   // Interview preparation: grouped questions, every one with a source.
+  await page.getByRole("tab", { name: /Interview/ }).click();
   await page.getByRole("button", { name: "Prepare Me for Interview" }).click();
   await expect(
     page.getByRole("heading", { name: "Interview preparation" }),
@@ -64,7 +90,7 @@ test("student analyses a job end to end", async ({ page }) => {
 
   // Export.
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download report (.md)" }).click();
+  await page.getByRole("button", { name: /Download report/ }).click();
   expect((await download).suggestedFilename()).toMatch(
     /^resume-optimizer-.*\.md$/,
   );

@@ -93,7 +93,7 @@ class LLMClient:
             else self._settings.openai_model_large or self._settings.openai_model_small
         )
         if not name:
-            raise LLMError("The AI model is not configured on the server (OPENAI_MODEL_SMALL).")
+            raise LLMError("No AI model selected. Choose one in Settings.")
         return name
 
     async def parse[T: BaseModel](
@@ -217,7 +217,7 @@ class OpenAIModel:
                 logger.info("Model %s rejected %r; retrying without it", model, rejected)
                 self._rejected.setdefault(model, set()).add(rejected)
             except openai.AuthenticationError as exc:
-                raise LLMError("The server's OpenAI API key was rejected.") from exc
+                raise LLMError("Your OpenAI API key was rejected. Update it in Settings.") from exc
 
         if response.status == "incomplete":
             reason = response.incomplete_details.reason if response.incomplete_details else None

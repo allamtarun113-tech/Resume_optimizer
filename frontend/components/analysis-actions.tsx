@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { DownloadIcon, PrinterIcon, RefreshCwIcon } from "lucide-react";
 import { toast } from "sonner";
 import { apiDownload, apiPostJson } from "@/lib/api";
 import { MAX_JD_CHARS, MIN_JD_CHARS } from "@/lib/analyze";
+import { showApiError } from "@/lib/errors";
 import type { AnalysisCreated, AnalysisRerun } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -43,9 +45,11 @@ export function ExportButtons({ analysisId }: { analysisId: string }) {
         onClick={download}
         disabled={downloading}
       >
+        <DownloadIcon />
         {downloading ? "Preparing…" : "Download report (.md)"}
       </Button>
       <Button variant="outline" size="sm" onClick={() => window.print()}>
+        <PrinterIcon />
         Print / Save as PDF
       </Button>
     </div>
@@ -74,7 +78,7 @@ export function RerunForm({ analysisId }: { analysisId: string }) {
       );
       router.push(`/analysis/${created.id}`);
     } catch (err) {
-      toast.error((err as Error).message);
+      showApiError(err, router.push);
       setBusy(false);
     }
   }
@@ -82,7 +86,10 @@ export function RerunForm({ analysisId }: { analysisId: string }) {
   return (
     <Card className="print:hidden">
       <CardHeader>
-        <CardTitle>Try another job</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <RefreshCwIcon className="size-4 text-primary" />
+          Try another job
+        </CardTitle>
         <CardDescription>
           Check the same resume and documents against a different job
           description. Your profile is reused, so it&apos;s quicker.

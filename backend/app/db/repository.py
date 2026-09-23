@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Protocol
 
 from app.llm.client import LLMStore
+from app.schemas.ai_settings import AiSettingsRecord
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
 from app.schemas.interview import BankQuestion
@@ -80,3 +81,19 @@ class Repository(LLMStore, Protocol):
     async def get_interview_set(self, analysis_id: str) -> dict[str, Any] | None: ...
 
     async def save_interview_set(self, analysis_id: str, questions: dict[str, Any]) -> None: ...
+
+    # -- per-user AI settings ----------------------------------------------------------
+
+    async def get_ai_settings(self, user_id: str) -> AiSettingsRecord | None: ...
+
+    async def save_ai_settings(
+        self,
+        *,
+        user_id: str,
+        encrypted_api_key: str,
+        key_last4: str,
+        model_small: str,
+        model_large: str | None,
+    ) -> None: ...
+
+    async def delete_ai_settings(self, user_id: str) -> None: ...

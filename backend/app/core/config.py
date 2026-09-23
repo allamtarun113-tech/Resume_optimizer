@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     cost_target_per_analysis: float = 0.01
 
     mcp_service_token: str = ""
+    # Fernet key that encrypts users' OpenAI keys in the database (see app/core/crypto.py).
+    app_encryption_key: str = ""
     # Offline question ingestion only (GitHub MCP server); never needed in production.
     github_personal_access_token: str = ""
     # Accepts a JSON list or a comma-separated string.

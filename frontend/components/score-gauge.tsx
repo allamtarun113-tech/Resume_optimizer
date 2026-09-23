@@ -14,7 +14,7 @@ export function ScoreGauge({ score, label }: { score: number; label: string }) {
     <div className="flex flex-col items-center gap-1">
       <svg
         viewBox="0 0 120 120"
-        className="size-32"
+        className="size-32 sm:size-36"
         role="img"
         aria-label={`${label}: ${clamped}%`}
       >
@@ -23,7 +23,7 @@ export function ScoreGauge({ score, label }: { score: number; label: string }) {
           cy="60"
           r={RADIUS}
           fill="none"
-          strokeWidth="10"
+          strokeWidth="9"
           className="stroke-muted"
         />
         <circle
@@ -44,12 +44,14 @@ export function ScoreGauge({ score, label }: { score: number; label: string }) {
           y="60"
           textAnchor="middle"
           dominantBaseline="central"
-          className="fill-foreground text-3xl font-semibold"
+          className="fill-foreground text-[28px] font-bold tabular-nums"
         >
           {clamped}%
         </text>
       </svg>
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="max-w-36 text-center text-sm text-muted-foreground">
+        {label}
+      </span>
     </div>
   );
 }

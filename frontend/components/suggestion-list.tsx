@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { TargetIcon, WandSparklesIcon } from "lucide-react";
 import { toast } from "sonner";
 import type { Gap, Suggestion } from "@/lib/types";
 import { whereToAdd } from "@/lib/results";
@@ -34,12 +35,13 @@ function CopyButton({ text }: { text: string }) {
 
 function SuggestionCard({ suggestion: s }: { suggestion: Suggestion }) {
   return (
-    <Card>
+    <Card className="border-l-4 border-l-primary">
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2">
+          <WandSparklesIcon className="size-4 text-primary" />
           {s.requirement_names.join(", ")}
           {s.uplift > 0 && (
-            <Badge className="bg-emerald-600 text-white dark:bg-emerald-500">
+            <Badge className="ml-auto bg-emerald-600 text-white dark:bg-emerald-500">
               +{s.uplift} points
             </Badge>
           )}
@@ -77,7 +79,8 @@ export function SuggestionList({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+          <WandSparklesIcon className="size-5 text-primary" />
           Already have it? Add it to your resume
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -111,7 +114,10 @@ export function GapList({ gaps }: { gaps: Gap[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Skill gaps ({gaps.length})</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <TargetIcon className="size-4 text-rose-500" />
+          Skill gaps ({gaps.length})
+        </CardTitle>
         <CardDescription>
           The job asks for these, and nothing you gave us shows them yet. These
           are what to learn next.

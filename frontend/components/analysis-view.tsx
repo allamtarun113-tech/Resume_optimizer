@@ -2,35 +2,91 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  AlertTriangleIcon,
+  BookOpenCheckIcon,
+  CheckIcon,
+  LayoutListIcon,
+  Loader2Icon,
+  MessagesSquareIcon,
+  WandSparklesIcon,
+} from "lucide-react";
+import { cn } from "cn";
 import { apiFetch } from "@/lib/api";
 import type { AnalysisResponse, AnalysisStatus } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequirementBreakdown } from "@/components/requirement-breakdown";
 import { ScoreGauge } from "@/components/score-gauge";
 import { GapList, SuggestionList } from "@/components/suggestion-list";
 import { LearningPathView } from "@/components/learning-path";
 import { InterviewPrep } from "@/components/interview-prep";
 import { ExportButtons, RerunForm } from "@/components/analysis-actions";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 const POLL_MS = 2000;
 const FINAL: AnalysisStatus[] = ["done", "failed"];
-const STATUS_TEXT: Record<AnalysisStatus, string> = {
-  queued: "Queued",
-  parsing: "Reading your documents",
-  extracting: "Extracting your profile and the job requirements",
-  scoring: "Scoring your fit",
-  advising: "Writing suggestions and your learning path",
-  done: "Done",
-  failed: "Failed",
-};
+const STAGES: { status: AnalysisStatus; label: string }[] = [
+  { status: "parsing", label: "Reading your documents" },
+  { status: "extracting", label: "Understanding your profile and the job" },
+  { status: "scoring", label: "Matching and scoring" },
+  { status: "advising", label: "Writing suggestions and your learning path" },
+];
+
+function stageIndex(status: AnalysisStatus): number {
+  if (status === "queued") return 0;
+  if (status === "done") return STAGES.length;
+  return STAGES.findIndex((s) => s.status === status);
+}
+
+function Progress({ status }: { status: AnalysisStatus }) {
+  const current = stageIndex(status);
+  return (
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 rounded-2xl border bg-card p-8 shadow-sm">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <Loader2Icon className="size-8 animate-spin text-primary" />
+        <h1 className="text-xl font-semibold">Analyzing your fit…</h1>
+        <p className="text-sm text-muted-foreground">
+          Usually under a minute. You can keep this page open.
+        </p>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="bg-brand-gradient h-full rounded-full transition-all duration-700"
+          style={{ width: `${Math.max(8, (current / STAGES.length) * 100)}%` }}
+        />
+      </div>
+      <ol className="flex flex-col gap-3">
+        {STAGES.map((stage, i) => {
+          const done = i < current;
+          const active = i === current;
+          return (
+            <li key={stage.status} className="flex items-center gap-3 text-sm">
+              <span
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-full border text-xs",
+                  done && "border-primary bg-primary text-primary-foreground",
+                  active && "border-primary text-primary",
+                )}
+              >
+                {done ? (
+                  <CheckIcon className="size-3.5" />
+                ) : active ? (
+                  <Loader2Icon className="size-3.5 animate-spin" />
+                ) : (
+                  i + 1
+                )}
+              </span>
+              <span className={cn(!done && !active && "text-muted-foreground")}>
+                {stage.label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
 
 export function AnalysisView({ id }: { id: string }) {
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
@@ -61,47 +117,100 @@ export function AnalysisView({ id }: { id: string }) {
   }, [id]);
 
   if (!analysis) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        {error ? `Could not load analysis: ${error}` : "Loading…"}
+    return error ? (
+      <p className="text-sm text-destructive">
+        Could not load analysis: {error}
       </p>
+    ) : (
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
     );
   }
 
-  const { status, llm_usage: usage } = analysis;
-  const profile = analysis.student_profile;
+  if (!FINAL.includes(analysis.status))
+    return <Progress status={analysis.status} />;
+
+  if (analysis.status === "failed") {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 rounded-2xl border bg-card p-8 text-center shadow-sm">
+        <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <AlertTriangleIcon className="size-6" />
+        </span>
+        <h1 className="text-xl font-semibold">
+          This analysis didn&apos;t finish
+        </h1>
+        <p className="text-muted-foreground">{analysis.error}</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button nativeButton={false} render={<Link href="/analyze" />}>
+            Start a new analysis
+          </Button>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href="/settings" />}
+          >
+            Check AI settings
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const requirements = analysis.job_requirements;
+  const profile = analysis.student_profile;
+  const matches = analysis.matches ?? [];
+  const counts = {
+    strong: matches.filter((m) => m.bucket === "strong_in_resume").length,
+    improve: matches.filter(
+      (m) =>
+        m.bucket === "weak_in_resume" ||
+        m.bucket === "missing_from_resume_but_evidenced",
+    ).length,
+    gaps: matches.filter((m) => m.bucket === "true_gap").length,
+  };
+  const suggestions = analysis.suggestions ?? [];
+  const pathSteps = analysis.learning_path?.steps.length ?? 0;
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex flex-wrap items-center gap-3">
-            {requirements?.role_title ?? "Analysis"}
-            <Badge
-              variant={
-                status === "failed"
-                  ? "destructive"
-                  : status === "done"
-                    ? "default"
-                    : "secondary"
-              }
-            >
-              {STATUS_TEXT[status]}
-            </Badge>
-          </CardTitle>
-          <CardDescription>
-            {FINAL.includes(status)
-              ? `Started ${new Date(analysis.created_at).toLocaleString()}`
-              : "This usually takes under a minute. You can leave this page open."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 text-sm">
-          {analysis.error && (
-            <p className="text-destructive">{analysis.error}</p>
-          )}
+      {/* Summary */}
+      <section className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+        <div
+          className="bg-brand-gradient absolute -top-24 -right-24 size-72 rounded-full opacity-10 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted-foreground">
+              {new Date(analysis.created_at).toLocaleDateString(undefined, {
+                dateStyle: "medium",
+              })}
+            </p>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              {requirements?.role_title ?? "Job analysis"}
+            </h1>
+            {requirements?.company && (
+              <p className="text-muted-foreground">{requirements.company}</p>
+            )}
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <Pill className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                {counts.strong} strong
+              </Pill>
+              <Pill className="bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                {counts.improve} to improve
+              </Pill>
+              <Pill className="bg-rose-500/10 text-rose-700 dark:text-rose-400">
+                {counts.gaps} gaps
+              </Pill>
+            </div>
+            <div className="mt-3">
+              <ExportButtons analysisId={analysis.id} />
+            </div>
+          </div>
           {analysis.fit_score != null && (
-            <div className="flex flex-wrap items-center justify-center gap-10 py-2">
+            <div className="flex justify-center gap-6 sm:gap-10">
               <ScoreGauge score={analysis.fit_score} label="Job fit (resume)" />
               {analysis.potential_score != null &&
                 analysis.potential_score > analysis.fit_score && (
@@ -112,63 +221,79 @@ export function AnalysisView({ id }: { id: string }) {
                 )}
             </div>
           )}
-          {analysis.fit_score != null && (
-            <p className="text-muted-foreground">
-              The score weighs each requirement by importance and by how clearly
-              your resume shows it. The same resume and job always get the same
-              score.
+        </div>
+      </section>
+
+      <Tabs defaultValue="overview" className="flex flex-col gap-4">
+        <TabsList className="w-full justify-start overflow-x-auto print:hidden">
+          <TabsTrigger value="overview">
+            <LayoutListIcon />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="improve">
+            <WandSparklesIcon />
+            Improve resume
+            {suggestions.length > 0 && <Count>{suggestions.length}</Count>}
+          </TabsTrigger>
+          <TabsTrigger value="learn">
+            <BookOpenCheckIcon />
+            Learn
+            {pathSteps > 0 && <Count>{pathSteps}</Count>}
+          </TabsTrigger>
+          <TabsTrigger value="interview">
+            <MessagesSquareIcon />
+            Interview
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="flex flex-col gap-6">
+          <p className="text-sm text-muted-foreground">
+            The score weighs each requirement by importance and by how clearly
+            your resume shows it. The same resume and job always get the same
+            score.
+          </p>
+          {matches.length > 0 && <RequirementBreakdown matches={matches} />}
+        </TabsContent>
+
+        <TabsContent value="improve">
+          <SuggestionList
+            suggestions={suggestions}
+            rejectedCount={analysis.rejected_suggestions?.length ?? 0}
+            fitScore={analysis.fit_score}
+            potentialScore={analysis.potential_score}
+          />
+        </TabsContent>
+
+        <TabsContent value="learn" className="flex flex-col gap-6">
+          {analysis.gaps && <GapList gaps={analysis.gaps} />}
+          {analysis.learning_path && pathSteps > 0 ? (
+            <LearningPathView path={analysis.learning_path} />
+          ) : (
+            <p className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground">
+              Nothing to learn for this job: every requirement is covered by
+              what you already have.
             </p>
           )}
-          {status === "done" && <ExportButtons analysisId={analysis.id} />}
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {analysis.suggestions && (
-        <SuggestionList
-          suggestions={analysis.suggestions}
-          rejectedCount={analysis.rejected_suggestions?.length ?? 0}
-          fitScore={analysis.fit_score}
-          potentialScore={analysis.potential_score}
-        />
-      )}
-      {analysis.gaps && <GapList gaps={analysis.gaps} />}
-      {analysis.learning_path && (
-        <LearningPathView path={analysis.learning_path} />
-      )}
-      {status === "done" && <InterviewPrep analysisId={analysis.id} />}
-      {status === "done" && <RerunForm analysisId={analysis.id} />}
-      {status === "failed" && (
-        <div className="print:hidden">
-          <Button nativeButton={false} render={<Link href="/analyze" />}>
-            Start a new analysis
-          </Button>
-        </div>
-      )}
+        <TabsContent value="interview">
+          <InterviewPrep analysisId={analysis.id} />
+        </TabsContent>
+      </Tabs>
 
-      {analysis.matches && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold tracking-tight">
-            Requirement by requirement
-          </h2>
-          <RequirementBreakdown
-            matches={analysis.matches}
-            skip={analysis.gaps ? ["true_gap"] : []}
-          />
-        </section>
-      )}
+      <RerunForm analysisId={analysis.id} />
 
       {(requirements || profile) && (
-        <details className="rounded-xl border p-4 text-sm print:hidden">
+        <details className="rounded-2xl border bg-card p-4 text-sm print:hidden">
           <summary className="cursor-pointer text-muted-foreground">
-            Raw extraction data
-            {usage.calls > 0 &&
-              ` · AI calls: ${usage.calls} (${usage.cached_calls} from cache)`}
+            Raw extraction data · AI calls: {analysis.llm_usage.calls} (
+            {analysis.llm_usage.cached_calls} from cache)
           </summary>
           <div className="mt-4 flex flex-col gap-4">
             {requirements && (
-              <JsonCard title="Job requirements" data={requirements} />
+              <JsonBlock title="Job requirements" data={requirements} />
             )}
-            {profile && <JsonCard title="Your profile" data={profile} />}
+            {profile && <JsonBlock title="Your profile" data={profile} />}
           </div>
         </details>
       )}
@@ -176,12 +301,33 @@ export function AnalysisView({ id }: { id: string }) {
   );
 }
 
-// Debug view of the raw extraction output.
-function JsonCard({ title, data }: { title: string; data: unknown }) {
+function Pill({
+  className,
+  children,
+}: {
+  className: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className={cn("rounded-full px-2.5 py-1 font-medium", className)}>
+      {children}
+    </span>
+  );
+}
+
+function Count({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full bg-primary/10 px-1.5 text-xs font-semibold text-primary tabular-nums">
+      {children}
+    </span>
+  );
+}
+
+function JsonBlock({ title, data }: { title: string; data: unknown }) {
   return (
     <div className="flex flex-col gap-2">
       <h3 className="font-medium">{title}</h3>
-      <pre className="max-h-[32rem] overflow-auto rounded-md bg-muted p-4 text-xs">
+      <pre className="max-h-[32rem] overflow-auto rounded-lg bg-muted p-4 text-xs">
         {JSON.stringify(data, null, 2)}
       </pre>
     </div>

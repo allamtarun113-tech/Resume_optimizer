@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.llm.client import Completion, LLMCallRecord
 from app.rag.embeddings import cosine
+from app.schemas.ai_settings import AiSettingsRecord
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
 from app.schemas.interview import BankQuestion
@@ -28,6 +29,7 @@ class InMemoryRepository:
         self.embedding_cache: dict[str, list[float]] = {}
         self.bank: list[tuple[BankQuestion, list[float]]] = []  # (question, embedding)
         self.interview_sets: dict[str, dict[str, Any]] = {}
+        self.ai_settings: dict[str, AiSettingsRecord] = {}
 
     async def upload_file(self, path: str, data: bytes, content_type: str) -> None:
         self.files[path] = data
@@ -192,6 +194,30 @@ class InMemoryRepository:
 
     async def save_interview_set(self, analysis_id: str, questions: dict[str, Any]) -> None:
         self.interview_sets.setdefault(analysis_id, questions)
+
+    async def get_ai_settings(self, user_id: str) -> AiSettingsRecord | None:
+        return self.ai_settings.get(user_id)
+
+    async def save_ai_settings(
+        self,
+        *,
+        user_id: str,
+        encrypted_api_key: str,
+        key_last4: str,
+        model_small: str,
+        model_large: str | None,
+    ) -> None:
+        self.ai_settings[user_id] = AiSettingsRecord(
+            user_id=user_id,
+            encrypted_api_key=encrypted_api_key,
+            key_last4=key_last4,
+            model_small=model_small,
+            model_large=model_large,
+            updated_at=datetime.now(UTC),
+        )
+
+    async def delete_ai_settings(self, user_id: str) -> None:
+        self.ai_settings.pop(user_id, None)
 
 
 Responder = Callable[[str, str], BaseModel]

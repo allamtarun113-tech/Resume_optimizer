@@ -121,7 +121,7 @@ async def test_large_tier_falls_back_to_small_model() -> None:
 
 async def test_missing_model_config_raises_llm_error() -> None:
     client, _, _ = _client(openai_model_small="")
-    with pytest.raises(LLMError, match="not configured"):
+    with pytest.raises(LLMError, match="No AI model selected"):
         await _parse(client)
 
 

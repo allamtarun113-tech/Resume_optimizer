@@ -1,36 +1,34 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { SignOutButton } from "@/components/sign-out-button";
+import { Brand } from "@/components/layout/brand";
+import { NavLinks } from "@/components/layout/nav-links";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { UserMenu } from "@/components/layout/user-menu";
+import { SignInLink } from "@/components/layout/sign-in-link";
 
 export async function SiteHeader() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  const signedIn = Boolean(data?.claims);
+  const email = data?.claims?.email as string | undefined;
 
   return (
-    <header className="border-b print:hidden">
-      <nav className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <Link href="/" className="font-semibold tracking-tight">
-          Resume Optimizer
-        </Link>
-        {signedIn && (
-          <div className="ml-auto flex items-center gap-1 text-sm sm:gap-3">
-            <Link
-              href="/analyze"
-              className="rounded-md px-2 py-1 hover:bg-muted"
-            >
-              New analysis
-            </Link>
-            <Link
-              href="/history"
-              className="rounded-md px-2 py-1 hover:bg-muted"
-            >
-              History
-            </Link>
-            <SignOutButton />
-          </div>
-        )}
-      </nav>
+    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md print:hidden">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4">
+        <Brand />
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          {email ? (
+            <>
+              <NavLinks />
+              <ThemeToggle />
+              <UserMenu email={email} />
+            </>
+          ) : (
+            <>
+              <ThemeToggle />
+              <SignInLink />
+            </>
+          )}
+        </div>
+      </div>
     </header>
   );
 }

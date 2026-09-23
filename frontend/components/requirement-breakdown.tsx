@@ -1,3 +1,9 @@
+import {
+  CheckCircle2Icon,
+  CircleDashedIcon,
+  FilePlus2Icon,
+  TargetIcon,
+} from "lucide-react";
 import type { RequirementMatch } from "@/lib/types";
 import {
   type Bucket,
@@ -83,6 +89,28 @@ function MatchRow({ match }: { match: RequirementMatch }) {
   );
 }
 
+const BUCKET_STYLE: Record<
+  Bucket,
+  { icon: React.ComponentType<{ className?: string }>; tone: string }
+> = {
+  strong_in_resume: {
+    icon: CheckCircle2Icon,
+    tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  },
+  weak_in_resume: {
+    icon: CircleDashedIcon,
+    tone: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  },
+  missing_from_resume_but_evidenced: {
+    icon: FilePlus2Icon,
+    tone: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+  },
+  true_gap: {
+    icon: TargetIcon,
+    tone: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  },
+};
+
 export function RequirementBreakdown({
   matches,
   skip = [],
@@ -92,26 +120,38 @@ export function RequirementBreakdown({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      {groupMatches(matches, skip).map((group) => (
-        <Card key={group.bucket}>
-          <CardHeader>
-            <CardTitle>
-              {group.title}{" "}
-              <span className="text-muted-foreground">
-                ({group.items.length})
-              </span>
-            </CardTitle>
-            <CardDescription>{group.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="divide-y">
-              {group.items.map((m) => (
-                <MatchRow key={m.requirement_index} match={m} />
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      ))}
+      {groupMatches(matches, skip).map((group) => {
+        const { icon: Icon, tone } = BUCKET_STYLE[group.bucket];
+        return (
+          <Card key={group.bucket}>
+            <CardHeader>
+              <div className="flex items-start gap-3">
+                <span
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${tone}`}
+                >
+                  <Icon className="size-4" />
+                </span>
+                <div className="flex flex-col gap-1">
+                  <CardTitle>
+                    {group.title}{" "}
+                    <span className="text-muted-foreground">
+                      ({group.items.length})
+                    </span>
+                  </CardTitle>
+                  <CardDescription>{group.description}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y">
+                {group.items.map((m) => (
+                  <MatchRow key={m.requirement_index} match={m} />
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

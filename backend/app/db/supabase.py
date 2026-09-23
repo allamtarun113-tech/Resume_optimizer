@@ -6,12 +6,13 @@ The secret key bypasses RLS, so every user-facing query here filters by user_id.
 import json
 import logging
 from dataclasses import asdict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
 
 from app.llm.client import LLMCallRecord
+from app.schemas.ai_settings import AiSettingsRecord
 from app.schemas.analyses import AnalysisRecord, LLMUsage
 from app.schemas.documents import DocumentKind, DocumentRecord
 from app.schemas.interview import BankQuestion
@@ -365,4 +366,39 @@ class SupabaseRepository:
             params={"on_conflict": "analysis_id"},
             json={"analysis_id": analysis_id, "questions": questions},
             headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+        )
+
+    # -- per-user AI settings ------------------------------------------------------------
+
+    async def get_ai_settings(self, user_id: str) -> AiSettingsRecord | None:
+        rows = await self._select("user_ai_settings", {"select": "*", "user_id": f"eq.{user_id}"})
+        return AiSettingsRecord.model_validate(rows[0]) if rows else None
+
+    async def save_ai_settings(
+        self,
+        *,
+        user_id: str,
+        encrypted_api_key: str,
+        key_last4: str,
+        model_small: str,
+        model_large: str | None,
+    ) -> None:
+        await self._request(
+            "POST",
+            "/rest/v1/user_ai_settings",
+            params={"on_conflict": "user_id"},
+            json={
+                "user_id": user_id,
+                "encrypted_api_key": encrypted_api_key,
+                "key_last4": key_last4,
+                "model_small": model_small,
+                "model_large": model_large,
+                "updated_at": datetime.now(UTC).isoformat(),
+            },
+            headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+        )
+
+    async def delete_ai_settings(self, user_id: str) -> None:
+        await self._request(
+            "DELETE", "/rest/v1/user_ai_settings", params={"user_id": f"eq.{user_id}"}
         )

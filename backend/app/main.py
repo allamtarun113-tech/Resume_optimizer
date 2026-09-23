@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import analyses, documents, health, interview
+from app.api import settings as ai_settings
 from app.core.config import Settings, get_settings
 from app.db.supabase import SupabaseRepository
 from app.mcp_server.server import BearerTokenGuard, create_mcp_server
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
     app.include_router(documents.router)
     app.include_router(analyses.router)
     app.include_router(interview.router)
+    app.include_router(ai_settings.router)
     # Only exposed when a service token is configured.
     if settings.mcp_service_token:
         app.mount("/mcp", _mcp_http_app(app, settings))

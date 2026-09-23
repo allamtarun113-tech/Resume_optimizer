@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import {
+  CodeIcon,
+  FolderGit2Icon,
+  Loader2Icon,
+  MessagesSquareIcon,
+  UserIcon,
+  UsersIcon,
+} from "lucide-react";
+import { showApiError } from "@/lib/errors";
 import { ApiError, apiFetch } from "@/lib/api";
 import type { InterviewQuestion, InterviewSet } from "@/lib/types";
 import { groupByTopic, sourceText } from "@/lib/results";
@@ -50,10 +59,12 @@ function QuestionList({ questions }: { questions: InterviewQuestion[] }) {
 }
 
 function Section({
+  icon: Icon,
   title,
   description,
   children,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
   children: React.ReactNode;
@@ -61,7 +72,12 @@ function Section({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Icon className="size-4" />
+          </span>
+          {title}
+        </CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">{children}</CardContent>
@@ -70,6 +86,7 @@ function Section({
 }
 
 export function InterviewPrep({ analysisId }: { analysisId: string }) {
+  const router = useRouter();
   const [set, setSet] = useState<InterviewSet | null>(null);
   const [checking, setChecking] = useState(true);
   const [preparing, setPreparing] = useState(false);
@@ -97,7 +114,7 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
       );
       setSet(data);
     } catch (e) {
-      toast.error((e as Error).message);
+      showApiError(e, router.push);
     } finally {
       setPreparing(false);
     }
@@ -107,9 +124,16 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
 
   if (!set) {
     return (
-      <Card>
+      <Card className="relative overflow-hidden">
+        <div
+          className="bg-brand-gradient absolute -top-20 -right-20 size-56 rounded-full opacity-10 blur-3xl"
+          aria-hidden
+        />
         <CardHeader>
-          <CardTitle>Prepare for the interview</CardTitle>
+          <span className="bg-brand-gradient mb-2 flex size-11 items-center justify-center rounded-xl text-white shadow-lg shadow-primary/25">
+            <MessagesSquareIcon className="size-5" />
+          </span>
+          <CardTitle className="text-lg">Prepare for the interview</CardTitle>
           <CardDescription>
             Real interview questions for this job, drawn from public question
             banks, plus deep questions about your own projects. Questions only,
@@ -117,7 +141,12 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-4">
-          <Button onClick={prepare} disabled={preparing}>
+          <Button size="lg" onClick={prepare} disabled={preparing}>
+            {preparing ? (
+              <Loader2Icon className="animate-spin" />
+            ) : (
+              <MessagesSquareIcon />
+            )}
             {preparing ? "Preparing…" : "Prepare Me for Interview"}
           </Button>
           {preparing && (
@@ -133,12 +162,14 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-xl font-semibold tracking-tight">
+      <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+        <MessagesSquareIcon className="size-5 text-primary" />
         Interview preparation
       </h2>
 
       {set.personal.length > 0 && (
         <Section
+          icon={UserIcon}
           title="About you"
           description="Background questions most interviews start with."
         >
@@ -148,6 +179,7 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
 
       {set.projects.length > 0 && (
         <Section
+          icon={FolderGit2Icon}
           title="Your projects, in depth"
           description="Interviewers dig into what you built. Be ready to explain every decision."
         >
@@ -169,6 +201,7 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
 
       {set.technical.length > 0 && (
         <Section
+          icon={CodeIcon}
           title="Technical, for this job"
           description="Chosen for the job's requirements, most important first."
         >
@@ -183,6 +216,7 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
 
       {set.general.length > 0 && (
         <Section
+          icon={UsersIcon}
           title="Behavioral"
           description="Answer with a real example: situation, what you did, and the result."
         >

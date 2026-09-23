@@ -1,6 +1,108 @@
 {
   "components": {
     "schemas": {
+      "AiSettingsResponse": {
+        "properties": {
+          "has_key": {
+            "title": "Has Key",
+            "type": "boolean"
+          },
+          "key_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Last4"
+          },
+          "model_large": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Large"
+          },
+          "model_small": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Small"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "has_key",
+          "key_last4",
+          "model_small",
+          "model_large",
+          "updated_at"
+        ],
+        "title": "AiSettingsResponse",
+        "type": "object"
+      },
+      "AiSettingsUpdate": {
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "model_large": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Large"
+          },
+          "model_small": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Model Small",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_small"
+        ],
+        "title": "AiSettingsUpdate",
+        "type": "object"
+      },
       "AnalysisCreate": {
         "properties": {
           "extra_text": {
@@ -1170,6 +1272,53 @@
         "title": "MeResponse",
         "type": "object"
       },
+      "ModelListRequest": {
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          }
+        },
+        "title": "ModelListRequest",
+        "type": "object"
+      },
+      "ModelListResponse": {
+        "properties": {
+          "default": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Models",
+            "type": "array"
+          }
+        },
+        "required": [
+          "models",
+          "default"
+        ],
+        "title": "ModelListResponse",
+        "type": "object"
+      },
       "Project": {
         "properties": {
           "challenges": {
@@ -2311,6 +2460,140 @@
         "summary": "Me",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/settings/ai": {
+      "delete": {
+        "operationId": "delete_ai_settings_settings_ai_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Ai Settings",
+        "tags": [
+          "settings"
+        ]
+      },
+      "get": {
+        "operationId": "get_ai_settings_settings_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Ai Settings",
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "save_ai_settings_settings_ai_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Ai Settings",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/settings/ai/models": {
+      "post": {
+        "description": "Check a key (or the saved one) and list the models it can use in this app.",
+        "operationId": "list_models_settings_ai_models_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelListRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Models",
+        "tags": [
+          "settings"
         ]
       }
     }

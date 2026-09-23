@@ -227,6 +227,10 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
 **Status:** All phases (0–6) ✅ done (2026-09-23). v1 is live. See §14 for what is out of scope.
+
+**Post-v1 (2026-09-23): bring-your-own OpenAI key + redesign.**
+- Every AI request uses the **signed-in user's own OpenAI key** (the server's `OPENAI_API_KEY` is no longer used for user requests, only for offline ingestion). Keys are set on `/settings`: `POST /settings/ai/models` validates a key and lists usable models (`app/ai/models.py`: chat models with structured outputs, recommended cheap ones first, default gpt-4o-mini), `PUT /settings/ai` saves it **Fernet-encrypted** (`APP_ENCRYPTION_KEY`, `app/core/crypto.py`) in `user_ai_settings` (RLS, backend-only), `GET` shows only the last 4 characters, `DELETE` removes it. `get_user_ai` → `get_llm_client`/`get_embedder` build per-key OpenAI clients (small LRU). No key → HTTP 428 "Add your OpenAI API key in Settings…", which the frontend turns into an "Open Settings" action.
+- UI: indigo/violet theme with dark mode (next-themes), landing page, dashboard home, split sign-in, sticky header with icon nav + user menu, drag-and-drop uploads, analysis progress stepper, tabbed results (Overview / Improve resume / Learn / Interview).
 Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.

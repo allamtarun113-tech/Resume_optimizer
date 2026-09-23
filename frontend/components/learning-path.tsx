@@ -1,3 +1,4 @@
+import { BookOpenCheckIcon } from "lucide-react";
 import type { LearningPath } from "@/lib/types";
 import { formatHours } from "@/lib/results";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,10 @@ export function LearningPathView({ path }: { path: LearningPath }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your learning path</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <BookOpenCheckIcon className="size-4 text-primary" />
+          Your learning path
+        </CardTitle>
         <CardDescription>
           Learn these in order, since earlier steps are what later ones build
           on.
@@ -38,7 +42,7 @@ export function LearningPathView({ path }: { path: LearningPath }) {
             return (
               <li key={`${step.step}-${step.name}`} className="relative">
                 <span
-                  className="absolute -left-[2.1rem] flex size-6 items-center justify-center rounded-full border bg-background text-xs font-medium"
+                  className="bg-brand-gradient absolute -left-[2.2rem] flex size-6 items-center justify-center rounded-full text-xs font-semibold text-white"
                   aria-hidden
                 >
                   {step.step}

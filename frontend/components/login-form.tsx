@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { MailCheckIcon } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { signUpOutcome } from "@/lib/signup";
@@ -72,9 +73,14 @@ export function LoginForm({ next }: { next: string }) {
 
   if (sentTo) {
     return (
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm shadow-xl shadow-primary/5">
         <CardHeader>
-          <CardTitle>Check your email</CardTitle>
+          <span className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <MailCheckIcon className="size-5" />
+          </span>
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Check your email
+          </CardTitle>
           <CardDescription>
             We sent a confirmation link to <strong>{sentTo}</strong>.
           </CardDescription>
@@ -110,13 +116,15 @@ export function LoginForm({ next }: { next: string }) {
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm shadow-xl shadow-primary/5">
       <CardHeader>
-        <CardTitle>
-          {mode === "signin" ? "Sign in" : "Create an account"}
+        <CardTitle className="text-2xl font-semibold tracking-tight">
+          {mode === "signin" ? "Welcome back" : "Create your account"}
         </CardTitle>
         <CardDescription>
-          Resume Optimizer — see how well you fit a job.
+          {mode === "signin"
+            ? "Sign in to see your analyses."
+            : "Free to use with your own OpenAI key."}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -146,7 +154,7 @@ export function LoginForm({ next }: { next: string }) {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" size="lg" disabled={loading}>
             {loading
               ? "Please wait…"
               : mode === "signin"

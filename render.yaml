@@ -20,11 +20,8 @@ services:
       # (sync: false means the Blueprint never overwrites them).
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_MODEL_SMALL
-        sync: false
-      - key: OPENAI_MODEL_LARGE
+      # Encrypts each user's OpenAI key in the database (users bring their own keys).
+      - key: APP_ENCRYPTION_KEY
         sync: false
       # Optional: exposes our MCP server at /mcp for external MCP clients.
       - key: MCP_SERVICE_TOKEN

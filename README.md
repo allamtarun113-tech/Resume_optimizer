@@ -48,6 +48,9 @@ After changing a backend API schema, regenerate the frontend types:
 `uv run python -m scripts.export_openapi` (in `backend/`), then `pnpm gen:api` (in `frontend/`).
 CI fails if they are out of date.
 
+Users bring their own OpenAI key: after signing in, open **Settings**, paste a key,
+click **Check key**, pick a model and save.
+
 ## One-time setup
 
 ### 1. Supabase
@@ -80,9 +83,7 @@ builds `backend/Dockerfile` on the free plan and health-checks `/health`.
 **Environment** tab, set these secrets (they are declared with `sync: false`):
 ```
 SUPABASE_SERVICE_ROLE_KEY=<Supabase → Project Settings → API Keys → secret key (sb_secret_...)>
-OPENAI_API_KEY=<platform.openai.com → API keys>
-OPENAI_MODEL_SMALL=<cheap model, used for extraction>
-OPENAI_MODEL_LARGE=<optional; defaults to the small model>
+APP_ENCRYPTION_KEY=<Fernet key that encrypts users' OpenAI keys; same value as backend/.env>
 ```
 (`SUPABASE_JWT_SECRET` only if your project still uses legacy HS256 JWT signing.)
 The service URL looks like `https://resume-optimizer-api.onrender.com`.

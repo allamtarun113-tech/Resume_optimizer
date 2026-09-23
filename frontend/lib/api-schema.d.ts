@@ -156,10 +156,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Ai Settings */
+        get: operations["get_ai_settings_settings_ai_get"];
+        /** Save Ai Settings */
+        put: operations["save_ai_settings_settings_ai_put"];
+        post?: never;
+        /** Delete Ai Settings */
+        delete: operations["delete_ai_settings_settings_ai_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/ai/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * List Models
+         * @description Check a key (or the saved one) and list the models it can use in this app.
+         */
+        post: operations["list_models_settings_ai_models_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AiSettingsResponse */
+        AiSettingsResponse: {
+            /** Has Key */
+            has_key: boolean;
+            /** Key Last4 */
+            key_last4: string | null;
+            /** Model Large */
+            model_large: string | null;
+            /** Model Small */
+            model_small: string | null;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /** AiSettingsUpdate */
+        AiSettingsUpdate: {
+            /** Api Key */
+            api_key?: string | null;
+            /** Model Large */
+            model_large?: string | null;
+            /** Model Small */
+            model_small: string;
+        };
         /** AnalysisCreate */
         AnalysisCreate: {
             /** Extra Text */
@@ -545,6 +606,18 @@ export interface components {
             email: string | null;
             /** User Id */
             user_id: string;
+        };
+        /** ModelListRequest */
+        ModelListRequest: {
+            /** Api Key */
+            api_key?: string | null;
+        };
+        /** ModelListResponse */
+        ModelListResponse: {
+            /** Default */
+            default: string | null;
+            /** Models */
+            models: string[];
         };
         /** Project */
         Project: {
@@ -1124,6 +1197,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+        };
+    };
+    get_ai_settings_settings_ai_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettingsResponse"];
+                };
+            };
+        };
+    };
+    save_ai_settings_settings_ai_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettingsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_ai_settings_settings_ai_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_models_settings_ai_models_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelListRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
