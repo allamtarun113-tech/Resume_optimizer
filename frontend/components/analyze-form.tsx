@@ -8,11 +8,11 @@ import {
   BriefcaseIcon,
   FileUserIcon,
   KeyRoundIcon,
-  Loader2Icon,
   SparklesIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { apiFetch, apiPostForm, apiPostJson } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
+import type { AiSettings } from "@/lib/types";
 import {
   MAX_SUPPORTING_DOCS,
   RESUME_ACCEPT,
@@ -20,15 +20,8 @@ import {
   MAX_ABOUT_CHARS,
   validateAnalyzeInput,
 } from "@/lib/analyze";
-import { emptyProject, filledProjects, formatProject } from "@/lib/projects";
-import { buildExtraText } from "@/lib/skills";
-import { showApiError } from "@/lib/errors";
-import type {
-  AiSettings,
-  AnalysisCreate,
-  AnalysisCreated,
-  DocumentResponse,
-} from "@/lib/types";
+import { emptyProject, filledProjects } from "@/lib/projects";
+import { getPendingAnalysis, setPendingAnalysis } from "@/lib/pending-analysis";
 import { FileDropzone } from "@/components/file-dropzone";
 import { JobDescriptionInput } from "@/components/inputs/job-description-input";
 import { ProjectList } from "@/components/inputs/project-descriptions";
@@ -37,20 +30,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-
-function uploadFile(kind: "resume" | "supporting", file: File) {
-  const form = new FormData();
-  form.set("kind", kind);
-  form.set("file", file);
-  return apiPostForm<DocumentResponse>("/documents", form);
-}
-
-function uploadText(text: string) {
-  const form = new FormData();
-  form.set("kind", "supporting");
-  form.set("text", text);
-  return apiPostForm<DocumentResponse>("/documents", form);
-}
 
 function Step({
   number,
@@ -87,13 +66,16 @@ function Step({
 export function AnalyzeForm() {
   const router = useRouter();
   const [hasKey, setHasKey] = useState<boolean | null>(null);
-  const [resume, setResume] = useState<File[]>([]);
-  const [jdText, setJdText] = useState("");
-  const [skills, setSkills] = useState<string[]>([]);
-  const [about, setAbout] = useState("");
-  const [projects, setProjects] = useState([emptyProject()]);
-  const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
-  const [step, setStep] = useState<string | null>(null);
+  // If starting the analysis failed, the previous entries are restored.
+  const [draft] = useState(getPendingAnalysis);
+  const [resume, setResume] = useState<File[]>(draft ? [draft.resume] : []);
+  const [jdText, setJdText] = useState(draft?.jdText ?? "");
+  const [skills, setSkills] = useState<string[]>(draft?.skills ?? []);
+  const [about, setAbout] = useState(draft?.about ?? "");
+  const [projects, setProjects] = useState(draft?.projects ?? [emptyProject()]);
+  const [supportingFiles, setSupportingFiles] = useState<File[]>(
+    draft?.supportingFiles ?? [],
+  );
 
   useEffect(() => {
     apiFetch<AiSettings>("/settings/ai")
@@ -101,7 +83,7 @@ export function AnalyzeForm() {
       .catch(() => setHasKey(true)); // don't block on a transient error; the API will say
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const input = {
       resume: resume[0] ?? null,
@@ -113,28 +95,9 @@ export function AnalyzeForm() {
     };
     const problem = validateAnalyzeInput(input);
     if (problem) return toast.error(problem);
-
-    try {
-      setStep("Uploading and reading your documents…");
-      const [resumeDoc, ...supportingDocs] = await Promise.all([
-        uploadFile("resume", input.resume!),
-        ...supportingFiles.map((f) => uploadFile("supporting", f)),
-        ...filledProjects(projects).map((p) => uploadText(formatProject(p))),
-      ]);
-
-      setStep("Starting analysis…");
-      const body: AnalysisCreate = {
-        resume_doc_id: resumeDoc.id,
-        jd_text: jdText,
-        extra_text: buildExtraText(skills, about) || null,
-        supporting_doc_ids: supportingDocs.map((d) => d.id),
-      };
-      const created = await apiPostJson<AnalysisCreated>("/analyses", body);
-      router.push(`/analysis/${created.id}`);
-    } catch (err) {
-      showApiError(err, router.push);
-      setStep(null);
-    }
+    // Go straight to the results page; it uploads and shows progress from there.
+    setPendingAnalysis({ ...input, resume: input.resume! });
+    router.push("/analysis/new");
   }
 
   if (hasKey === null) return <Skeleton className="h-96 w-full rounded-2xl" />;
@@ -162,7 +125,6 @@ export function AnalyzeForm() {
     );
   }
 
-  const busy = step !== null;
   const supportingCount =
     supportingFiles.length + filledProjects(projects).length;
 
@@ -180,7 +142,6 @@ export function AnalyzeForm() {
           accept={RESUME_ACCEPT}
           files={resume}
           onChange={setResume}
-          disabled={busy}
         />
       </Step>
 
@@ -190,11 +151,7 @@ export function AnalyzeForm() {
         title="The job"
         description="Paste it, or upload the PDF/DOCX; you can edit the text either way."
       >
-        <JobDescriptionInput
-          value={jdText}
-          onChange={setJdText}
-          disabled={busy}
-        />
+        <JobDescriptionInput value={jdText} onChange={setJdText} />
       </Step>
 
       <Step
@@ -205,12 +162,7 @@ export function AnalyzeForm() {
       >
         <div className="flex flex-col gap-2">
           <Label htmlFor="skills">Additional skills</Label>
-          <SkillsInput
-            id="skills"
-            skills={skills}
-            onChange={setSkills}
-            disabled={busy}
-          />
+          <SkillsInput id="skills" skills={skills} onChange={setSkills} />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="about">About your skills & knowledge</Label>
@@ -219,7 +171,6 @@ export function AnalyzeForm() {
             rows={5}
             maxLength={MAX_ABOUT_CHARS}
             placeholder="In your own words: what you know and how you've used it. e.g. I'm comfortable with SQL joins and window functions from my DBMS course, and I've used Git daily in team projects."
-            disabled={busy}
             value={about}
             onChange={(e) => setAbout(e.target.value)}
           />
@@ -234,7 +185,6 @@ export function AnalyzeForm() {
             projects={projects}
             onChange={setProjects}
             canAddMore={supportingCount < MAX_SUPPORTING_DOCS}
-            disabled={busy}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -251,23 +201,17 @@ export function AnalyzeForm() {
             multiple
             files={supportingFiles}
             onChange={setSupportingFiles}
-            disabled={busy}
           />
         </div>
       </Step>
 
       <div className="sticky bottom-4 z-10 flex flex-col items-center gap-3 rounded-2xl border bg-background/90 p-4 shadow-lg backdrop-blur sm:flex-row sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          {step ?? "Takes about a minute. You can leave the results page open."}
+          Takes about a minute. You&apos;ll see the progress right away.
         </p>
-        <Button
-          type="submit"
-          size="lg"
-          disabled={busy}
-          className="w-full sm:w-auto"
-        >
-          {busy ? <Loader2Icon className="animate-spin" /> : <SparklesIcon />}
-          {busy ? "Working…" : "Analyze"}
+        <Button type="submit" size="lg" className="w-full sm:w-auto">
+          <SparklesIcon />
+          Analyze
         </Button>
       </div>
     </form>

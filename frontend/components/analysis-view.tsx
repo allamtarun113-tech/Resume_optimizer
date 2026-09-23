@@ -5,9 +5,7 @@ import Link from "next/link";
 import {
   AlertTriangleIcon,
   BookOpenCheckIcon,
-  CheckIcon,
   LayoutListIcon,
-  Loader2Icon,
   MessagesSquareIcon,
   WandSparklesIcon,
 } from "lucide-react";
@@ -23,71 +21,10 @@ import { GapList, SuggestionList } from "@/components/suggestion-list";
 import { LearningPathView } from "@/components/learning-path";
 import { InterviewPrep } from "@/components/interview-prep";
 import { ExportButtons, RerunForm } from "@/components/analysis-actions";
+import { AnalysisProgress } from "@/components/analysis-progress";
 
 const POLL_MS = 2000;
 const FINAL: AnalysisStatus[] = ["done", "failed"];
-const STAGES: { status: AnalysisStatus; label: string }[] = [
-  { status: "parsing", label: "Reading your documents" },
-  { status: "extracting", label: "Understanding your profile and the job" },
-  { status: "scoring", label: "Matching and scoring" },
-  { status: "advising", label: "Writing suggestions and your learning path" },
-];
-
-function stageIndex(status: AnalysisStatus): number {
-  if (status === "queued") return 0;
-  if (status === "done") return STAGES.length;
-  return STAGES.findIndex((s) => s.status === status);
-}
-
-function Progress({ status }: { status: AnalysisStatus }) {
-  const current = stageIndex(status);
-  return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 rounded-2xl border bg-card p-8 shadow-sm">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <Loader2Icon className="size-8 animate-spin text-primary" />
-        <h1 className="text-xl font-semibold">Analyzing your fit…</h1>
-        <p className="text-sm text-muted-foreground">
-          Usually under a minute. You can keep this page open.
-        </p>
-      </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="bg-brand-gradient h-full rounded-full transition-all duration-700"
-          style={{ width: `${Math.max(8, (current / STAGES.length) * 100)}%` }}
-        />
-      </div>
-      <ol className="flex flex-col gap-3">
-        {STAGES.map((stage, i) => {
-          const done = i < current;
-          const active = i === current;
-          return (
-            <li key={stage.status} className="flex items-center gap-3 text-sm">
-              <span
-                className={cn(
-                  "flex size-6 items-center justify-center rounded-full border text-xs",
-                  done && "border-primary bg-primary text-primary-foreground",
-                  active && "border-primary text-primary",
-                )}
-              >
-                {done ? (
-                  <CheckIcon className="size-3.5" />
-                ) : active ? (
-                  <Loader2Icon className="size-3.5 animate-spin" />
-                ) : (
-                  i + 1
-                )}
-              </span>
-              <span className={cn(!done && !active && "text-muted-foreground")}>
-                {stage.label}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </div>
-  );
-}
-
 export function AnalysisView({ id }: { id: string }) {
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +67,7 @@ export function AnalysisView({ id }: { id: string }) {
   }
 
   if (!FINAL.includes(analysis.status))
-    return <Progress status={analysis.status} />;
+    return <AnalysisProgress stage={analysis.status} />;
 
   if (analysis.status === "failed") {
     return (
