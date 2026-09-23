@@ -18,7 +18,9 @@ Buckets (GapClassifier): resume strength 1.0 = strong_in_resume; >0 = weak_in_re
 from fractions import Fraction
 
 # 2: requirements with alternatives ("Java, C++ or R") match any known alternative.
-SCORING_VERSION = "2"
+# 3: combined skills count as each part ("Data structures and algorithms" = algorithms);
+#    the LLM matcher can't link a known skill to an unrelated known requirement.
+SCORING_VERSION = "3"
 
 IMPORTANCE_WEIGHTS: dict[str, Fraction] = {"must": Fraction(3), "nice": Fraction(1)}
 

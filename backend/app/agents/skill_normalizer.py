@@ -40,11 +40,15 @@ class SkillNormalizer:
         return self._taxonomy.lookup(name) or self._taxonomy.fuzzy_lookup(name)
 
     def resolve(self, name: str) -> list[str]:
-        """All canonical ids in a name like "Python (pandas, NumPy)" or "HTML/CSS"."""
+        """All canonical ids in a name like "Python (pandas, NumPy)" or "HTML/CSS".
+
+        A combined skill also counts as each named part: "Data structures and algorithms"
+        is dsa, data-structures and algorithms."""
         whole = self._taxonomy.lookup(name)
-        if whole:
-            return [whole]
         parts = [p for p in _SPLIT_RE.split(name) if p.strip()]
+        if whole:
+            named = (self._taxonomy.lookup(p) for p in parts) if len(parts) > 1 else ()
+            return list(dict.fromkeys([whole, *(i for i in named if i)]))
         if len(parts) > 1:
             found = (self._single(p) for p in parts)
             return list(dict.fromkeys(i for i in found if i))

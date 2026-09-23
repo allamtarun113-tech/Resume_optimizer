@@ -25,8 +25,11 @@ import {
 
 function MatchRow({ match }: { match: RequirementMatch }) {
   const explain = useExplain("requirement", String(match.requirement_index));
-  const direct = match.evidence.filter((e) => e.direct);
-  const shown = (direct.length ? direct : match.evidence).slice(0, 4);
+  // Everything we found, exact matches first; related ones are labelled as such.
+  const shown = [
+    ...match.evidence.filter((e) => e.direct),
+    ...match.evidence.filter((e) => !e.direct),
+  ].slice(0, 5);
 
   return (
     <li className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0">

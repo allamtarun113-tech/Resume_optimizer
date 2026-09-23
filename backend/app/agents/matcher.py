@@ -221,13 +221,29 @@ class Matcher:
                 pending.append(i)
 
         if pending:
-            await self._judge(profile, requirements, results, pending, analysis_id, user_id)
+            await self._judge(
+                profile, requirements, normalized, results, pending, analysis_id, user_id
+            )
         return results
+
+    def _contradicts_taxonomy(
+        self, ref: EvidenceRef, known: set[str], normalized: NormalizedSkills
+    ) -> bool:
+        """A skill the taxonomy knows can only support a known requirement through the
+        taxonomy (same id or `implies`). Stops the LLM linking unrelated skills, e.g.
+        "Linear algebra" as evidence for "Algorithms"."""
+        if ref.kind != "skill":
+            return False
+        ids = normalized.mention_ids[ref.index]
+        return bool(ids) and not any(
+            sid in known or known & self._taxonomy.implied_by(sid) for sid in ids
+        )
 
     async def _judge(
         self,
         profile: StudentProfile,
         requirements: JobRequirements,
+        normalized: NormalizedSkills,
         results: list[RequirementEvidence],
         pending: list[int],
         analysis_id: str | None,
@@ -262,6 +278,16 @@ class Matcher:
                 continue
             direct = judgement.relation == "direct"
             refs = [r for cid in judgement.evidence_ids for r in catalog.refs(cid, direct=direct)]
+            known = {
+                i
+                for i in (
+                    normalized.requirement_ids[index],
+                    *normalized.requirement_alternatives[index],
+                )
+                if i
+            }
+            if known:
+                refs = [r for r in refs if not self._contradicts_taxonomy(r, known, normalized)]
             if not refs:
                 continue
             current = results[index]

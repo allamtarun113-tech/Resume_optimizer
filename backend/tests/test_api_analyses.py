@@ -9,6 +9,7 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.config import Settings, get_settings
 from app.llm.client import LLMClient
 from app.main import create_app
+from app.scoring.weights import SCORING_VERSION
 from tests.builders import judged
 from tests.fakes import FakeModel, InMemoryRepository
 from tests.samples import (
@@ -178,7 +179,7 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
     # Python listed only 0.7; FastAPI shown in a project 0.7; AWS via certification 0.7.
     # 100 × (2.1 + 2.1 + 0 + 0.7 + 0) / (3 + 3 + 3 + 1 + 1.2) = 43.75 -> 44
     assert body["fit_score"] == 44
-    assert body["scoring_version"] == "2"
+    assert body["scoring_version"] == SCORING_VERSION
     buckets = {m["name"]: m["bucket"] for m in body["matches"]}
     assert buckets == {
         "Python": "weak_in_resume",

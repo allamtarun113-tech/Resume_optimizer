@@ -145,7 +145,7 @@ def test_taxonomy_validation(skills: list[dict[str, Any]], message: str) -> None
         ("Python (pandas, NumPy)", ["python", "pandas", "numpy"]),
         ("HTML/CSS", ["html", "css"]),
         ("CI/CD", ["ci-cd"]),
-        ("Data structures and algorithms", ["dsa"]),
+        ("Data structures and algorithms", ["dsa", "data-structures", "algorithms"]),
         ("React & Redux", ["react", "redux"]),
         ("Flask", ["flask"]),
         ("Underwater welding", []),
@@ -302,6 +302,33 @@ async def test_llm_judgements_map_ids_back_to_evidence() -> None:
     assert cloud.method == "implied"
     assert cloud.evidence[0].source == "supplementary:d1"
     assert rust.method == "none" and rust.evidence == []
+
+
+async def test_combined_skill_is_direct_evidence_for_each_part() -> None:
+    p = profile(skills=[skill("Data Structures and Algorithms"), skill("Linear Algebra")])
+    evidence, model = await _match(p, reqs(req("algorithms"), req("linear algebra")))
+    algorithms, algebra = evidence
+    assert algorithms.method == "taxonomy"
+    assert [(r.label, r.direct) for r in algorithms.evidence] == [
+        ("Data Structures and Algorithms", True)
+    ]
+    assert [r.label for r in algebra.evidence] == ["Linear Algebra"]
+    assert model.requests == []
+
+
+async def test_llm_cannot_link_unrelated_known_skills() -> None:
+    # Algorithms and linear algebra are both in the taxonomy and unrelated, so the LLM
+    # calling "Linear Algebra" direct evidence for "Algorithms" is ignored. A skill the
+    # taxonomy doesn't know is still up to the LLM.
+    p = profile(skills=[skill("Linear Algebra"), skill("Underwater welding")])
+    evidence, _ = await _match(
+        p,
+        reqs(req("Algorithms"), req("Diving safety", "domain")),
+        judged(("R1", "direct", ["K1", "K2"]), ("R2", "direct", ["K1", "K2"])),
+    )
+    algorithms, diving = evidence
+    assert [r.label for r in algorithms.evidence] == ["Underwater welding"]
+    assert [r.label for r in diving.evidence] == ["Linear Algebra", "Underwater welding"]
 
 
 async def test_experience_requirements_always_go_to_the_llm() -> None:
