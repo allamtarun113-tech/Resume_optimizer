@@ -38,6 +38,12 @@ The interview question bank is built offline from `ingestion/sources.yaml`:
 `GITHUB_PERSONAL_ACCESS_TOKEN` (fine-grained, public repositories read-only) and
 `OPENAI_API_KEY` in `backend/.env`.
 
+End-to-end test against the live site (Playwright, desktop + mobile):
+`pnpm e2e` in `frontend/`. It signs in as a dedicated test user whose credentials are in
+`frontend/.env.e2e.local` (gitignored: `E2E_BASE_URL`, `E2E_EMAIL`, `E2E_PASSWORD`), runs
+a full analysis and interview prep, downloads the report, then deletes the analysis.
+Repeat runs are mostly LLM cache hits. Cost report: `uv run python -m scripts.cost_report`.
+
 After changing a backend API schema, regenerate the frontend types:
 `uv run python -m scripts.export_openapi` (in `backend/`), then `pnpm gen:api` (in `frontend/`).
 CI fails if they are out of date.

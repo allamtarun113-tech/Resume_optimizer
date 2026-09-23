@@ -1,0 +1,61 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 933 >>
+stream
+BT
+/F1 10 Tf
+12 TL
+40 800 Td
+(Asha Rao) Tj T*
+(asha.rao@example.com | github.com/asharao) Tj T*
+() Tj T*
+(SUMMARY) Tj T*
+(Final-year Computer Science student focused on backend development.) Tj T*
+() Tj T*
+(EDUCATION) Tj T*
+(B.Tech in Computer Science, Example Institute of Technology    2022 - 2026) Tj T*
+() Tj T*
+(TECHNICAL SKILLS) Tj T*
+(Languages: Python, SQL, JavaScript) Tj T*
+(Frameworks: FastAPI, React) Tj T*
+(Tools: Git, PostgreSQL) Tj T*
+() Tj T*
+(PROJECTS) Tj T*
+(Campus Food Ordering App) Tj T*
+(- Built a FastAPI backend with PostgreSQL serving 2,000 students) Tj T*
+(- Added JWT authentication and Redis caching, cutting p95 latency from 800ms to 120ms) Tj T*
+(Library Seat Booking) Tj T*
+(- React frontend with a REST API for booking study seats) Tj T*
+() Tj T*
+(EXPERIENCE) Tj T*
+(Backend Intern, Acme Payments    May 2025 - Jul 2025) Tj T*
+(- Wrote REST endpoints in Python for refund processing) Tj T*
+() Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001225 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1295
+%%EOF
