@@ -44,4 +44,4 @@ next-env.d.ts
 !.env.example
 test-results
 playwright-report
-e2e/.shots.mjs
+e2e/.shot*.mjs
