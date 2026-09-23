@@ -226,7 +226,7 @@ Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scann
 
 Each phase ends with working, deployed software plus tests. **Don't start a phase until the previous phase's exit criteria pass.** At the start of each phase, confirm open questions with the user before writing code.
 
-**Status:** Phases 0–5 ✅ done (2026-09-23). Phase 6 in progress.
+**Status:** All phases (0–6) ✅ done (2026-09-23). v1 is live. See §14 for what is out of scope.
 Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 
 **Live:** frontend https://resume-optimizer-ten-virid.vercel.app · backend https://resume-optimizer-api-jzq4.onrender.com · Supabase project ref `toesvlmefyvghivevjie`. The Vercel project's Root Directory must be `frontend`. `ALLOWED_ORIGINS` lives in `render.yaml`.
@@ -299,7 +299,7 @@ Implementation notes (decided during Phase 5):
 - InterviewPrep agent + "Prepare Me for Interview" button. UI groups questions by category, with the source shown on each question and per-project drill-down sections.
 - **Exit:** 100% of questions have a `source`. Technical questions change according to the JD. Each resume project gets deep, specific questions.
 
-### Phase 6: History, polish and hardening
+### Phase 6: History, polish and hardening ✅
 Implementation notes (decided during Phase 6):
 - API: `GET /analyses` (history with role title/company, newest first, max 50), `POST /analyses/{id}/rerun` (same resume and supporting docs incl. notes, new JD; profile extraction is a cache hit), `DELETE /analyses/{id}` (cascades results and the interview set; documents are kept because re-runs share them), `GET /analyses/{id}/export` (Markdown report incl. the interview set). PDF = browser print with `print:hidden` on UI chrome.
 - Limits: `DAILY_ANALYSIS_LIMIT` (re-runs count) and `DAILY_UPLOAD_LIMIT` (default 40 files/pasted texts per 24 h). Upload file names are reduced to a printable base name (display only; storage paths are UUIDs).

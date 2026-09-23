@@ -27,6 +27,7 @@ export function LoginForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   const callbackUrl = () =>
     `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
@@ -59,10 +60,42 @@ export function LoginForm({ next }: { next: string }) {
         router.refresh();
         return;
       }
-      toast.success(
-        "If this email is new, a confirmation link is on its way. Already registered? Sign in instead.",
-      );
+      setSentTo(email);
     }
+  }
+
+  if (sentTo) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Check your email</CardTitle>
+          <CardDescription>
+            We sent a confirmation link to <strong>{sentTo}</strong>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4 text-sm text-muted-foreground">
+          <p>
+            Open it on any device and click <em>Confirm email address</em> once;
+            you&apos;ll be signed in. It can take a minute to arrive, so check
+            Spam or Promotions too.
+          </p>
+          <p>
+            Already have an account with this email? No new email is sent; just
+            sign in.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSentTo(null);
+              setMode("signin");
+              setPassword("");
+            }}
+          >
+            Back to sign in
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   async function handleGoogle() {
