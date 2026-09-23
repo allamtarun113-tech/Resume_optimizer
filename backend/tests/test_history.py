@@ -80,16 +80,13 @@ def test_rerun_validation(h: Harness) -> None:
     )
 
 
-def test_rerun_counts_towards_the_daily_limit(h: Harness) -> None:
+def test_reruns_are_not_limited(h: Harness) -> None:
     original = run(h)
-    for _ in range(2):
+    for _ in range(12):
         assert (
             h.client.post(f"/analyses/{original}/rerun", json={"jd_text": OTHER_JD}).status_code
             == 202
         )
-    assert (
-        h.client.post(f"/analyses/{original}/rerun", json={"jd_text": OTHER_JD}).status_code == 429
-    )
 
 
 def test_delete_analysis(h: Harness) -> None:

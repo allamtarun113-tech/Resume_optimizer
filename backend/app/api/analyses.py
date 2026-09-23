@@ -1,4 +1,3 @@
-from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -46,12 +45,6 @@ async def _start_analysis(
     supporting_ids: list[str],
     jd_text: str,
 ) -> AnalysisCreated:
-    since = datetime.now(UTC) - timedelta(days=1)
-    if await repo.count_analyses_since(user.id, since) >= settings.daily_analysis_limit:
-        raise HTTPException(
-            status.HTTP_429_TOO_MANY_REQUESTS,
-            f"You've reached the limit of {settings.daily_analysis_limit} analyses per day.",
-        )
     jd_text = normalize_text(jd_text)
     jd = await repo.insert_document(
         user_id=user.id,

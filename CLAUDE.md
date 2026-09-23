@@ -185,7 +185,7 @@ The InterviewPrep and LearningPathPlanner agents call these through an **MCP cli
 4. **Send only what's needed.** Agents get the relevant sections or JSON, never whole raw documents when extracted JSON exists. Downstream agents get the `StudentProfile` JSON, not raw resume text.
 5. **Batch.** Handle ambiguous matches and suggestion drafting in single calls, not one call per item.
 6. **Lazy features.** InterviewPrep runs only on button click, and its output is stored for reuse.
-7. **Budgets.** Each agent has a `max_output_tokens`. Each user has a daily analysis limit (`DAILY_ANALYSIS_LIMIT`, default 10).
+7. **Budgets.** Each agent has a `max_output_tokens`. There is no daily analysis limit (users pay with their own OpenAI key); uploads are capped by `DAILY_UPLOAD_LIMIT`.
 8. **Accounting.** Every LLM call logs `{agent, model, input_tokens, output_tokens, cached, latency_ms, analysis_id}` to `llm_calls`. The target is **< $0.01 per analysis** on the small model.
 9. **Prompt versions.** Prompts live in `backend/app/agents/prompts/*.md` with a `PROMPT_VERSION`. Changing a prompt means bumping the version.
 
@@ -307,7 +307,7 @@ Implementation notes (decided during Phase 5):
 ### Phase 6: History, polish and hardening ✅
 Implementation notes (decided during Phase 6):
 - API: `GET /analyses` (history with role title/company, newest first, max 50), `POST /analyses/{id}/rerun` (same resume and supporting docs incl. notes, new JD; profile extraction is a cache hit), `DELETE /analyses/{id}` (cascades results and the interview set; documents are kept because re-runs share them), `GET /analyses/{id}/export` (Markdown report incl. the interview set). PDF = browser print with `print:hidden` on UI chrome.
-- Limits: `DAILY_ANALYSIS_LIMIT` (re-runs count) and `DAILY_UPLOAD_LIMIT` (default 40 files/pasted texts per 24 h). Upload file names are reduced to a printable base name (display only; storage paths are UUIDs).
+- Limits: `DAILY_UPLOAD_LIMIT` (default 40 files/pasted texts per 24 h). Upload file names are reduced to a printable base name (display only; storage paths are UUIDs).
 - Cost: view `llm_usage_daily`; `uv run python -m scripts.cost_report` (prices from `OPENAI_PRICE_INPUT_PER_M` / `OPENAI_PRICE_OUTPUT_PER_M`, target `COST_TARGET_PER_ANALYSIS`). Live baseline on gpt-4o-mini: about $0.0012 per analysis including interview prep.
 - E2E: `frontend/e2e/full-flow.spec.ts` (Playwright; desktop Chrome + Pixel 7) runs against production as the confirmed test user `allamtarun.113+e2e@gmail.com` (created via the Supabase admin API; password only in `frontend/.env.e2e.local`). It covers sign in → upload → analysis → suggestions → interview prep with sources → Markdown export → history → delete. Not in CI (production + paid LLM calls); run `pnpm e2e` locally.
 - Auth email: custom SMTP via Gmail (app password entered in the Supabase dashboard only), "Confirm email" on, Site URL = the Vercel domain, minimum password length 8. The "Confirm signup" email template links to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/`, verified server-side with `verifyOtp`, so links work on any device (the PKCE `/auth/callback` flow needs the same browser; it stays for OAuth). Auth errors (including `#error_code=` fragments) are mapped to friendly messages in `lib/auth-errors.ts`.
@@ -335,7 +335,7 @@ SUPABASE_JWT_SECRET=
 DATABASE_URL=                  # Supabase Postgres (pooler) connection string
 MCP_SERVICE_TOKEN=
 ALLOWED_ORIGINS=http://localhost:3000
-DAILY_ANALYSIS_LIMIT=10
+DAILY_UPLOAD_LIMIT=100
 ```
 **frontend/.env.local**
 ```

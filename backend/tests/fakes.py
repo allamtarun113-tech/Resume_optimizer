@@ -60,11 +60,6 @@ class InMemoryRepository:
     async def get_documents(self, user_id: str, ids: list[str]) -> list[DocumentRecord]:
         return [d for i in ids if (d := self.documents.get(i)) is not None and d.user_id == user_id]
 
-    async def count_analyses_since(self, user_id: str, since: datetime) -> int:
-        return sum(
-            1 for a in self.analyses.values() if a.user_id == user_id and a.created_at >= since
-        )
-
     async def count_uploads_since(self, user_id: str, since: datetime) -> int:
         return sum(
             1

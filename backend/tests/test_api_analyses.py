@@ -36,9 +36,7 @@ class Harness:
             }
         )
         self.user = USER
-        self.settings = settings.model_copy(
-            update={"openai_model_small": "small-model", "daily_analysis_limit": 3}
-        )
+        self.settings = settings.model_copy(update={"openai_model_small": "small-model"})
         app = create_app()
         app.dependency_overrides[get_settings] = lambda: self.settings
         app.dependency_overrides[get_repository] = lambda: self.repo
@@ -267,13 +265,10 @@ def test_analysis_validates_documents(h: Harness) -> None:
     assert h.client.get(f"/analyses/{analysis_id}").status_code == 404
 
 
-def test_daily_analysis_limit(h: Harness) -> None:
+def test_no_daily_analysis_limit(h: Harness) -> None:
     resume_id = h.upload_resume().json()["id"]
-    for _ in range(3):
+    for _ in range(15):
         assert h.analyze(resume_id).status_code == 202
-    res = h.analyze(resume_id)
-    assert res.status_code == 429
-    assert "3 analyses per day" in res.json()["detail"]
 
 
 def test_unknown_analysis_is_404(h: Harness) -> None:

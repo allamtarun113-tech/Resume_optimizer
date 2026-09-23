@@ -129,20 +129,6 @@ class SupabaseRepository:
 
     # -- analyses -----------------------------------------------------------------------
 
-    async def count_analyses_since(self, user_id: str, since: datetime) -> int:
-        response = await self._request(
-            "HEAD",
-            "/rest/v1/analyses",
-            params={
-                "select": "id",
-                "user_id": f"eq.{user_id}",
-                "created_at": f"gte.{since.isoformat()}",
-            },
-            headers={"Prefer": "count=exact"},
-        )
-        # Content-Range: "*/<count>" or "0-4/<count>"
-        return int(response.headers.get("content-range", "*/0").rsplit("/", 1)[-1])
-
     async def count_uploads_since(self, user_id: str, since: datetime) -> int:
         response = await self._request(
             "HEAD",
