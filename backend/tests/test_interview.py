@@ -464,7 +464,7 @@ async def test_outdated_interview_sets_are_regenerated(api: tuple[TestClient, An
         h.repo.bank.append((q, vector))
     analysis_id = h.analyze(h.upload_resume().json()["id"]).json()["id"]
     # A set stored by an older version (smaller, no version field).
-    old = {"personal": [], "projects": [], "technical": [], "general": []}
+    old: dict[str, Any] = {"personal": [], "projects": [], "technical": [], "general": []}
     h.repo.interview_sets[analysis_id] = old
 
     assert client.get(f"/analyses/{analysis_id}/interview").status_code == 404

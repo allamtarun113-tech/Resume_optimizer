@@ -102,7 +102,7 @@ def _analysis(h: Harness) -> AnalysisResponse:
 def _question(text: str, category: str = "technical") -> InterviewQuestion:
     return InterviewQuestion(
         text=text,
-        category=category,  # type: ignore[arg-type]
+        category=category,
         topic="Python" if category == "technical" else None,
         dimension="trade-offs" if category == "project" else None,
         source=QuestionSource(kind="template", label="bank", url=None, license=None),
