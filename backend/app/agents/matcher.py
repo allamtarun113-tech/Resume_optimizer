@@ -1,9 +1,13 @@
 """Agent 5: Matcher (minimal LLM). Finds the student's evidence for each requirement.
 
-Order: taxonomy id match (direct, then "implies" edges) -> fuzzy name match -> one batched
-EvidenceMatcher LLM call for everything still without direct evidence (domains, soft
-skills, education, experience, and skills the taxonomy doesn't know).
+Order: taxonomy id match (direct, then "implies" edges) -> fuzzy name match -> batched
+EvidenceMatcher LLM calls for everything still without direct evidence (domains, soft
+skills, education, experience, and skills the taxonomy doesn't know): one call over the
+resume's evidence and one over the supplementary evidence, so the resume's judgements
+depend only on the resume.
 """
+
+import asyncio
 
 from rapidfuzz import fuzz
 
@@ -31,14 +35,24 @@ def _clip(text: str, limit: int = MAX_DETAIL_CHARS) -> str:
 
 
 class EvidenceCatalog:
-    """Numbered evidence items for the LLM prompt, and their mapping back to EvidenceRefs."""
+    """Numbered evidence items for the LLM prompt, and their mapping back to EvidenceRefs.
 
-    def __init__(self, profile: StudentProfile) -> None:
+    `sources` limits the catalog to evidence from those documents ("resume" or
+    "supplementary"); refs keep their index in the full profile."""
+
+    def __init__(
+        self, profile: StudentProfile, sources: tuple[str, ...] = ("resume", "supplementary")
+    ) -> None:
         self.lines: list[str] = []
         self._refs: dict[str, list[EvidenceRef]] = {}
 
+        def keep(source: str) -> bool:
+            return ("resume" if source == "resume" else "supplementary") in sources
+
         skill_groups: dict[str, str] = {}  # skill_key -> catalog id
         for i, m in enumerate(profile.skills):
+            if not keep(m.source):
+                continue
             ref = skill_ref(profile, i, direct=True)
             key = skill_key(m.name)
             if key not in skill_groups:
@@ -46,15 +60,21 @@ class EvidenceCatalog:
             self._refs[skill_groups[key]].append(ref)
 
         for i, p in enumerate(profile.projects):
+            if not keep(p.source):
+                continue
             detail = f"{p.summary} Tech: {', '.join(p.technologies)}. {' '.join(p.highlights)}"
             cid = self._add("P", f"project: {p.name} — {_clip(detail)}")
             self._refs[cid].append(project_ref(profile, i, direct=True))
         for i, x in enumerate(profile.experience):
+            if not keep(x.source):
+                continue
             dates = f"{x.start or '?'} to {x.end or '?'}, {x.employment_type}"
             detail = f"Tech: {', '.join(x.technologies)}. {' '.join(x.highlights)}"
             cid = self._add("X", f"job: {x.title} at {x.organization} ({dates}) — {_clip(detail)}")
             self._refs[cid].append(experience_ref(profile, i, direct=True))
         for i, e in enumerate(profile.education):
+            if not keep(e.source):
+                continue
             parts = [e.degree, e.field_of_study, e.institution, e.grade]
             cid = self._add("E", "education: " + ", ".join(p for p in parts if p))
             self._refs[cid].append(
@@ -69,6 +89,8 @@ class EvidenceCatalog:
                 )
             )
         for i, c in enumerate(profile.certifications):
+            if not keep(c.source):
+                continue
             issuer = f" ({c.issuer})" if c.issuer else ""
             cid = self._add("C", f"certification: {c.name}{issuer}")
             self._refs[cid].append(
@@ -192,7 +214,8 @@ class Matcher:
         user_id: str | None = None,
     ) -> list[RequirementEvidence]:
         results: list[RequirementEvidence] = []
-        pending: list[int] = []
+        pending: list[int] = []  # no direct evidence anywhere yet
+        pending_resume: list[int] = []  # no direct evidence in the resume yet
         for i, req in enumerate(requirements.requirements):
             skill_id = normalized.requirement_ids[i]
             method: MatchMethod
@@ -217,13 +240,24 @@ class Matcher:
                 )
             )
             # Experience requirements need judgement about which jobs are relevant.
-            if req.category == "experience" or not has_direct:
+            experience = req.category == "experience"
+            if experience or not has_direct:
                 pending.append(i)
+            if experience or not any(r.direct and r.source == "resume" for r in refs):
+                pending_resume.append(i)
 
-        if pending:
-            await self._judge(
-                profile, requirements, normalized, results, pending, analysis_id, user_id
-            )
+        # Resume evidence and supplementary evidence are judged in separate calls, so the
+        # resume's judgements (and the job fit score) never change with the other documents.
+        catalogs = [
+            (EvidenceCatalog(profile, ("resume",)), pending_resume),
+            (EvidenceCatalog(profile, ("supplementary",)), pending),
+        ]
+        asks = [(c, idx) for c, idx in catalogs if c.lines and idx]
+        answers = await asyncio.gather(
+            *(self._ask(requirements, c, idx, analysis_id, user_id) for c, idx in asks)
+        )
+        for (catalog, idx), judged in zip(asks, answers, strict=True):
+            self._apply(judged, catalog, idx, results, normalized)
         return results
 
     def _contradicts_taxonomy(
@@ -239,26 +273,23 @@ class Matcher:
             sid in known or known & self._taxonomy.implied_by(sid) for sid in ids
         )
 
-    async def _judge(
+    async def _ask(
         self,
-        profile: StudentProfile,
         requirements: JobRequirements,
-        normalized: NormalizedSkills,
-        results: list[RequirementEvidence],
+        catalog: EvidenceCatalog,
         pending: list[int],
         analysis_id: str | None,
         user_id: str | None,
-    ) -> None:
-        catalog = EvidenceCatalog(profile)
+    ) -> EvidenceJudgements:
         req_lines = []
         for i in pending:
             req = requirements.requirements[i]
             req_lines.append(f'R{i + 1} [{req.category}] {req.name} — "{_clip(req.evidence)}"')
         input_text = (
             "<requirements>\n" + "\n".join(req_lines) + "\n</requirements>\n\n"
-            "<evidence>\n" + ("\n".join(catalog.lines) or "(none)") + "\n</evidence>"
+            "<evidence>\n" + "\n".join(catalog.lines) + "\n</evidence>"
         )
-        judged = await self._llm.parse(
+        return await self._llm.parse(
             agent=self.name,
             prompt=self.prompt,
             input_text=input_text,
@@ -268,6 +299,14 @@ class Matcher:
             user_id=user_id,
         )
 
+    def _apply(
+        self,
+        judged: EvidenceJudgements,
+        catalog: EvidenceCatalog,
+        pending: list[int],
+        results: list[RequirementEvidence],
+        normalized: NormalizedSkills,
+    ) -> None:
         allowed = set(pending)
         for judgement in judged.judgements:
             try:

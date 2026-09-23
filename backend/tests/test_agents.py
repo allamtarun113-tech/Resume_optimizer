@@ -90,9 +90,31 @@ async def test_profile_extractor_resolves_sources_and_drops_unknown() -> None:
     }  # "Made-up skill" cited S9, which doesn't exist
     assert profile.projects[0].source == "resume"
     assert profile.education[0].grade == "8.7/10"
-    sent = model.requests[0]["input_text"]
-    assert "Campus Food Ordering App" in sent
-    assert "k3s cluster" in sent
+    # The resume and the supporting material are extracted separately.
+    resume_prompt, supplementary_prompt = sorted(
+        (r["input_text"] for r in model.requests), key=lambda t: "RESUME" not in t
+    )
+    assert resume_prompt.count("<document id=") == 1
+    assert "Campus Food Ordering App" in resume_prompt
+    assert '<document id="S1">' in supplementary_prompt
+    assert "k3s cluster" in supplementary_prompt
+    assert "RESUME" not in supplementary_prompt
+
+
+async def test_resume_extraction_does_not_depend_on_other_documents() -> None:
+    llm, model, _ = _llm()
+    resume = _doc("r", RESUME_CLASSIC)
+    extractor = ProfileExtractor(llm)
+    await extractor.run(ProfileExtractorInput(resume=resume, supplementary=[]))
+    assert len(model.requests) == 1
+    # Different notes, same resume: the resume part is a cache hit.
+    for notes in ("Additional skills: Kubernetes.", "Additional skills: kubernetes."):
+        await extractor.run(
+            ProfileExtractorInput(resume=resume, supplementary=[_doc("n", notes * 3)])
+        )
+    prompts = [r["input_text"] for r in model.requests]
+    assert sum("RESUME" in p for p in prompts) == 1
+    assert len(prompts) == 3
 
 
 async def test_jd_analyzer_wraps_input_and_dedupes() -> None:

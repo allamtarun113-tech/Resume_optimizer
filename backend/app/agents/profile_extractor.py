@@ -1,5 +1,11 @@
-"""Agent 2: ProfileExtractor (LLM, small). Resume + supplementary text -> StudentProfile."""
+"""Agent 2: ProfileExtractor (LLM, small). Resume + supplementary text -> StudentProfile.
 
+The resume and the supplementary material are extracted in two separate (parallel) calls,
+each cached on its own text. So the resume's extraction — and with it the job fit score —
+depends only on the resume: editing notes or adding a document never changes it.
+"""
+
+import asyncio
 import logging
 from typing import Any
 
@@ -97,6 +103,15 @@ def resolve_sources(profile: StudentProfile, sources: dict[str, str]) -> Student
     return profile.model_copy(update=updates)
 
 
+def merge_profiles(resume: StudentProfile, others: list[StudentProfile]) -> StudentProfile:
+    """Resume items first, then supplementary ones; the headline comes from the resume."""
+    updates: dict[str, list[Any]] = {
+        field: [item for p in (resume, *others) for item in getattr(p, field)]
+        for field in _SOURCED_FIELDS
+    }
+    return resume.model_copy(update=updates)
+
+
 class ProfileExtractor:
     name = "profile_extractor"
     uses_llm = True
@@ -105,14 +120,12 @@ class ProfileExtractor:
         self._llm = llm
         self.prompt = load_prompt(self.name)
 
-    async def run(
+    async def _extract(
         self,
-        inp: ProfileExtractorInput,
-        *,
-        analysis_id: str | None = None,
-        user_id: str | None = None,
+        labeled: list[tuple[str, str, SourceDocument]],
+        analysis_id: str | None,
+        user_id: str | None,
     ) -> StudentProfile:
-        labeled = label_documents(inp)
         profile = await self._llm.parse(
             agent=self.name,
             prompt=self.prompt,
@@ -123,3 +136,20 @@ class ProfileExtractor:
             user_id=user_id,
         )
         return resolve_sources(profile, {label: source for label, source, _ in labeled})
+
+    async def run(
+        self,
+        inp: ProfileExtractorInput,
+        *,
+        analysis_id: str | None = None,
+        user_id: str | None = None,
+    ) -> StudentProfile:
+        labeled = label_documents(inp)
+        parts = [
+            [x for x in labeled if x[0] == RESUME_LABEL],
+            [x for x in labeled if x[0] != RESUME_LABEL],
+        ]
+        resume, *others = await asyncio.gather(
+            *(self._extract(part, analysis_id, user_id) for part in parts if part)
+        )
+        return merge_profiles(resume, others)

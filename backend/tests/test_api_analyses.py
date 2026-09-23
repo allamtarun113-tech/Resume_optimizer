@@ -161,7 +161,7 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
         "done",
     ]
     assert body["prompt_versions"] == {
-        "profile_extractor": "1",
+        "profile_extractor": "2",
         "jd_analyzer": "2",
         "evidence_matcher": "1",
         "resume_advisor": "1",
@@ -172,7 +172,8 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
     skills = {s["name"]: s["source"] for s in body["student_profile"]["skills"]}
     assert skills["Python"] == "resume"
     assert skills["Kubernetes"].startswith("supplementary:")
-    assert body["llm_usage"]["calls"] == 3
+    # Profile (resume, supporting), JD, matcher (resume evidence, supporting evidence).
+    assert body["llm_usage"]["calls"] == 5
     assert body["llm_usage"]["cached_calls"] == 0
 
     # Requirements (deduped): Python, FastAPI, Docker (must), AWS (nice), Communication.
@@ -196,12 +197,12 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
     # Communication is a soft skill. Nothing to plan, so no planner LLM call.
     assert body["learning_path"] == {"steps": [], "total_hours": 0.0}
 
-    # The profile prompt carried the resume, the supporting doc and the extra text.
-    profile_prompt = next(
+    # Two profile prompts: the resume alone, then the supporting doc and the extra text.
+    profile_prompts = [
         r["input_text"] for r in h.model.requests if r["output_type"] == "StudentProfile"
-    )
-    assert profile_prompt.count("<document id=") == 3
-    assert "Terraform" in profile_prompt
+    ]
+    assert sorted(p.count("<document id=") for p in profile_prompts) == [1, 2]
+    assert any("Terraform" in p and "RESUME" not in p for p in profile_prompts)
 
     analysis = h.repo.analyses[analysis_id]
     extra_docs = [h.repo.documents[i] for i in analysis.supporting_doc_ids]
@@ -216,12 +217,12 @@ def test_identical_second_run_is_fully_cached(h: Harness) -> None:
 
     first_body = h.client.get(f"/analyses/{first.json()['id']}").json()
     second_body = h.client.get(f"/analyses/{second.json()['id']}").json()
-    assert len(h.model.requests) == 3  # only the first run reached the model
+    assert len(h.model.requests) == 5  # only the first run reached the model
     assert second_body["fit_score"] == first_body["fit_score"]
     assert second_body["matches"] is not None
     assert second_body["llm_usage"] == {
-        "calls": 3,
-        "cached_calls": 3,
+        "calls": 5,
+        "cached_calls": 5,
         "input_tokens": 0,
         "output_tokens": 0,
     }
@@ -340,3 +341,17 @@ def test_suggestions_flow_through_the_pipeline(h: Harness) -> None:
         "Its quote isn't in your documents."
     ]
     assert body["gaps"] == []
+
+
+def test_changing_notes_never_changes_the_resume_score(h: Harness) -> None:
+    # Same resume and job; the notes differ only in letter case.
+    first = h.analyze(h.upload_resume().json()["id"], extra_text="Additional skills: Kubernetes.")
+    calls_before = len(h.model.requests)
+    second = h.analyze(h.upload_resume().json()["id"], extra_text="Additional skills: kubernetes.")
+    first_body = h.client.get(f"/analyses/{first.json()['id']}").json()
+    second_body = h.client.get(f"/analyses/{second.json()['id']}").json()
+
+    assert second_body["fit_score"] == first_body["fit_score"]
+    # Only the notes were read again; everything about the resume came from the cache.
+    (new_prompt,) = [r["input_text"] for r in h.model.requests[calls_before:]]
+    assert new_prompt.startswith('<document id="S1">') and "kubernetes" in new_prompt

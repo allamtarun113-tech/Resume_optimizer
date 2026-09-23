@@ -287,12 +287,16 @@ async def test_llm_judgements_map_ids_back_to_evidence() -> None:
     )
     evidence, model = await _match(p, requirements, judgements)
 
-    prompt = model.requests[0]["input_text"]
-    assert prompt.count("skill: Python") == 1  # repeated skill names are grouped
-    assert "P1 project: Bot" in prompt
-    assert "X1 job: TA at Uni (2024-01 to 2024-12, part_time)" in prompt
-    assert "E1 education: B.Tech, Computer Science, State University" in prompt
-    assert "C1 certification: AWS Cloud Practitioner" in prompt
+    # Resume evidence and supplementary evidence are judged in separate calls.
+    resume_prompt, other_prompt = (r["input_text"] for r in model.requests)
+    assert resume_prompt.count("skill: Python") == 1  # repeated skill names are grouped
+    assert "P1 project: Bot" in resume_prompt
+    assert "X1 job: TA at Uni (2024-01 to 2024-12, part_time)" in resume_prompt
+    assert "E1 education: B.Tech, Computer Science, State University" in resume_prompt
+    assert "certification" not in resume_prompt
+    assert other_prompt.endswith(
+        "<evidence>\nC1 certification: AWS Cloud Practitioner\n</evidence>"
+    )
 
     python, degree, mentoring, cloud, rust = evidence
     assert python.method == "taxonomy"
