@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { signUpOutcome } from "@/lib/signup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,13 +55,18 @@ export function LoginForm({ next }: { next: string }) {
       });
       setLoading(false);
       if (error) return toast.error(error.message);
-      // A session is returned when email confirmation is disabled.
-      if (data.session) {
+      const outcome = signUpOutcome(data);
+      if (outcome === "signed_in") {
         router.push(next);
         router.refresh();
-        return;
+      } else if (outcome === "already_exists") {
+        toast.error("User already exists. Sign in instead.");
+        setMode("signin");
+        setPassword("");
+      } else {
+        toast.success("Check your email to confirm your email address.");
+        setSentTo(email);
       }
-      setSentTo(email);
     }
   }
 
@@ -78,10 +84,6 @@ export function LoginForm({ next }: { next: string }) {
             Open it on any device and click <em>Confirm email address</em> once;
             you&apos;ll be signed in. It can take a minute to arrive, so check
             Spam or Promotions too.
-          </p>
-          <p>
-            Already have an account with this email? No new email is sent; just
-            sign in.
           </p>
           <Button
             variant="outline"
