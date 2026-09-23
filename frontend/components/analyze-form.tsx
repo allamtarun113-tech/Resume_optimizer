@@ -17,10 +17,11 @@ import {
   MAX_SUPPORTING_DOCS,
   RESUME_ACCEPT,
   SUPPORTING_ACCEPT,
-  filledProjects,
+  MAX_ABOUT_CHARS,
   validateAnalyzeInput,
 } from "@/lib/analyze";
-import { formatSkills } from "@/lib/skills";
+import { emptyProject, filledProjects, formatProject } from "@/lib/projects";
+import { buildExtraText } from "@/lib/skills";
 import { showApiError } from "@/lib/errors";
 import type {
   AiSettings,
@@ -30,11 +31,12 @@ import type {
 } from "@/lib/types";
 import { FileDropzone } from "@/components/file-dropzone";
 import { JobDescriptionInput } from "@/components/inputs/job-description-input";
-import { ProjectDescriptions } from "@/components/inputs/project-descriptions";
+import { ProjectList } from "@/components/inputs/project-descriptions";
 import { SkillsInput } from "@/components/inputs/skills-input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 
 function uploadFile(kind: "resume" | "supporting", file: File) {
   const form = new FormData();
@@ -88,7 +90,8 @@ export function AnalyzeForm() {
   const [resume, setResume] = useState<File[]>([]);
   const [jdText, setJdText] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
-  const [projects, setProjects] = useState<string[]>([""]);
+  const [about, setAbout] = useState("");
+  const [projects, setProjects] = useState([emptyProject()]);
   const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
   const [step, setStep] = useState<string | null>(null);
 
@@ -104,6 +107,7 @@ export function AnalyzeForm() {
       resume: resume[0] ?? null,
       jdText,
       skills,
+      about,
       projects,
       supportingFiles,
     };
@@ -115,14 +119,14 @@ export function AnalyzeForm() {
       const [resumeDoc, ...supportingDocs] = await Promise.all([
         uploadFile("resume", input.resume!),
         ...supportingFiles.map((f) => uploadFile("supporting", f)),
-        ...filledProjects(projects).map(uploadText),
+        ...filledProjects(projects).map((p) => uploadText(formatProject(p))),
       ]);
 
       setStep("Starting analysis…");
       const body: AnalysisCreate = {
         resume_doc_id: resumeDoc.id,
         jd_text: jdText,
-        extra_text: formatSkills(skills) || null,
+        extra_text: buildExtraText(skills, about) || null,
         supporting_doc_ids: supportingDocs.map((d) => d.id),
       };
       const created = await apiPostJson<AnalysisCreated>("/analyses", body);
@@ -208,12 +212,31 @@ export function AnalyzeForm() {
             disabled={busy}
           />
         </div>
-        <ProjectDescriptions
-          projects={projects}
-          onChange={setProjects}
-          canAddMore={supportingCount < MAX_SUPPORTING_DOCS}
-          disabled={busy}
-        />
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="about">About your skills & knowledge</Label>
+          <Textarea
+            id="about"
+            rows={5}
+            maxLength={MAX_ABOUT_CHARS}
+            placeholder="In your own words: what you know and how you've used it. e.g. I'm comfortable with SQL joins and window functions from my DBMS course, and I've used Git daily in team projects."
+            disabled={busy}
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Plain English is fine. It&apos;s read alongside your resume, just
+            like your other documents.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label>Projects</Label>
+          <ProjectList
+            projects={projects}
+            onChange={setProjects}
+            canAddMore={supportingCount < MAX_SUPPORTING_DOCS}
+            disabled={busy}
+          />
+        </div>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <Label>Supporting documents</Label>

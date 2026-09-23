@@ -22,3 +22,12 @@ export function addSkills(current: string[], raw: string): string[] {
 export function formatSkills(skills: string[]): string {
   return skills.length ? `Additional skills: ${skills.join(", ")}.` : "";
 }
+
+// Everything from "Anything missing from your resume?" that isn't a document:
+// skill tags plus the student's own plain-English description of what they know.
+export function buildExtraText(skills: string[], about: string): string {
+  const parts = [formatSkills(skills)];
+  if (about.trim())
+    parts.push(`About my skills and knowledge:\n${about.trim()}`);
+  return parts.filter(Boolean).join("\n\n");
+}

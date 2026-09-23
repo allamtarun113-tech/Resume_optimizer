@@ -9,11 +9,13 @@ from hypothesis import strategies as st
 from app.agents.profile_extractor import (
     MAX_SUPPLEMENTARY_CHARS,
     SUPPLEMENTARY_BUDGET,
+    UNTRIMMED_DOCS,
     ProfileExtractorInput,
     SourceDocument,
     build_input,
     fair_limits,
     label_documents,
+    supplementary_limits,
 )
 from app.core.config import Settings
 from app.parsing.text import text_hash
@@ -48,6 +50,23 @@ def test_limits_always_fit_the_budget(lengths: list[int]) -> None:
     assert all(
         0 <= lim <= min(n, MAX_SUPPLEMENTARY_CHARS) for lim, n in zip(limits, lengths, strict=True)
     )
+
+
+def test_up_to_five_documents_are_never_trimmed() -> None:
+    lengths = [30_000, 25_000, 20_000, 10_000, 500]
+    assert UNTRIMMED_DOCS == 5
+    assert supplementary_limits(lengths) == lengths  # 85,500 chars, all kept
+    # Only a single enormous file hits the per-document safety ceiling.
+    assert supplementary_limits([90_000]) == [MAX_SUPPLEMENTARY_CHARS]
+
+
+def test_more_than_five_documents_share_the_budget() -> None:
+    lengths = [40_000] * 6
+    limits = supplementary_limits(lengths)
+    assert sum(limits) <= SUPPLEMENTARY_BUDGET
+    assert limits == [20_000] * 6
+    small = [1_000] * 6  # short documents are never trimmed, even with many of them
+    assert supplementary_limits(small) == small
 
 
 def test_twenty_long_documents_fit_the_prompt_budget() -> None:

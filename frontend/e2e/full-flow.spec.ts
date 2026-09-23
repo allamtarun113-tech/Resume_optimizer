@@ -53,11 +53,24 @@ test("student analyses a job end to end", async ({ page }) => {
   await page
     .getByLabel("Drop your resume here, or click to choose")
     .setInputFiles(path.join(__dirname, "fixtures", "resume.pdf"));
-  await page.getByLabel("Job description", { exact: true }).fill(JOB_DESCRIPTION);
-  await page.getByLabel("Project description 1").fill(NOTES);
+  await page
+    .getByLabel("Job description", { exact: true })
+    .fill(JOB_DESCRIPTION);
   await page.getByLabel("Additional skills").fill("Git");
   await page.getByRole("button", { name: "Add skill" }).click();
   await expect(page.getByRole("button", { name: "Remove Git" })).toBeVisible();
+  await page
+    .getByLabel("About your skills & knowledge")
+    .fill("I am comfortable writing SQL queries and REST APIs.");
+  await page
+    .getByLabel("Project 1 name")
+    .fill("Campus Food Ordering App deployment");
+  await page.getByLabel("Project 1 Description").fill(NOTES);
+  const projectSkills = page.getByLabel("Project 1 Skills & frameworks used");
+  await projectSkills.fill("Docker, Kubernetes,");
+  await expect(
+    page.getByRole("button", { name: "Remove Kubernetes" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Analyze", exact: true }).click();
   await page.waitForURL(/\/analysis\/[0-9a-f-]{36}$/, { timeout: 120_000 });
   const analysisId = page.url().split("/").pop()!;

@@ -12,11 +12,15 @@ export function SkillsInput({
   skills,
   onChange,
   disabled,
+  placeholder = "e.g. Docker",
+  addLabel = "Add skill",
 }: {
   id: string;
   skills: string[];
   onChange: (skills: string[]) => void;
   disabled?: boolean;
+  placeholder?: string;
+  addLabel?: string;
 }) {
   const [draft, setDraft] = useState("");
 
@@ -35,7 +39,7 @@ export function SkillsInput({
           id={id}
           value={draft}
           maxLength={MAX_SKILL_CHARS * 4}
-          placeholder={full ? `Up to ${MAX_SKILLS} skills` : "e.g. Docker"}
+          placeholder={full ? `Up to ${MAX_SKILLS} skills` : placeholder}
           disabled={disabled || full}
           onChange={(e) => {
             const value = e.target.value;
@@ -59,11 +63,11 @@ export function SkillsInput({
           onClick={() => commit(draft)}
         >
           <PlusIcon />
-          Add skill
+          {addLabel}
         </Button>
       </div>
       {skills.length > 0 && (
-        <ul className="flex flex-wrap gap-2" aria-label="Added skills">
+        <ul className="flex flex-wrap gap-2" aria-label={`Added: ${id}`}>
           {skills.map((skill) => (
             <li
               key={skill.toLowerCase()}

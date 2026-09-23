@@ -12,10 +12,14 @@ from app.schemas.profile import StudentProfile
 logger = logging.getLogger(__name__)
 
 MAX_RESUME_CHARS = 20_000
-MAX_SUPPLEMENTARY_CHARS = 15_000  # per document
-# All supplementary documents together (up to 20 per analysis) share this budget, which
-# keeps a 20-document analysis around a cent on a small model.
-SUPPLEMENTARY_BUDGET = 60_000
+# Supplementary documents (projects, notes, files; up to 20 per analysis):
+# - up to UNTRIMMED_DOCS of them are sent whole (only a safety ceiling per document, so a
+#   huge file can't overflow the model's context);
+# - with more, they share SUPPLEMENTARY_BUDGET, split fairly: short documents stay whole
+#   and only the long ones are trimmed. This keeps a 20-document analysis around a cent.
+MAX_SUPPLEMENTARY_CHARS = 40_000  # safety ceiling per document
+UNTRIMMED_DOCS = 5
+SUPPLEMENTARY_BUDGET = 120_000
 MAX_OUTPUT_TOKENS = 16_000
 RESUME_LABEL = "RESUME"
 _SOURCED_FIELDS = ("skills", "projects", "experience", "education", "certifications")
@@ -62,13 +66,15 @@ def fair_limits(lengths: list[int], budget: int, cap: int) -> list[int]:
     return limits
 
 
+def supplementary_limits(lengths: list[int]) -> list[int]:
+    if len(lengths) <= UNTRIMMED_DOCS:
+        return [min(n, MAX_SUPPLEMENTARY_CHARS) for n in lengths]
+    return fair_limits(lengths, SUPPLEMENTARY_BUDGET, MAX_SUPPLEMENTARY_CHARS)
+
+
 def build_input(labeled: list[tuple[str, str, SourceDocument]]) -> str:
     supplementary = [doc for label, _, doc in labeled if label != RESUME_LABEL]
-    limits = iter(
-        fair_limits(
-            [len(d.text) for d in supplementary], SUPPLEMENTARY_BUDGET, MAX_SUPPLEMENTARY_CHARS
-        )
-    )
+    limits = iter(supplementary_limits([len(d.text) for d in supplementary]))
     blocks = []
     for label, _, doc in labeled:
         limit = MAX_RESUME_CHARS if label == RESUME_LABEL else next(limits)

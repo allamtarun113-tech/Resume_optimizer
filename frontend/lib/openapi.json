@@ -108,7 +108,7 @@
           "extra_text": {
             "anyOf": [
               {
-                "maxLength": 5000,
+                "maxLength": 10000,
                 "type": "string"
               },
               {

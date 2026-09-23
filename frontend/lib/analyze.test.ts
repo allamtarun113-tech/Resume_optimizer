@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_FILE_BYTES,
-  filledProjects,
   validateAnalyzeInput,
   type AnalyzeInput,
 } from "./analyze";
+import { emptyProject, type ProjectEntry } from "./projects";
+
+const project = (name: string): ProjectEntry => ({
+  name,
+  description: `${name} description`,
+  skills: [],
+});
 
 const file = (name: string, size = 1000) => {
   const f = new File(["x"], name);
@@ -17,7 +23,8 @@ const valid: AnalyzeInput = {
   jdText:
     "Backend engineer. Requirements: Python, FastAPI, PostgreSQL, Docker.",
   skills: [],
-  projects: [""],
+  about: "",
+  projects: [emptyProject()],
   supportingFiles: [],
 };
 
@@ -47,7 +54,7 @@ describe("validateAnalyzeInput", () => {
 
   it("allows up to 20 files and project descriptions together", () => {
     const files = Array.from({ length: 18 }, (_, i) => file(`p${i}.pdf`));
-    const projects = ["Project A", "Project B", "  "];
+    const projects = [project("A"), project("B"), emptyProject()];
     expect(
       validateAnalyzeInput({ ...valid, supportingFiles: files, projects }),
     ).toBeNull();
@@ -55,15 +62,21 @@ describe("validateAnalyzeInput", () => {
       validateAnalyzeInput({
         ...valid,
         supportingFiles: files,
-        projects: [...projects, "Project C"],
+        projects: [...projects, project("C")],
       }),
     ).toMatch(/at most 20 .* \(you have 21\)/);
   });
 
-  it("rejects over-long project descriptions", () => {
+  it("validates projects and the about text", () => {
     expect(
-      validateAnalyzeInput({ ...valid, projects: ["x".repeat(20_001)] }),
-    ).toMatch(/project description/);
+      validateAnalyzeInput({
+        ...valid,
+        projects: [{ name: "", description: "x", skills: [] }],
+      }),
+    ).toMatch(/Project 1: add a project name/);
+    expect(
+      validateAnalyzeInput({ ...valid, about: "x".repeat(8_001) }),
+    ).toMatch(/About your skills/);
   });
 
   it("rejects unsupported types and large files", () => {
@@ -76,11 +89,5 @@ describe("validateAnalyzeInput", () => {
         resume: file("resume.pdf", MAX_FILE_BYTES + 1),
       }),
     ).toMatch(/larger than 5 MB/);
-  });
-});
-
-describe("filledProjects", () => {
-  it("drops blank descriptions and trims the rest", () => {
-    expect(filledProjects(["  A  ", "", "   ", "B"])).toEqual(["A", "B"]);
   });
 });

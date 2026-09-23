@@ -1,13 +1,18 @@
 // Client-side checks that mirror the backend limits (backend/app/schemas/analyses.py,
 // backend/app/api/documents.py). The backend re-validates everything.
 
-import { formatSkills } from "@/lib/skills";
+import {
+  type ProjectEntry,
+  filledProjects,
+  projectProblem,
+} from "@/lib/projects";
+import { buildExtraText } from "@/lib/skills";
 
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
 export const MIN_JD_CHARS = 50;
 export const MAX_JD_CHARS = 15_000;
-export const MAX_EXTRA_CHARS = 5_000;
-export const MAX_PROJECT_CHARS = 20_000;
+export const MAX_EXTRA_CHARS = 10_000; // skill tags + "about my skills" text
+export const MAX_ABOUT_CHARS = 8_000;
 export const MAX_SUPPORTING_DOCS = 20;
 
 export const RESUME_ACCEPT = ".pdf,.docx";
@@ -18,7 +23,8 @@ export type AnalyzeInput = {
   resume: File | null;
   jdText: string;
   skills: string[];
-  projects: string[];
+  about: string;
+  projects: ProjectEntry[];
   supportingFiles: File[];
 };
 
@@ -31,11 +37,6 @@ export function hasAllowedExtension(name: string, accept: string): boolean {
   return accept.split(",").includes(extension(name));
 }
 
-// Pasted project descriptions that will be uploaded (blank ones are ignored).
-export function filledProjects(projects: string[]): string[] {
-  return projects.map((p) => p.trim()).filter(Boolean);
-}
-
 export function validateAnalyzeInput(input: AnalyzeInput): string | null {
   if (!input.resume) return "Choose your resume (PDF or DOCX).";
   if (!hasAllowedExtension(input.resume.name, RESUME_ACCEPT))
@@ -46,12 +47,14 @@ export function validateAnalyzeInput(input: AnalyzeInput): string | null {
     return `Add the full job description (at least ${MIN_JD_CHARS} characters).`;
   if (jd.length > MAX_JD_CHARS)
     return `The job description is too long (max ${MAX_JD_CHARS.toLocaleString()} characters).`;
-  if (formatSkills(input.skills).length > MAX_EXTRA_CHARS)
+  if (input.about.length > MAX_ABOUT_CHARS)
+    return `"About your skills" can be up to ${MAX_ABOUT_CHARS.toLocaleString()} characters.`;
+  if (buildExtraText(input.skills, input.about).length > MAX_EXTRA_CHARS)
     return "That's a lot of skills. Please remove a few.";
 
+  const problem = projectProblem(input.projects);
+  if (problem) return problem;
   const projects = filledProjects(input.projects);
-  if (projects.some((p) => p.length > MAX_PROJECT_CHARS))
-    return `Each project description can be up to ${MAX_PROJECT_CHARS.toLocaleString()} characters.`;
 
   const supportingCount = input.supportingFiles.length + projects.length;
   if (supportingCount > MAX_SUPPORTING_DOCS)

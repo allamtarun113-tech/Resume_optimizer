@@ -13,7 +13,7 @@ from app.schemas.requirements import JobRequirements
 AnalysisStatus = Literal["queued", "parsing", "extracting", "scoring", "advising", "done", "failed"]
 
 MAX_JD_CHARS = 15_000
-MAX_EXTRA_TEXT_CHARS = 5_000
+MAX_EXTRA_TEXT_CHARS = 10_000  # skill tags + "about my skills" text
 MAX_SUPPORTING_DOCS = 20
 
 

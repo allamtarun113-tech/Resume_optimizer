@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_SKILLS, addSkills, formatSkills } from "./skills";
+import { MAX_SKILLS, addSkills, buildExtraText, formatSkills } from "./skills";
 
 describe("addSkills", () => {
   it("adds a single trimmed skill", () => {
@@ -37,5 +37,17 @@ describe("formatSkills", () => {
       "Additional skills: Docker, AWS.",
     );
     expect(formatSkills([])).toBe("");
+  });
+});
+
+describe("buildExtraText", () => {
+  it("combines tags and the plain-English description", () => {
+    expect(buildExtraText(["Docker"], "  I know REST APIs well.  ")).toBe(
+      "Additional skills: Docker.\n\nAbout my skills and knowledge:\nI know REST APIs well.",
+    );
+    expect(buildExtraText([], "Only prose")).toBe(
+      "About my skills and knowledge:\nOnly prose",
+    );
+    expect(buildExtraText([], "   ")).toBe("");
   });
 });
