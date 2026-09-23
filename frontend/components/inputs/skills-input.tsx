@@ -47,6 +47,10 @@ export function SkillsInput({
             if (/[,;\n]/.test(value)) commit(value);
             else setDraft(value);
           }}
+          // A skill typed but not added yet still counts (e.g. clicking Analyze next).
+          onBlur={() => {
+            if (draft.trim()) commit(draft);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();

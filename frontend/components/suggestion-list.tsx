@@ -5,6 +5,7 @@ import { TargetIcon, WandSparklesIcon } from "lucide-react";
 import { toast } from "sonner";
 import type { Gap, Suggestion } from "@/lib/types";
 import { whereToAdd } from "@/lib/results";
+import { ExplainButton, ExplainPanel, useExplain } from "@/components/explain";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 function SuggestionCard({ suggestion: s }: { suggestion: Suggestion }) {
+  const explain = useExplain("suggestion", s.id);
   return (
     <Card className="border-l-4 border-l-primary">
       <CardHeader>
@@ -47,19 +49,29 @@ function SuggestionCard({ suggestion: s }: { suggestion: Suggestion }) {
           )}
         </CardTitle>
         <CardDescription>
-          Add to: {whereToAdd(s.section, s.target)}
+          Where: {whereToAdd(s.section, s.target)}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3 text-sm">
-        <div className="flex items-start gap-3 rounded-md border bg-muted/40 p-3">
-          <p className="flex-1">{s.suggested_text}</p>
-          <CopyButton text={s.suggested_text} />
+      <CardContent className="flex flex-col gap-4 text-sm">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Add this line
+          </p>
+          <div className="flex items-start gap-3 rounded-md border bg-muted/40 p-3">
+            <p className="flex-1">{s.suggested_text}</p>
+            <CopyButton text={s.suggested_text} />
+          </div>
         </div>
-        <p className="text-muted-foreground">{s.rationale}</p>
+        <p>
+          <span className="font-medium">Why it helps: </span>
+          <span className="text-muted-foreground">{s.rationale}</span>
+        </p>
         <p className="text-xs text-muted-foreground">
           Based on what you wrote in {s.quote_source_label}:{" "}
           <q className="italic">{s.quote}</q>
         </p>
+        <ExplainButton explain={explain} className="-ml-2 self-start" />
+        <ExplainPanel explain={explain} />
       </CardContent>
     </Card>
   );
@@ -116,7 +128,7 @@ export function GapList({ gaps }: { gaps: Gap[] }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TargetIcon className="size-4 text-rose-500" />
-          Skill gaps ({gaps.length})
+          Still to learn ({gaps.length})
         </CardTitle>
         <CardDescription>
           The job asks for these, and nothing you gave us shows them yet. These

@@ -9,25 +9,26 @@ export const BUCKETS: {
 }[] = [
   {
     bucket: "strong_in_resume",
-    title: "Strong matches",
-    description: "Listed on your resume and backed by a project or job.",
+    title: "You're covered",
+    description: "Your resume clearly shows these. Nothing to do.",
   },
   {
     bucket: "weak_in_resume",
-    title: "Weak on your resume",
+    title: "Show these more clearly",
     description:
-      "Your resume mentions it, but only in passing (listed without a project, or only implied).",
+      "Your resume mentions these, but only in passing. Show where you used them.",
   },
   {
     bucket: "missing_from_resume_but_evidenced",
-    title: "You have it, but it's not on your resume",
+    title: "Add these to your resume",
     description:
-      "Found in your other documents or notes. Adding it to your resume raises your score.",
+      "You have them (we found them in your other documents or notes), but your resume doesn't say so.",
   },
   {
     bucket: "true_gap",
-    title: "Skill gaps",
-    description: "No evidence anywhere yet. These are what to learn next.",
+    title: "Still to learn",
+    description:
+      "Nothing you gave us shows these yet. Your learning path covers them.",
   },
 ];
 
@@ -56,21 +57,10 @@ export function groupMatches(
     .filter((g) => g.items.length > 0);
 }
 
-export function strengthLabel(strength: number): string {
-  if (strength >= 1) return "Strong";
-  if (strength >= 0.7) return "Listed";
-  if (strength > 0) return "Partial";
-  return "Missing";
-}
-
 export function scoreTone(score: number): "good" | "ok" | "low" {
   if (score >= 75) return "good";
   if (score >= 50) return "ok";
   return "low";
-}
-
-export function sourceLabel(source: string): string {
-  return source === "resume" ? "resume" : "other docs";
 }
 
 export const SECTION_LABEL: Record<string, string> = {
@@ -119,4 +109,131 @@ export function groupByTopic<T extends SourcedQuestion>(
 export function sourceText(source: SourcedQuestion["source"]): string {
   if (source.kind === "template") return "Project deep-dive template";
   return source.license ? `${source.label} (${source.license})` : source.label;
+}
+
+// -- plain-English wording for the results page --------------------------------------
+
+export function plural(n: number, one: string, many = `${one}s`): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+export function scoreVerdict(score: number): string {
+  if (score >= 75) return "Strong match";
+  if (score >= 50) return "Good start";
+  return "Needs work";
+}
+
+export function scoreSentence(fit: number, potential: number | null): string {
+  const base = `Your resume shows ${fit}% of what this job asks for.`;
+  return potential != null && potential > fit
+    ? `${base} Adding things you already have (from your other documents and notes) could raise it to ${potential}%.`
+    : base;
+}
+
+type Evidence = RequirementMatch["evidence"][number];
+
+const DEMONSTRATED = ["project", "experience"];
+
+function isDemonstrated(e: Evidence): boolean {
+  return DEMONSTRATED.includes(e.kind) || DEMONSTRATED.includes(e.context);
+}
+
+function years(n: number): string {
+  const rounded = Math.round(n * 10) / 10;
+  return `${rounded} year${rounded === 1 ? "" : "s"}`;
+}
+
+// One sentence a student can act on: what we found and what it means.
+export function plainStatus(m: RequirementMatch): string {
+  const onResume = m.evidence.filter((e) => e.direct && e.source === "resume");
+  const used = onResume.find(isDemonstrated);
+  const listed = onResume.some((e) => !isDemonstrated(e));
+  const yearsNote =
+    m.min_years != null
+      ? ` The job asks for ${years(m.min_years)}; your resume shows about ${years(m.resume_years ?? 0)}.`
+      : "";
+
+  switch (m.bucket) {
+    case "strong_in_resume":
+      return (
+        (used
+          ? `On your resume, and you show it in ${used.label}.`
+          : "Clearly shown on your resume.") + yearsNote
+      );
+    case "weak_in_resume": {
+      const why =
+        m.min_years != null
+          ? "On your resume, but with less experience than the job asks for."
+          : listed && !used
+            ? "Listed on your resume, but no project or job there shows you using it."
+            : used && !listed
+              ? `You used it in ${used.label}, but your resume doesn't name it clearly.`
+              : "Only hinted at on your resume, not stated clearly.";
+      const more =
+        m.best_strength > m.resume_strength
+          ? " Your other documents show more: see Improve resume."
+          : "";
+      return why + yearsNote + more;
+    }
+    case "missing_from_resume_but_evidenced":
+      return "Not on your resume, but your other documents or notes show it. Adding it raises your score.";
+    case "true_gap":
+      return m.category === "skill" || m.category === "domain"
+        ? "Not found in anything you gave us yet. It's in your learning path."
+        : "Not found in anything you gave us yet.";
+  }
+}
+
+export function evidenceWhere(e: Evidence): string {
+  const where =
+    e.source === "resume" ? "your resume" : "your other documents or notes";
+  const what =
+    e.kind === "skill"
+      ? e.context === "skills_section"
+        ? "skills list"
+        : e.context.replace("_", " ")
+      : e.kind;
+  return `${what} in ${where}${e.direct ? "" : " (related, not exact)"}`;
+}
+
+export type NextStep = {
+  title: string;
+  detail: string;
+  tab: "improve" | "learn" | "interview";
+};
+
+export function nextSteps(input: {
+  fitScore: number | null;
+  potentialScore: number | null;
+  suggestionCount: number;
+  gapNames: string[];
+}): NextStep[] {
+  const steps: NextStep[] = [];
+  if (input.suggestionCount > 0) {
+    steps.push({
+      title: `Add ${plural(input.suggestionCount, "thing")} you already have to your resume`,
+      detail:
+        input.potentialScore != null && input.fitScore != null
+          ? `Ready-to-copy lines, based only on what you gave us. Could take you from ${input.fitScore}% to ${input.potentialScore}%.`
+          : "Ready-to-copy lines, based only on what you gave us.",
+      tab: "improve",
+    });
+  }
+  if (input.gapNames.length > 0) {
+    const shown = input.gapNames.slice(0, 3).join(", ");
+    const more =
+      input.gapNames.length > 3 ? ` and ${input.gapNames.length - 3} more` : "";
+    steps.push({
+      title: `Learn what's missing: ${shown}${more}`,
+      detail: "A step-by-step plan with free resources, basics first.",
+      tab: "learn",
+    });
+  }
+  steps.push({
+    title: "Practise for the interview",
+    detail:
+      "Real questions for this job and deep questions about your projects.",
+    tab: "interview",
+  });
+  return steps;
 }

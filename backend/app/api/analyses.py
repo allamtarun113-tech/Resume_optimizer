@@ -163,7 +163,7 @@ async def delete_analysis(analysis_id: UUID, user: User, repo: Repo) -> None:
 @router.get("/analyses/{analysis_id}/export", response_class=PlainTextResponse)
 async def export_analysis(analysis_id: UUID, user: User, repo: Repo) -> PlainTextResponse:
     """The full report as Markdown (download)."""
-    analysis = await _load(analysis_id, user, repo)
+    analysis = await load_analysis(analysis_id, user, repo)
     if analysis.status != "done":
         raise HTTPException(status.HTTP_409_CONFLICT, "The analysis hasn't finished yet.")
     stored = await repo.get_interview_set(analysis.id)
@@ -175,7 +175,7 @@ async def export_analysis(analysis_id: UUID, user: User, repo: Repo) -> PlainTex
     )
 
 
-async def _load(analysis_id: UUID, user: CurrentUser, repo: Repository) -> AnalysisResponse:
+async def load_analysis(analysis_id: UUID, user: CurrentUser, repo: Repository) -> AnalysisResponse:
     analysis = await repo.get_analysis(user.id, str(analysis_id))
     if analysis is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Analysis not found.")
@@ -215,4 +215,4 @@ async def _load(analysis_id: UUID, user: CurrentUser, repo: Repository) -> Analy
 
 @router.get("/analyses/{analysis_id}")
 async def get_analysis(analysis_id: UUID, user: User, repo: Repo) -> AnalysisResponse:
-    return await _load(analysis_id, user, repo)
+    return await load_analysis(analysis_id, user, repo)

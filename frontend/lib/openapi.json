@@ -838,6 +838,64 @@
         "title": "Experience",
         "type": "object"
       },
+      "ExplainRequest": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "score",
+              "requirement",
+              "suggestion",
+              "learning_step",
+              "interview_question"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "ref": {
+            "default": "",
+            "maxLength": 64,
+            "title": "Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ExplainRequest",
+        "type": "object"
+      },
+      "Explanation": {
+        "properties": {
+          "details": {
+            "description": "Two to four short bullet points with the key facts behind the summary.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Details",
+            "type": "array"
+          },
+          "next_steps": {
+            "description": "One to three concrete things the student can do next. Empty if none.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Next Steps",
+            "type": "array"
+          },
+          "summary": {
+            "description": "Two or three short, plain-English sentences that answer the question.",
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "details",
+          "next_steps"
+        ],
+        "title": "Explanation",
+        "type": "object"
+      },
       "ExtractedText": {
         "description": "Text pulled out of an uploaded file without storing it (e.g. a job description).",
         "properties": {
@@ -2196,6 +2254,65 @@
         "summary": "Get Analysis",
         "tags": [
           "analyses"
+        ]
+      }
+    },
+    "/analyses/{analysis_id}/explain": {
+      "post": {
+        "description": "Plain-English explanation of one item on the results page (cached per item).",
+        "operationId": "explain_analyses__analysis_id__explain_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Explanation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Explain",
+        "tags": [
+          "explain"
         ]
       }
     },

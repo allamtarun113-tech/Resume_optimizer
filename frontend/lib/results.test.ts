@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   groupMatches,
   scoreTone,
-  sourceLabel,
-  strengthLabel,
   whereToAdd,
   formatHours,
   groupByTopic,
@@ -73,19 +71,10 @@ describe("groupMatches", () => {
 });
 
 describe("labels", () => {
-  it("maps strengths", () => {
-    expect(strengthLabel(1)).toBe("Strong");
-    expect(strengthLabel(0.7)).toBe("Listed");
-    expect(strengthLabel(0.4)).toBe("Partial");
-    expect(strengthLabel(0)).toBe("Missing");
-  });
-
-  it("maps score tones and sources", () => {
+  it("maps score tones", () => {
     expect(scoreTone(80)).toBe("good");
     expect(scoreTone(50)).toBe("ok");
     expect(scoreTone(49)).toBe("low");
-    expect(sourceLabel("resume")).toBe("resume");
-    expect(sourceLabel("supplementary:abc")).toBe("other docs");
   });
 
   it("describes where to add a suggestion", () => {

@@ -14,6 +14,7 @@ import { showApiError } from "@/lib/errors";
 import { ApiError, apiFetch } from "@/lib/api";
 import type { InterviewQuestion, InterviewSet } from "@/lib/types";
 import { groupByTopic, sourceText } from "@/lib/results";
+import { ExplainButton, ExplainPanel, useExplain } from "@/components/explain";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,11 +25,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-function QuestionItem({ q }: { q: InterviewQuestion }) {
+function QuestionItem({ q, refId }: { q: InterviewQuestion; refId: string }) {
+  const explain = useExplain("interview_question", refId);
   const source = sourceText(q.source);
   return (
-    <li className="flex flex-col gap-0.5">
-      <span>{q.text}</span>
+    <li className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-start gap-x-2">
+        <span className="min-w-0 flex-1">{q.text}</span>
+        <ExplainButton
+          explain={explain}
+          label="What are they looking for?"
+          className="-my-1"
+        />
+      </div>
       <span className="text-xs text-muted-foreground">
         {q.dimension && <span className="capitalize">{q.dimension} · </span>}
         {q.source.url ? (
@@ -44,19 +53,30 @@ function QuestionItem({ q }: { q: InterviewQuestion }) {
           source
         )}
       </span>
+      <ExplainPanel explain={explain} />
     </li>
   );
 }
 
-function QuestionList({ questions }: { questions: InterviewQuestion[] }) {
+// `refs[i]` locates each question in the stored set, for its Explain button.
+function QuestionList({
+  questions,
+  refs,
+}: {
+  questions: InterviewQuestion[];
+  refs: string[];
+}) {
   return (
     <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm">
       {questions.map((q, i) => (
-        <QuestionItem key={`${i}-${q.text}`} q={q} />
+        <QuestionItem key={`${i}-${q.text}`} q={q} refId={refs[i]} />
       ))}
     </ol>
   );
 }
+
+const refsFor = (prefix: string, n: number) =>
+  Array.from({ length: n }, (_, i) => `${prefix}:${i}`);
 
 function Section({
   icon: Icon,
@@ -173,7 +193,10 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
           title="About you"
           description="Background questions most interviews start with."
         >
-          <QuestionList questions={set.personal} />
+          <QuestionList
+            questions={set.personal}
+            refs={refsFor("personal", set.personal.length)}
+          />
         </Section>
       )}
 
@@ -183,7 +206,7 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
           title="Your projects, in depth"
           description="Interviewers dig into what you built. Be ready to explain every decision."
         >
-          {set.projects.map((p) => (
+          {set.projects.map((p, pi) => (
             <div key={p.project} className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-medium">{p.project}</h3>
@@ -193,7 +216,10 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
                   </Badge>
                 ))}
               </div>
-              <QuestionList questions={p.questions} />
+              <QuestionList
+                questions={p.questions}
+                refs={refsFor(`project:${pi}`, p.questions.length)}
+              />
             </div>
           ))}
         </Section>
@@ -205,10 +231,15 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
           title="Technical, for this job"
           description="Chosen for the job's requirements, most important first."
         >
-          {groupByTopic(set.technical).map((g) => (
+          {groupByTopic(
+            set.technical.map((q, i) => ({ ...q, ref: `technical:${i}` })),
+          ).map((g) => (
             <div key={g.topic} className="flex flex-col gap-2">
               <h3 className="font-medium">{g.topic}</h3>
-              <QuestionList questions={g.questions} />
+              <QuestionList
+                questions={g.questions}
+                refs={g.questions.map((q) => q.ref)}
+              />
             </div>
           ))}
         </Section>
@@ -220,7 +251,10 @@ export function InterviewPrep({ analysisId }: { analysisId: string }) {
           title="Behavioral"
           description="Answer with a real example: situation, what you did, and the result."
         >
-          <QuestionList questions={set.general} />
+          <QuestionList
+            questions={set.general}
+            refs={refsFor("general", set.general.length)}
+          />
         </Section>
       )}
     </section>

@@ -40,6 +40,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analyses/{analysis_id}/explain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Explain
+         * @description Plain-English explanation of one item on the results page (cached per item).
+         */
+        post: operations["explain_analyses__analysis_id__explain_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/analyses/{analysis_id}/export": {
         parameters: {
             query?: never;
@@ -488,6 +508,37 @@ export interface components {
             technologies: string[];
             /** Title */
             title: string;
+        };
+        /** ExplainRequest */
+        ExplainRequest: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "score" | "requirement" | "suggestion" | "learning_step" | "interview_question";
+            /**
+             * Ref
+             * @default
+             */
+            ref: string;
+        };
+        /** Explanation */
+        Explanation: {
+            /**
+             * Details
+             * @description Two to four short bullet points with the key facts behind the summary.
+             */
+            details: string[];
+            /**
+             * Next Steps
+             * @description One to three concrete things the student can do next. Empty if none.
+             */
+            next_steps: string[];
+            /**
+             * Summary
+             * @description Two or three short, plain-English sentences that answer the question.
+             */
+            summary: string;
         };
         /**
          * ExtractedText
@@ -1024,6 +1075,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    explain_analyses__analysis_id__explain_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExplainRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Explanation"];
+                };
             };
             /** @description Validation Error */
             422: {

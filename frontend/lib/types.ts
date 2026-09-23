@@ -26,3 +26,6 @@ export type AiSettings = Schemas["AiSettingsResponse"];
 export type AiSettingsUpdate = Schemas["AiSettingsUpdate"];
 export type ModelList = Schemas["ModelListResponse"];
 export type ExtractedText = Schemas["ExtractedText"];
+export type ExplainRequest = Schemas["ExplainRequest"];
+export type ExplainKind = ExplainRequest["kind"];
+export type Explanation = Schemas["Explanation"];

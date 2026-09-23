@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangleIcon,
+  ArrowRightIcon,
+  ListChecksIcon,
   BookOpenCheckIcon,
   LayoutListIcon,
   MessagesSquareIcon,
@@ -22,12 +24,26 @@ import { LearningPathView } from "@/components/learning-path";
 import { InterviewPrep } from "@/components/interview-prep";
 import { ExportButtons, RerunForm } from "@/components/analysis-actions";
 import { AnalysisProgress } from "@/components/analysis-progress";
+import {
+  AnalysisIdContext,
+  ExplainButton,
+  ExplainPanel,
+  useExplain,
+} from "@/components/explain";
+import {
+  type NextStep,
+  nextSteps,
+  plural,
+  scoreSentence,
+  scoreVerdict,
+} from "@/lib/results";
 
 const POLL_MS = 2000;
 const FINAL: AnalysisStatus[] = ["done", "failed"];
 export function AnalysisView({ id }: { id: string }) {
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState("overview");
 
   useEffect(() => {
     let cancelled = false;
@@ -109,132 +125,229 @@ export function AnalysisView({ id }: { id: string }) {
   };
   const suggestions = analysis.suggestions ?? [];
   const pathSteps = analysis.learning_path?.steps.length ?? 0;
+  const gapNames = [...(analysis.gaps ?? [])]
+    .sort(
+      (a, b) =>
+        Number(b.importance === "must") - Number(a.importance === "must"),
+    )
+    .map((g) => g.name);
+  const steps = nextSteps({
+    fitScore: analysis.fit_score,
+    potentialScore: analysis.potential_score,
+    suggestionCount: suggestions.length,
+    gapNames,
+  });
+
+  function openTab(value: string) {
+    setTab(value);
+    document
+      .getElementById("results-tabs")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      {/* Summary */}
-      <section className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
-        <div
-          className="bg-brand-gradient absolute -top-24 -right-24 size-72 rounded-full opacity-10 blur-3xl"
-          aria-hidden
-        />
-        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">
-              {new Date(analysis.created_at).toLocaleDateString(undefined, {
-                dateStyle: "medium",
-              })}
-            </p>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              {requirements?.role_title ?? "Job analysis"}
-            </h1>
-            {requirements?.company && (
-              <p className="text-muted-foreground">{requirements.company}</p>
-            )}
-            <div className="mt-2 flex flex-wrap gap-2 text-xs">
-              <Pill className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-                {counts.strong} strong
-              </Pill>
-              <Pill className="bg-amber-500/10 text-amber-700 dark:text-amber-400">
-                {counts.improve} to improve
-              </Pill>
-              <Pill className="bg-rose-500/10 text-rose-700 dark:text-rose-400">
-                {counts.gaps} gaps
-              </Pill>
-            </div>
-            <div className="mt-3">
-              <ExportButtons analysisId={analysis.id} />
-            </div>
-          </div>
-          {analysis.fit_score != null && (
-            <div className="flex justify-center gap-6 sm:gap-10">
-              <ScoreGauge score={analysis.fit_score} label="Job fit (resume)" />
-              {analysis.potential_score != null &&
-                analysis.potential_score > analysis.fit_score && (
-                  <ScoreGauge
-                    score={analysis.potential_score}
-                    label="With what you already have"
-                  />
-                )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <Tabs defaultValue="overview" className="flex flex-col gap-4">
-        <TabsList className="w-full justify-start overflow-x-auto print:hidden">
-          <TabsTrigger value="overview">
-            <LayoutListIcon />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="improve">
-            <WandSparklesIcon />
-            Improve resume
-            {suggestions.length > 0 && <Count>{suggestions.length}</Count>}
-          </TabsTrigger>
-          <TabsTrigger value="learn">
-            <BookOpenCheckIcon />
-            Learn
-            {pathSteps > 0 && <Count>{pathSteps}</Count>}
-          </TabsTrigger>
-          <TabsTrigger value="interview">
-            <MessagesSquareIcon />
-            Interview
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="flex flex-col gap-6">
-          <p className="text-sm text-muted-foreground">
-            The score weighs each requirement by importance and by how clearly
-            your resume shows it. The same resume and job always get the same
-            score.
-          </p>
-          {matches.length > 0 && <RequirementBreakdown matches={matches} />}
-        </TabsContent>
-
-        <TabsContent value="improve">
-          <SuggestionList
-            suggestions={suggestions}
-            rejectedCount={analysis.rejected_suggestions?.length ?? 0}
-            fitScore={analysis.fit_score}
-            potentialScore={analysis.potential_score}
+    <AnalysisIdContext.Provider value={analysis.id}>
+      <div className="flex w-full flex-col gap-6">
+        {/* Summary */}
+        <section className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+          <div
+            className="bg-brand-gradient absolute -top-24 -right-24 size-72 rounded-full opacity-10 blur-3xl"
+            aria-hidden
           />
-        </TabsContent>
-
-        <TabsContent value="learn" className="flex flex-col gap-6">
-          {analysis.gaps && <GapList gaps={analysis.gaps} />}
-          {analysis.learning_path && pathSteps > 0 ? (
-            <LearningPathView path={analysis.learning_path} />
-          ) : (
-            <p className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground">
-              Nothing to learn for this job: every requirement is covered by
-              what you already have.
-            </p>
-          )}
-        </TabsContent>
-
-        <TabsContent value="interview">
-          <InterviewPrep analysisId={analysis.id} />
-        </TabsContent>
-      </Tabs>
-
-      <RerunForm analysisId={analysis.id} />
-
-      {(requirements || profile) && (
-        <details className="rounded-2xl border bg-card p-4 text-sm print:hidden">
-          <summary className="cursor-pointer text-muted-foreground">
-            Raw extraction data · AI calls: {analysis.llm_usage.calls} (
-            {analysis.llm_usage.cached_calls} from cache)
-          </summary>
-          <div className="mt-4 flex flex-col gap-4">
-            {requirements && (
-              <JsonBlock title="Job requirements" data={requirements} />
+          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-muted-foreground">
+                {new Date(analysis.created_at).toLocaleDateString(undefined, {
+                  dateStyle: "medium",
+                })}
+              </p>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                {requirements?.role_title ?? "Job analysis"}
+              </h1>
+              {requirements?.company && (
+                <p className="text-muted-foreground">{requirements.company}</p>
+              )}
+              {analysis.fit_score != null && (
+                <p className="mt-1 max-w-xl text-base leading-relaxed">
+                  <span className="font-semibold">
+                    {scoreVerdict(analysis.fit_score)}.
+                  </span>{" "}
+                  {scoreSentence(analysis.fit_score, analysis.potential_score)}
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                <Pill className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                  {counts.strong} covered
+                </Pill>
+                <Pill className="bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                  {counts.improve} to add or improve
+                </Pill>
+                <Pill className="bg-rose-500/10 text-rose-700 dark:text-rose-400">
+                  {plural(counts.gaps, "skill")} to learn
+                </Pill>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <ExportButtons analysisId={analysis.id} />
+              </div>
+            </div>
+            {analysis.fit_score != null && (
+              <div className="flex justify-center gap-6 sm:gap-10">
+                <ScoreGauge
+                  score={analysis.fit_score}
+                  label="Job fit (resume)"
+                />
+                {analysis.potential_score != null &&
+                  analysis.potential_score > analysis.fit_score && (
+                    <ScoreGauge
+                      score={analysis.potential_score}
+                      label="With what you already have"
+                    />
+                  )}
+              </div>
             )}
-            {profile && <JsonBlock title="Your profile" data={profile} />}
           </div>
-        </details>
-      )}
+          {analysis.fit_score != null && <ScoreExplain />}
+        </section>
+
+        <Tabs
+          id="results-tabs"
+          value={tab}
+          onValueChange={(v) => setTab(String(v))}
+          className="flex scroll-mt-20 flex-col gap-4"
+        >
+          <TabsList className="w-full justify-start overflow-x-auto print:hidden">
+            <TabsTrigger value="overview">
+              <LayoutListIcon />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="improve">
+              <WandSparklesIcon />
+              Improve resume
+              {suggestions.length > 0 && <Count>{suggestions.length}</Count>}
+            </TabsTrigger>
+            <TabsTrigger value="learn">
+              <BookOpenCheckIcon />
+              Learn
+              {pathSteps > 0 && <Count>{pathSteps}</Count>}
+            </TabsTrigger>
+            <TabsTrigger value="interview">
+              <MessagesSquareIcon />
+              Interview
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="flex flex-col gap-6">
+            <NextSteps steps={steps} onOpen={openTab} />
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold tracking-tight">
+                Everything the job asks for
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Each requirement from the job, and what we found for it. Click{" "}
+                <span className="font-medium text-primary">Explain</span> on
+                anything for more detail.
+              </p>
+            </div>
+            {matches.length > 0 && <RequirementBreakdown matches={matches} />}
+          </TabsContent>
+
+          <TabsContent value="improve">
+            <SuggestionList
+              suggestions={suggestions}
+              rejectedCount={analysis.rejected_suggestions?.length ?? 0}
+              fitScore={analysis.fit_score}
+              potentialScore={analysis.potential_score}
+            />
+          </TabsContent>
+
+          <TabsContent value="learn" className="flex flex-col gap-6">
+            {analysis.gaps && <GapList gaps={analysis.gaps} />}
+            {analysis.learning_path && pathSteps > 0 ? (
+              <LearningPathView path={analysis.learning_path} />
+            ) : (
+              <p className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground">
+                Nothing to learn for this job: every requirement is covered by
+                what you already have.
+              </p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="interview">
+            <InterviewPrep analysisId={analysis.id} />
+          </TabsContent>
+        </Tabs>
+
+        <RerunForm analysisId={analysis.id} />
+
+        {(requirements || profile) && (
+          <details className="rounded-2xl border bg-card p-4 text-sm print:hidden">
+            <summary className="cursor-pointer text-muted-foreground">
+              Technical details · AI calls: {analysis.llm_usage.calls} (
+              {analysis.llm_usage.cached_calls} from cache)
+            </summary>
+            <div className="mt-4 flex flex-col gap-4">
+              {requirements && (
+                <JsonBlock title="Job requirements" data={requirements} />
+              )}
+              {profile && <JsonBlock title="Your profile" data={profile} />}
+            </div>
+          </details>
+        )}
+      </div>
+    </AnalysisIdContext.Provider>
+  );
+}
+
+function ScoreExplain() {
+  const explain = useExplain("score");
+  return (
+    <div className="relative mt-4 flex flex-col gap-3 border-t pt-4">
+      <ExplainButton
+        explain={explain}
+        label="How was my score calculated?"
+        className="-ml-2 self-start"
+      />
+      <ExplainPanel explain={explain} />
     </div>
+  );
+}
+
+function NextSteps({
+  steps,
+  onOpen,
+}: {
+  steps: NextStep[];
+  onOpen: (tab: string) => void;
+}) {
+  return (
+    <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
+      <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        <ListChecksIcon className="size-5 text-primary" />
+        What to do next
+      </h2>
+      <ol className="mt-4 flex flex-col gap-2">
+        {steps.map((step, i) => (
+          <li key={step.tab}>
+            <button
+              type="button"
+              onClick={() => onOpen(step.tab)}
+              className="group flex w-full items-start gap-3 rounded-xl border bg-background p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+            >
+              <span className="bg-brand-gradient flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white">
+                {i + 1}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="font-medium">{step.title}</span>
+                <span className="text-sm text-muted-foreground">
+                  {step.detail}
+                </span>
+              </span>
+              <ArrowRightIcon className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+            </button>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 

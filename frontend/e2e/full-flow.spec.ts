@@ -59,9 +59,14 @@ test("student analyses a job end to end", async ({ page }) => {
   await page.getByLabel("Additional skills").fill("Git");
   await page.getByRole("button", { name: "Add skill" }).click();
   await expect(page.getByRole("button", { name: "Remove Git" })).toBeVisible();
+  // A skill typed without clicking "Add skill" is added when leaving the box.
+  await page.getByLabel("Additional skills").fill("Linear Algebra");
   await page
     .getByLabel("About your skills & knowledge")
     .fill("I am comfortable writing SQL queries and REST APIs.");
+  await expect(
+    page.getByRole("button", { name: "Remove Linear Algebra" }),
+  ).toBeVisible();
   await page
     .getByLabel("Project 1 name")
     .fill("Campus Food Ordering App deployment");
@@ -79,7 +84,16 @@ test("student analyses a job end to end", async ({ page }) => {
   await expect(
     page.getByRole("img", { name: /Job fit \(resume\): \d+%/ }),
   ).toBeVisible({ timeout: 180_000 });
-  await expect(page.getByText("Strong matches")).toBeVisible();
+  await expect(page.getByText("What to do next")).toBeVisible();
+  await expect(page.getByText("Everything the job asks for")).toBeVisible();
+
+  // "Explain" asks the AI about one item and shows the answer inline.
+  await page
+    .getByRole("button", { name: "How was my score calculated?" })
+    .click();
+  await expect(page.getByRole("region", { name: "Explanation" })).toBeVisible({
+    timeout: 60_000,
+  });
 
   await page.getByRole("tab", { name: /Improve resume/ }).click();
   await expect(
@@ -88,7 +102,7 @@ test("student analyses a job end to end", async ({ page }) => {
 
   await page.getByRole("tab", { name: /Learn/ }).click();
   await expect(
-    page.getByText(/Skill gaps|Nothing to learn/).first(),
+    page.getByText(/Still to learn|Nothing to learn/).first(),
   ).toBeVisible();
 
   // Interview preparation: grouped questions, every one with a source.
