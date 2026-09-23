@@ -20,7 +20,9 @@ from fractions import Fraction
 # 2: requirements with alternatives ("Java, C++ or R") match any known alternative.
 # 3: combined skills count as each part ("Data structures and algorithms" = algorithms);
 #    the LLM matcher can't link a known skill to an unrelated known requirement.
-SCORING_VERSION = "3"
+# 4: JD lists of skills that are all wanted are split into one requirement each; skills
+#    written in a document but skipped by the LLM are added from the taxonomy.
+SCORING_VERSION = "4"
 
 IMPORTANCE_WEIGHTS: dict[str, Fraction] = {"must": Fraction(3), "nice": Fraction(1)}
 

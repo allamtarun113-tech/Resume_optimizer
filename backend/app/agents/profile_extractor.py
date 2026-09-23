@@ -3,6 +3,11 @@
 The resume and the supplementary material are extracted in two separate (parallel) calls,
 each cached on its own text. So the resume's extraction — and with it the job fit score —
 depends only on the resume: editing notes or adding a document never changes it.
+
+Safety net (no LLM): the LLM sometimes skips a skill that is plainly written (e.g. an
+elective course "Probability, Stochastic processes and Statistics"). Python scans each
+document for skills the taxonomy knows and adds the ones the LLM missed, quoting the line
+verbatim as evidence.
 """
 
 import asyncio
@@ -11,9 +16,12 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.agents.skill_normalizer import SkillNormalizer
 from app.llm.client import LLMClient
 from app.llm.prompts import load_prompt
-from app.schemas.profile import StudentProfile
+from app.parsing.sections import split_sections
+from app.schemas.profile import SkillContext, SkillMention, StudentProfile
+from app.skills.taxonomy import TECHNICAL_CATEGORIES, Taxonomy, load_taxonomy
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +37,17 @@ SUPPLEMENTARY_BUDGET = 120_000
 MAX_OUTPUT_TOKENS = 16_000
 RESUME_LABEL = "RESUME"
 _SOURCED_FIELDS = ("skills", "projects", "experience", "education", "certifications")
+# Safety net: short, list-like lines are scanned for concepts too ("Statistics",
+# "Linear algebra"); longer prose lines only for technical skills (tools, languages...).
+LIST_LINE_MAX_WORDS = 12
+MAX_EVIDENCE_CHARS = 200
+SECTION_CONTEXT: dict[str, SkillContext] = {
+    "skills": "skills_section",
+    "coursework": "education",
+    "education": "education",
+    "certifications": "certification",
+    "summary": "summary",
+}
 
 
 class SourceDocument(BaseModel):
@@ -112,12 +131,56 @@ def merge_profiles(resume: StudentProfile, others: list[StudentProfile]) -> Stud
     return resume.model_copy(update=updates)
 
 
+def missed_skills(
+    profile: StudentProfile,
+    labeled: list[tuple[str, str, SourceDocument]],
+    taxonomy: Taxonomy,
+    normalizer: SkillNormalizer,
+) -> list[SkillMention]:
+    """Skills written in a document that the extracted profile doesn't list for it."""
+    added: list[SkillMention] = []
+    for _, source, doc in labeled:
+        known: set[str] = set()
+        for m in profile.skills:
+            if m.source == source:
+                known.update(normalizer.resolve(m.name))
+        techs = [t for p in profile.projects if p.source == source for t in p.technologies]
+        techs += [t for x in profile.experience if x.source == source for t in x.technologies]
+        for tech in techs:
+            known.update(normalizer.resolve(tech))
+        for section in split_sections(doc.text):
+            context = SECTION_CONTEXT.get(section.name, "other")
+            for line in section.text.split("\n"):
+                text = line.strip()
+                if not text:
+                    continue
+                categories = (
+                    TECHNICAL_CATEGORIES | {"concept"}
+                    if len(text.split()) <= LIST_LINE_MAX_WORDS
+                    else TECHNICAL_CATEGORIES
+                )
+                for skill_id in sorted(taxonomy.find_in_text(text, categories) - known):
+                    known.add(skill_id)
+                    added.append(
+                        SkillMention(
+                            name=taxonomy.name(skill_id),
+                            context=context,
+                            context_name=None,
+                            source=source,
+                            evidence=text[:MAX_EVIDENCE_CHARS],
+                        )
+                    )
+    return added
+
+
 class ProfileExtractor:
     name = "profile_extractor"
     uses_llm = True
 
-    def __init__(self, llm: LLMClient) -> None:
+    def __init__(self, llm: LLMClient, taxonomy: Taxonomy | None = None) -> None:
         self._llm = llm
+        self._taxonomy = taxonomy or load_taxonomy()
+        self._normalizer = SkillNormalizer(self._taxonomy)
         self.prompt = load_prompt(self.name)
 
     async def _extract(
@@ -152,4 +215,8 @@ class ProfileExtractor:
         resume, *others = await asyncio.gather(
             *(self._extract(part, analysis_id, user_id) for part in parts if part)
         )
-        return merge_profiles(resume, others)
+        profile = merge_profiles(resume, others)
+        extra = missed_skills(profile, labeled, self._taxonomy, self._normalizer)
+        if extra:
+            logger.info("Added %d skills the extraction missed", len(extra))
+        return profile.model_copy(update={"skills": [*profile.skills, *extra]})

@@ -9,6 +9,8 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.config import Settings, get_settings
 from app.llm.client import LLMClient
 from app.main import create_app
+from app.schemas.advice import ResumeAdvice
+from app.schemas.learning import PathPlan
 from app.scoring.weights import SCORING_VERSION
 from tests.builders import judged
 from tests.fakes import FakeModel, InMemoryRepository
@@ -34,6 +36,9 @@ class Harness:
                 "StudentProfile": PROFILE_FIXTURE,
                 "JobRequirements": REQUIREMENTS_FIXTURE,
                 "EvidenceJudgements": judged(("R4", "direct", ["C1"])),
+                # Advice and study-plan steps answer "nothing to add" unless a test says so.
+                "ResumeAdvice": ResumeAdvice(suggestions=[]),
+                "PathPlan": PathPlan(order=[], notes=[]),
             }
         )
         self.user = USER
@@ -172,29 +177,33 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
     skills = {s["name"]: s["source"] for s in body["student_profile"]["skills"]}
     assert skills["Python"] == "resume"
     assert skills["Kubernetes"].startswith("supplementary:")
-    # Profile (resume, supporting), JD, matcher (resume evidence, supporting evidence).
-    assert body["llm_usage"]["calls"] == 5
+    # Profile (resume, supporting), JD, matcher (resume evidence, supporting evidence),
+    # advisor (FastAPI is stronger in the supporting doc than on the resume).
+    assert body["llm_usage"]["calls"] == 6
     assert body["llm_usage"]["cached_calls"] == 0
 
     # Requirements (deduped): Python, FastAPI, Docker (must), AWS (nice), Communication.
     # Python listed only 0.7; FastAPI shown in a project 0.7; AWS via certification 0.7.
-    # 100 × (2.1 + 2.1 + 0 + 0.7 + 0) / (3 + 3 + 3 + 1 + 1.2) = 43.75 -> 44
-    assert body["fit_score"] == 44
+    # Docker: the fixture extraction missed it, but the resume lists it ("Tools: Git,
+    # Docker, PostgreSQL"), so the safety net adds it: listed only, 0.7.
+    # 100 × (2.1 + 2.1 + 2.1 + 0.7 + 0) / (3 + 3 + 3 + 1 + 1.2) = 62.5 -> 63
+    assert body["fit_score"] == 63
+    docker = next(s for s in body["student_profile"]["skills"] if s["name"] == "Docker")
+    assert (docker["source"], docker["context"]) == ("resume", "skills_section")
+    assert docker["evidence"] == "Tools: Git, Docker, PostgreSQL"
     assert body["scoring_version"] == SCORING_VERSION
     buckets = {m["name"]: m["bucket"] for m in body["matches"]}
     assert buckets == {
         "Python": "weak_in_resume",
         "FastAPI": "weak_in_resume",
-        "Docker": "true_gap",
+        "Docker": "weak_in_resume",
         "AWS": "weak_in_resume",
         "Communication": "true_gap",
     }
-    # Nothing in the supporting docs beats the resume for these requirements, so the
-    # advisor has nothing to suggest and makes no LLM call.
+    # The (fake) advisor suggests nothing; Communication is the only gap.
     assert body["suggestions"] == []
-    assert [g["name"] for g in body["gaps"]] == ["Docker", "Communication"]
-    # Kubernetes (in the notes) builds on Docker, so Docker isn't something to learn;
-    # Communication is a soft skill. Nothing to plan, so no planner LLM call.
+    assert [g["name"] for g in body["gaps"]] == ["Communication"]
+    # Communication is a soft skill, not a study step: nothing to plan, no planner call.
     assert body["learning_path"] == {"steps": [], "total_hours": 0.0}
 
     # Two profile prompts: the resume alone, then the supporting doc and the extra text.
@@ -217,12 +226,12 @@ def test_identical_second_run_is_fully_cached(h: Harness) -> None:
 
     first_body = h.client.get(f"/analyses/{first.json()['id']}").json()
     second_body = h.client.get(f"/analyses/{second.json()['id']}").json()
-    assert len(h.model.requests) == 5  # only the first run reached the model
+    assert len(h.model.requests) == 6  # only the first run reached the model
     assert second_body["fit_score"] == first_body["fit_score"]
     assert second_body["matches"] is not None
     assert second_body["llm_usage"] == {
-        "calls": 5,
-        "cached_calls": 5,
+        "calls": 6,
+        "cached_calls": 6,
         "input_tokens": 0,
         "output_tokens": 0,
     }

@@ -74,6 +74,8 @@ _AMBIGUOUS_KEYS = frozenset(
         "security",
         "api",
         "apis",
+        "oracle",  # also the company and its many products (e.g. Oracle Hyperion)
+        "iam",
         "excel",
         "gin",
         "tf",
@@ -123,9 +125,12 @@ class Taxonomy:
             raise TaxonomyError("Duplicate skill ids")
 
         self._keys: dict[str, str] = {}
+        self._multiword_keys: set[str] = set()  # keys of names written as several words
         for skill in data.skills:
             for name in (skill.id, skill.name, *skill.aliases):
                 key = skill_key(name)
+                if len(_SEPARATORS_RE.split(name.strip())) > 1:
+                    self._multiword_keys.add(key)
                 owner = self._keys.setdefault(key, skill.id)
                 if owner != skill.id:
                     raise TaxonomyError(f"{name!r} maps to both {owner} and {skill.id}")
@@ -162,8 +167,11 @@ class Taxonomy:
         )
         return self._keys[best[0]] if best else None
 
-    def find_in_text(self, text: str) -> set[str]:
-        """Technical skills named in free text (exact alias matches on 1-4 word spans)."""
+    def find_in_text(
+        self, text: str, categories: frozenset[str] = TECHNICAL_CATEGORIES
+    ) -> set[str]:
+        """Skills of these categories named in free text (exact alias matches on 1-4 word
+        spans). Defaults to technical skills (tools, languages...)."""
         tokens = _TOKEN_RE.findall(text)
         found: set[str] = set()
         for size in range(1, MAX_NGRAM + 1):
@@ -172,13 +180,19 @@ class Taxonomy:
                 candidates = [span]
                 if size == 1 and "/" in span:
                     candidates += span.split("/")
+                # Joining several words only matches a one-word name when it clearly spells
+                # it ("JAVA SCRIPT"), not by accident ("I am" -> "iam").
+                words = tokens[start : start + size]
+                accidental = size > 1 and (min(len(w) for w in words) < 2 or len(span) < 6)
                 for candidate in candidates:
                     key = skill_key(candidate)
+                    if accidental and key not in self._multiword_keys:
+                        continue
                     skill_id = self._keys.get(key)
                     if (
                         skill_id
                         and key not in _AMBIGUOUS_KEYS
-                        and self.skills[skill_id].category in TECHNICAL_CATEGORIES
+                        and self.skills[skill_id].category in categories
                     ):
                         found.add(skill_id)
         return found

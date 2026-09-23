@@ -82,12 +82,11 @@ async def test_profile_extractor_resolves_sources_and_drops_unknown() -> None:
             supplementary=[_doc("doc-1", SUPPORTING_PROJECT)],
         )
     )
-    sources = {s.name: s.source for s in profile.skills}
-    assert sources == {
-        "Python": "resume",
-        "FastAPI": "resume",
-        "Kubernetes": "supplementary:doc-1",
-    }  # "Made-up skill" cited S9, which doesn't exist
+    extracted = {(s.name, s.source) for s in profile.skills if s.context != "other"}
+    assert {("Python", "resume"), ("FastAPI", "resume")} <= extracted
+    assert ("Kubernetes", "supplementary:doc-1") in {(s.name, s.source) for s in profile.skills}
+    # "Made-up skill" cited S9, which doesn't exist.
+    assert "Made-up skill" not in {s.name for s in profile.skills}
     assert profile.projects[0].source == "resume"
     assert profile.education[0].grade == "8.7/10"
     # The resume and the supporting material are extracted separately.

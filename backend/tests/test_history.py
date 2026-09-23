@@ -40,7 +40,7 @@ def test_history_lists_own_analyses_newest_first(h: Harness) -> None:
     assert [i["id"] for i in items] == [second, first]
     assert items[0]["role_title"] == "Backend Engineer"
     assert items[0]["company"] == "Example Corp"
-    assert items[0]["fit_score"] == 44 and items[0]["status"] == "done"
+    assert items[0]["fit_score"] == 63 and items[0]["status"] == "done"
 
     h.user = OTHER
     assert h.client.get("/analyses").json() == []
@@ -109,7 +109,7 @@ def test_export_markdown(h: Harness) -> None:
     assert 'filename="resume-optimizer-backend-engineer-' in res.headers["content-disposition"]
     text = res.text
     assert text.startswith("# Backend Engineer at Example Corp")
-    assert "**Job Fit Score:** 44%" in text
+    assert "**Job Fit Score:** 63%" in text
     assert "### Skill gaps" in text and "- Docker (must have)" in text
 
 
