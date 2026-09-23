@@ -105,8 +105,12 @@ test("student analyses a job end to end", async ({ page }) => {
   ).toBeVisible();
 
   await page.getByRole("tab", { name: /ATS check/ }).click();
-  await expect(page.getByText("Can hiring software read it?")).toBeVisible();
-  await expect(page.getByText("The job's keywords")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Can hiring software read it?" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "The job's keywords" }),
+  ).toBeVisible();
 
   await page.getByRole("tab", { name: /Learn/ }).click();
   await expect(
