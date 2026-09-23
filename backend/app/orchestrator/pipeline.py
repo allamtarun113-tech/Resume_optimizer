@@ -2,7 +2,7 @@
 
 Parser (at upload) -> ProfileExtractor || JDAnalyzer -> SkillNormalizer -> Matcher ->
 Scorer (+ GapClassifier) -> ResumeAdvisor (+ EvidenceValidator) || LearningPathPlanner
--> store everything.
+-> AtsChecker (resume layout read from the stored file) -> final score -> store everything.
 """
 
 import asyncio
@@ -10,6 +10,7 @@ import logging
 
 import openai
 
+from app.agents.ats_checker import AtsChecker
 from app.agents.jd_analyzer import JDAnalyzer
 from app.agents.learning_path_planner import LearningPathPlanner, PlannerInput
 from app.agents.matcher import Matcher
@@ -21,7 +22,10 @@ from app.db.repository import Repository
 from app.llm.client import LLMClient, LLMError
 from app.mcp_server.server import create_mcp_server, open_tools
 from app.parsing.extract import ExtractionError
+from app.parsing.layout import extract_layout
+from app.schemas.ats import ResumeLayout
 from app.schemas.documents import DocumentRecord
+from app.scoring.ats import final_score
 from app.skills.taxonomy import load_taxonomy
 
 logger = logging.getLogger(__name__)
@@ -64,6 +68,7 @@ class AnalysisPipeline:
         self._normalizer = SkillNormalizer(taxonomy)
         self._matcher = Matcher(llm, taxonomy)
         self._scorer = Scorer()
+        self._ats = AtsChecker(taxonomy)
         self._advisor = ResumeAdvisor(llm, taxonomy)
         mcp = create_mcp_server(lambda: repo, taxonomy)
         self._planner = LearningPathPlanner(llm, taxonomy, lambda: open_tools(mcp))
@@ -90,6 +95,18 @@ class AnalysisPipeline:
             except Exception:
                 logger.exception("Could not mark analysis %s as failed", analysis_id)
 
+    async def _layout(self, resume: DocumentRecord) -> ResumeLayout | None:
+        """The resume file's layout for the ATS check; None if the file can't be read
+        (the ATS check then skips the layout part)."""
+        if not resume.storage_path:
+            return None
+        try:
+            data = await self._repo.download_file(resume.storage_path)
+        except Exception:
+            logger.warning("Could not download resume %s", resume.id, exc_info=True)
+            return None
+        return await asyncio.to_thread(extract_layout, data, resume.filename or "resume")
+
     async def _run(self, analysis_id: str, user_id: str) -> None:
         await self._repo.update_analysis(analysis_id, status="parsing")
         analysis = await self._repo.get_analysis(user_id, analysis_id)
@@ -106,6 +123,7 @@ class AnalysisPipeline:
         await self._repo.update_analysis(
             analysis_id, status="extracting", prompt_versions=self.prompt_versions
         )
+        layout_task = asyncio.create_task(self._layout(resume))
         profile, requirements = await asyncio.gather(
             self._profile_extractor.run(
                 ProfileExtractorInput(resume=_source(resume), supplementary=supplementary),
@@ -149,8 +167,18 @@ class AnalysisPipeline:
                 user_id=user_id,
             ),
         )
+        addressed = {i for s in advice.suggestions for i in s.requirement_indexes}
+        ats = self._ats.run(
+            layout=await layout_task,
+            resume_text=resume.extracted_text or "",
+            requirements=requirements,
+            normalized=normalized,
+            matches=score.matches,
+            addressed=addressed,
+        )
         await self._repo.save_analysis_results(
             analysis_id,
+            ats=ats.model_dump(mode="json"),
             matches=[m.model_dump(mode="json") for m in score.matches],
             suggestions=advice.model_dump(mode="json", include={"suggestions", "rejected"}),
             gaps=[g.model_dump(mode="json") for g in advice.gaps],
@@ -162,5 +190,8 @@ class AnalysisPipeline:
             error=None,
             fit_score=score.fit_score,
             potential_score=score.potential_score,
+            ats_score=ats.score,
+            final_score=final_score(score.fit_score, ats.score),
+            potential_final_score=final_score(score.potential_score, ats.potential_score),
             scoring_version=score.scoring_version,
         )

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import type { AiSettings, AnalysisSummary } from "@/lib/types";
-import { scoreTone } from "@/lib/results";
+import { headlineScore, scoreTone } from "@/lib/results";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,9 +41,11 @@ export function Dashboard({ email }: { email: string }) {
       .catch(() => setItems([]));
   }, []);
 
-  const done = (items ?? []).filter((i) => i.fit_score != null);
-  const best = done.length ? Math.max(...done.map((i) => i.fit_score!)) : null;
-  const latest = done[0]?.fit_score ?? null;
+  const done = (items ?? []).filter((i) => headlineScore(i) != null);
+  const best = done.length
+    ? Math.max(...done.map((i) => headlineScore(i)!))
+    : null;
+  const latest = done[0] ? headlineScore(done[0]) : null;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10">
@@ -89,12 +91,12 @@ export function Dashboard({ email }: { email: string }) {
           value={items ? String(items.length) : null}
         />
         <StatCard
-          label="Latest fit score"
+          label="Latest score"
           value={latest != null ? `${latest}%` : items ? "–" : null}
           tone={latest != null ? scoreTone(latest) : undefined}
         />
         <StatCard
-          label="Best fit score"
+          label="Best score"
           value={best != null ? `${best}%` : items ? "–" : null}
           tone={best != null ? scoreTone(best) : undefined}
         />
@@ -143,12 +145,14 @@ export function Dashboard({ email }: { email: string }) {
                     >
                       <span
                         className={`w-12 text-lg font-semibold tabular-nums ${
-                          item.fit_score != null
-                            ? TONE_TEXT[scoreTone(item.fit_score)]
+                          headlineScore(item) != null
+                            ? TONE_TEXT[scoreTone(headlineScore(item)!)]
                             : "text-muted-foreground"
                         }`}
                       >
-                        {item.fit_score != null ? `${item.fit_score}%` : "–"}
+                        {headlineScore(item) != null
+                          ? `${headlineScore(item)}%`
+                          : "–"}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">

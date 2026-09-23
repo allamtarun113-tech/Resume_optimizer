@@ -80,10 +80,14 @@ test("student analyses a job end to end", async ({ page }) => {
   await page.waitForURL(/\/analysis\/[0-9a-f-]{36}$/, { timeout: 120_000 });
   const analysisId = page.url().split("/").pop()!;
 
-  // Results: score and the tabs.
+  // Results: final score (job fit + ATS) and the tabs.
   await expect(
-    page.getByRole("img", { name: /Job fit \(resume\): \d+%/ }),
+    page.getByRole("img", { name: /Final score: \d+%/ }),
   ).toBeVisible({ timeout: 180_000 });
+  await expect(page.getByRole("img", { name: /Job fit: \d+%/ })).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: /ATS score: \d+%/ }),
+  ).toBeVisible();
   await expect(page.getByText("What to do next")).toBeVisible();
   await expect(page.getByText("Everything the job asks for")).toBeVisible();
 
@@ -99,6 +103,10 @@ test("student analyses a job end to end", async ({ page }) => {
   await expect(
     page.getByText("Already have it? Add it to your resume"),
   ).toBeVisible();
+
+  await page.getByRole("tab", { name: /ATS check/ }).click();
+  await expect(page.getByText("Can hiring software read it?")).toBeVisible();
+  await expect(page.getByText("The job's keywords")).toBeVisible();
 
   await page.getByRole("tab", { name: /Learn/ }).click();
   await expect(

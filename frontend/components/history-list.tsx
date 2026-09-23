@@ -5,7 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { apiDelete, apiFetch } from "@/lib/api";
 import type { AnalysisSummary } from "@/lib/types";
-import { scoreTone } from "@/lib/results";
+import { headlineScore, scoreTone } from "@/lib/results";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,11 +72,11 @@ export function HistoryList() {
           <Card>
             <CardContent className="flex flex-wrap items-center gap-4 py-4">
               <div className="w-14 text-center">
-                {item.fit_score != null ? (
+                {headlineScore(item) != null ? (
                   <span
-                    className={`text-2xl font-semibold ${TONE_CLASS[scoreTone(item.fit_score)]}`}
+                    className={`text-2xl font-semibold ${TONE_CLASS[scoreTone(headlineScore(item)!)]}`}
                   >
-                    {item.fit_score}%
+                    {headlineScore(item)}%
                   </span>
                 ) : (
                   <span className="text-muted-foreground">–</span>
@@ -92,6 +92,8 @@ export function HistoryList() {
                 </Link>
                 <span className="text-xs text-muted-foreground">
                   {new Date(item.created_at).toLocaleString()}
+                  {item.final_score != null &&
+                    ` · job fit ${item.fit_score}%, ATS ${item.ats_score}%`}
                   {item.potential_score != null &&
                     item.fit_score != null &&
                     item.potential_score > item.fit_score &&

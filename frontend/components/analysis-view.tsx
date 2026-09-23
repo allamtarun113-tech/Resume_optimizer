@@ -9,6 +9,7 @@ import {
   BookOpenCheckIcon,
   LayoutListIcon,
   MessagesSquareIcon,
+  ScanTextIcon,
   WandSparklesIcon,
 } from "lucide-react";
 import { cn } from "cn";
@@ -24,6 +25,7 @@ import { LearningPathView } from "@/components/learning-path";
 import { InterviewPrep } from "@/components/interview-prep";
 import { ExportButtons, RerunForm } from "@/components/analysis-actions";
 import { AnalysisProgress } from "@/components/analysis-progress";
+import { AtsReportView } from "@/components/ats-report";
 import {
   AnalysisIdContext,
   ExplainButton,
@@ -32,9 +34,12 @@ import {
 } from "@/components/explain";
 import {
   type NextStep,
+  atsIssues,
+  atsSentence,
   nextSteps,
   plural,
   scoreSentence,
+  scoreTone,
   scoreVerdict,
 } from "@/lib/results";
 
@@ -131,11 +136,16 @@ export function AnalysisView({ id }: { id: string }) {
         Number(b.importance === "must") - Number(a.importance === "must"),
     )
     .map((g) => g.name);
+  const ats = analysis.ats;
+  const issueCount = ats ? atsIssues(ats.checks).length : 0;
+  const headline = analysis.final_score ?? analysis.fit_score;
   const steps = nextSteps({
     fitScore: analysis.fit_score,
     potentialScore: analysis.potential_score,
     suggestionCount: suggestions.length,
     gapNames,
+    atsIssues: issueCount,
+    atsScore: analysis.ats_score,
   });
 
   function openTab(value: string) {
@@ -167,12 +177,14 @@ export function AnalysisView({ id }: { id: string }) {
               {requirements?.company && (
                 <p className="text-muted-foreground">{requirements.company}</p>
               )}
-              {analysis.fit_score != null && (
+              {analysis.fit_score != null && headline != null && (
                 <p className="mt-1 max-w-xl text-base leading-relaxed">
                   <span className="font-semibold">
-                    {scoreVerdict(analysis.fit_score)}.
+                    {scoreVerdict(headline)}.
                   </span>{" "}
                   {scoreSentence(analysis.fit_score, analysis.potential_score)}
+                  {analysis.ats_score != null &&
+                    ` ${atsSentence(analysis.ats_score)}`}
                 </p>
               )}
               <div className="mt-2 flex flex-wrap gap-2 text-xs">
@@ -190,19 +202,46 @@ export function AnalysisView({ id }: { id: string }) {
                 <ExportButtons analysisId={analysis.id} />
               </div>
             </div>
-            {analysis.fit_score != null && (
-              <div className="flex justify-center gap-6 sm:gap-10">
-                <ScoreGauge
-                  score={analysis.fit_score}
-                  label="Job fit (resume)"
-                />
-                {analysis.potential_score != null && (
-                  <ScoreGauge
-                    score={analysis.potential_score}
-                    label="After adding what you have"
+            {analysis.final_score != null &&
+            analysis.fit_score != null &&
+            analysis.ats_score != null ? (
+              <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
+                <ScoreGauge score={analysis.final_score} label="Final score" />
+                <div className="flex w-full min-w-52 flex-col gap-3 sm:w-auto">
+                  <ScoreBar
+                    label="Job fit"
+                    hint="70% of the final score"
+                    score={analysis.fit_score}
                   />
-                )}
+                  <ScoreBar
+                    label="ATS score"
+                    hint="30% of the final score"
+                    score={analysis.ats_score}
+                  />
+                  {analysis.potential_final_score != null && (
+                    <ScoreBar
+                      label="After adding what you have"
+                      hint="Final score, with the Improve resume lines"
+                      score={analysis.potential_final_score}
+                    />
+                  )}
+                </div>
               </div>
+            ) : (
+              analysis.fit_score != null && (
+                <div className="flex justify-center gap-6 sm:gap-10">
+                  <ScoreGauge
+                    score={analysis.fit_score}
+                    label="Job fit (resume)"
+                  />
+                  {analysis.potential_score != null && (
+                    <ScoreGauge
+                      score={analysis.potential_score}
+                      label="After adding what you have"
+                    />
+                  )}
+                </div>
+              )
             )}
           </div>
           {analysis.fit_score != null && <ScoreExplain />}
@@ -224,6 +263,13 @@ export function AnalysisView({ id }: { id: string }) {
               Improve resume
               {suggestions.length > 0 && <Count>{suggestions.length}</Count>}
             </TabsTrigger>
+            {ats && (
+              <TabsTrigger value="ats">
+                <ScanTextIcon />
+                ATS check
+                {issueCount > 0 && <Count>{issueCount}</Count>}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="learn">
               <BookOpenCheckIcon />
               Learn
@@ -256,8 +302,16 @@ export function AnalysisView({ id }: { id: string }) {
               rejectedCount={analysis.rejected_suggestions?.length ?? 0}
               fitScore={analysis.fit_score}
               potentialScore={analysis.potential_score}
+              finalScore={analysis.final_score}
+              potentialFinalScore={analysis.potential_final_score}
             />
           </TabsContent>
+
+          {ats && (
+            <TabsContent value="ats">
+              <AtsReportView report={ats} />
+            </TabsContent>
+          )}
 
           <TabsContent value="learn" className="flex flex-col gap-6">
             {analysis.gaps && <GapList gaps={analysis.gaps} />}
@@ -347,6 +401,42 @@ function NextSteps({
         ))}
       </ol>
     </section>
+  );
+}
+
+const BAR_TONE = {
+  good: "bg-emerald-500",
+  ok: "bg-amber-500",
+  low: "bg-rose-500",
+};
+
+function ScoreBar({
+  label,
+  hint,
+  score,
+}: {
+  label: string;
+  hint: string;
+  score: number;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="font-medium">{label}</span>
+        <span className="font-semibold tabular-nums">{score}%</span>
+      </div>
+      <div
+        className="h-2 overflow-hidden rounded-full bg-muted"
+        role="img"
+        aria-label={`${label}: ${score}%`}
+      >
+        <div
+          className={cn("h-full rounded-full", BAR_TONE[scoreTone(score)])}
+          style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
+        />
+      </div>
+      <span className="text-xs text-muted-foreground">{hint}</span>
+    </div>
   );
 }
 

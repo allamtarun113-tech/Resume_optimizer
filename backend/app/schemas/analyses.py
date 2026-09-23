@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.schemas.advice import Gap, RejectedSuggestion, Suggestion
+from app.schemas.ats import AtsReport
 from app.schemas.learning import LearningPath
 from app.schemas.matching import RequirementMatch
 from app.schemas.profile import StudentProfile
@@ -34,6 +35,8 @@ class AnalysisSummary(BaseModel):
     created_at: datetime
     fit_score: int | None
     potential_score: int | None
+    ats_score: int | None
+    final_score: int | None
     role_title: str | None
     company: str | None
 
@@ -53,6 +56,9 @@ class AnalysisRecord(BaseModel):
     error: str | None
     fit_score: int | None = None
     potential_score: int | None = None
+    ats_score: int | None = None
+    final_score: int | None = None
+    potential_final_score: int | None = None
     scoring_version: str | None = None
     prompt_versions: dict[str, Any]
     created_at: datetime
@@ -75,7 +81,11 @@ class AnalysisResponse(BaseModel):
     prompt_versions: dict[str, Any]
     fit_score: int | None
     potential_score: int | None
+    ats_score: int | None
+    final_score: int | None
+    potential_final_score: int | None
     scoring_version: str | None
+    ats: AtsReport | None
     student_profile: StudentProfile | None
     job_requirements: JobRequirements | None
     matches: list[RequirementMatch] | None

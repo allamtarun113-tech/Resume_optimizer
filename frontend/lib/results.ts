@@ -1,4 +1,4 @@
-import type { RequirementMatch } from "@/lib/types";
+import type { AtsCheck, KeywordFact, RequirementMatch } from "@/lib/types";
 
 export type Bucket = RequirementMatch["bucket"];
 
@@ -203,10 +203,48 @@ export function evidenceWhere(e: Evidence): string {
   return `${what} in ${where}${e.direct ? "" : " (related, not exact)"}`;
 }
 
+// The one number shown first: the final score (job fit + ATS), or job fit on analyses
+// made before the ATS check existed.
+export function headlineScore(item: {
+  final_score: number | null;
+  fit_score: number | null;
+}): number | null {
+  return item.final_score ?? item.fit_score;
+}
+
+export function atsSentence(ats: number): string {
+  return `Hiring software (an ATS) can read it and find the job's keywords at ${ats}%.`;
+}
+
+export const ATS_GROUP_TITLE: Record<AtsCheck["group"], string> = {
+  readable: "Can hiring software read it?",
+  sections: "Sections and contact details",
+  keywords: "The job's keywords",
+};
+
+export function atsIssues(checks: AtsCheck[]): AtsCheck[] {
+  return checks.filter((c) => c.status !== "pass");
+}
+
+// Where to go for a keyword the resume doesn't use yet.
+export function keywordHint(bucket: KeywordFact["bucket"]): string {
+  switch (bucket) {
+    case "strong_in_resume":
+    case "weak_in_resume":
+      return "You show this, but not with the job's exact word. Use the job's wording.";
+    case "missing_from_resume_but_evidenced":
+      return "You have this in your other documents: add it (see Improve resume).";
+    case "true_gap":
+      return "Not shown anywhere yet: see Learn.";
+    default:
+      return "Not written in your resume.";
+  }
+}
+
 export type NextStep = {
   title: string;
   detail: string;
-  tab: "improve" | "learn" | "interview";
+  tab: "improve" | "ats" | "learn" | "interview";
 };
 
 export function nextSteps(input: {
@@ -214,8 +252,17 @@ export function nextSteps(input: {
   potentialScore: number | null;
   suggestionCount: number;
   gapNames: string[];
+  atsIssues?: number;
+  atsScore?: number | null;
 }): NextStep[] {
   const steps: NextStep[] = [];
+  if (input.atsIssues) {
+    steps.push({
+      title: `Fix ${plural(input.atsIssues, "thing")} that hiring software may trip over`,
+      detail: `Your ATS score is ${input.atsScore}%. Each fix is a small change to your resume file.`,
+      tab: "ats",
+    });
+  }
   if (input.suggestionCount > 0) {
     steps.push({
       title: `Add ${plural(input.suggestionCount, "thing")} you already have to your resume`,

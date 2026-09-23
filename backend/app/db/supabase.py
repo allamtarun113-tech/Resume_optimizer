@@ -93,6 +93,10 @@ class SupabaseRepository:
             headers={"Content-Type": content_type, "x-upsert": "false"},
         )
 
+    async def download_file(self, path: str) -> bytes:
+        response = await self._request("GET", f"/storage/v1/object/{UPLOADS_BUCKET}/{path}")
+        return response.content
+
     # -- documents ----------------------------------------------------------------------
 
     async def insert_document(

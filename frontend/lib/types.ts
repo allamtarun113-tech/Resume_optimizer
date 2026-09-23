@@ -29,3 +29,6 @@ export type ExtractedText = Schemas["ExtractedText"];
 export type ExplainRequest = Schemas["ExplainRequest"];
 export type ExplainKind = ExplainRequest["kind"];
 export type Explanation = Schemas["Explanation"];
+export type AtsReport = Schemas["AtsReport"];
+export type AtsCheck = Schemas["AtsCheck"];
+export type KeywordFact = Schemas["KeywordFact"];

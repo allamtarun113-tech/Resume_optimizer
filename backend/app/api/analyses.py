@@ -20,6 +20,7 @@ from app.schemas.analyses import (
     AnalysisResponse,
     AnalysisSummary,
 )
+from app.schemas.ats import AtsReport
 from app.schemas.interview import InterviewSet
 from app.schemas.learning import LearningPath
 from app.schemas.matching import RequirementMatch
@@ -147,6 +148,8 @@ async def list_analyses(user: User, repo: Repo) -> list[AnalysisSummary]:
             created_at=a.created_at,
             fit_score=a.fit_score,
             potential_score=a.potential_score,
+            ats_score=a.ats_score,
+            final_score=a.final_score,
             role_title=titles.get(a.id, (None, None))[0],
             company=titles.get(a.id, (None, None))[1],
         )
@@ -186,6 +189,7 @@ async def load_analysis(analysis_id: UUID, user: CurrentUser, repo: Repository) 
     advice = results.get("suggestions") or {}
     gaps = results.get("gaps")
     learning_path = results.get("learning_path")
+    ats = results.get("ats")
     return AnalysisResponse(
         id=analysis.id,
         status=analysis.status,
@@ -195,7 +199,11 @@ async def load_analysis(analysis_id: UUID, user: CurrentUser, repo: Repository) 
         prompt_versions=analysis.prompt_versions,
         fit_score=analysis.fit_score,
         potential_score=analysis.potential_score,
+        ats_score=analysis.ats_score,
+        final_score=analysis.final_score,
+        potential_final_score=analysis.potential_final_score,
         scoring_version=analysis.scoring_version,
+        ats=AtsReport.model_validate(ats) if ats else None,
         student_profile=StudentProfile.model_validate(profile) if profile else None,
         job_requirements=JobRequirements.model_validate(requirements) if requirements else None,
         matches=[RequirementMatch.model_validate(m) for m in matches] if matches else None,

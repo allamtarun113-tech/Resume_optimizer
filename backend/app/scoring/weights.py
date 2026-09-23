@@ -24,7 +24,8 @@ from fractions import Fraction
 #    written in a document but skipped by the LLM are added from the taxonomy.
 # 5: a language/tool/database/cloud requirement ("GitHub", "MySQL") only counts a project
 #    or job the LLM cites if its text names that skill (or one implying it).
-SCORING_VERSION = "5"
+# 6: adds the ATS score (ATS_VERSION) and the final score (job fit and ATS combined).
+SCORING_VERSION = "6"
 
 IMPORTANCE_WEIGHTS: dict[str, Fraction] = {"must": Fraction(3), "nice": Fraction(1)}
 
@@ -46,3 +47,45 @@ DEMONSTRATED_CONTEXTS = frozenset({"project", "experience"})
 
 # Strengths are rounded to this many decimals so stored values recompute exactly.
 STRENGTH_DECIMALS = 3
+
+# -- ATS check and final score -------------------------------------------------------------
+# The ATS score (0-100) says how well an applicant tracking system can read the resume and
+# find the job's keywords in it. Each check earns up to its points; the score is the share
+# of points earned over the checks that apply (layout checks need the PDF/DOCX file).
+ATS_VERSION = "1"
+ATS_POINTS: dict[str, int] = {
+    # Can an ATS read it?
+    "readable_text": 12,
+    "single_column": 10,
+    "no_tables": 8,
+    "no_graphics": 5,
+    "contact_in_body": 5,  # DOCX only: contact details in the page header/footer
+    "page_count": 3,
+    # Sections and contact details
+    "standard_headings": 10,
+    "contact_details": 8,
+    "profile_links": 4,
+    "date_format": 4,
+    "personal_details": 5,
+    "length": 3,
+    # Job keywords, word for word
+    "keywords": 25,
+}
+# Share of a check's points earned for a warning (the rest of the rules are in scoring/ats.py).
+ATS_TABLE_SHARE = Fraction(1, 4)
+ATS_GRAPHICS_SHARE = Fraction(1, 2)
+ATS_PARTIAL_SHARE = Fraction(1, 2)
+ATS_HIDDEN_LINK_SHARE = Fraction(1, 4)
+ATS_LONG_RESUME_SHARE = Fraction(1, 3)
+ATS_UNREADABLE_OK = Fraction(2, 1000)  # share of characters an ATS can't read
+ATS_UNREADABLE_WARN = Fraction(2, 100)
+ATS_MIN_WORDS = 200
+ATS_MAX_WORDS = 1000
+ATS_MAX_PAGES = 2
+ATS_KEYWORDS_PASS = Fraction(8, 10)
+ATS_KEYWORDS_WARN = Fraction(4, 10)
+ATS_REQUIRED_SECTIONS = (("education",), ("skills",), ("experience", "projects"))
+
+# Final score = the one number shown first: mostly job fit, partly ATS readability.
+FINAL_FIT_WEIGHT = Fraction(7, 10)
+FINAL_ATS_WEIGHT = Fraction(3, 10)

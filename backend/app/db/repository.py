@@ -14,6 +14,8 @@ from app.schemas.learning import LearningResource
 class Repository(LLMStore, Protocol):
     async def upload_file(self, path: str, data: bytes, content_type: str) -> None: ...
 
+    async def download_file(self, path: str) -> bytes: ...
+
     async def insert_document(
         self,
         *,

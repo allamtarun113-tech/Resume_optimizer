@@ -34,6 +34,9 @@ class InMemoryRepository:
     async def upload_file(self, path: str, data: bytes, content_type: str) -> None:
         self.files[path] = data
 
+    async def download_file(self, path: str) -> bytes:
+        return self.files[path]
+
     async def insert_document(
         self,
         *,

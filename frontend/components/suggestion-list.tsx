@@ -83,11 +83,15 @@ export function SuggestionList({
   rejectedCount,
   potentialScore,
   fitScore,
+  finalScore = null,
+  potentialFinalScore = null,
 }: {
   suggestions: Suggestion[];
   rejectedCount: number;
   potentialScore: number | null;
   fitScore: number | null;
+  finalScore?: number | null;
+  potentialFinalScore?: number | null;
 }) {
   return (
     <section className="flex flex-col gap-4">
@@ -106,7 +110,7 @@ export function SuggestionList({
         <Card>
           <CardContent className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
             <div className="flex items-start gap-2 sm:gap-4">
-              <ScoreGauge score={fitScore} label="Your resume now" />
+              <ScoreGauge score={fitScore} label="Job fit now" />
               <ArrowRightIcon
                 className="mt-14 size-5 shrink-0 text-muted-foreground sm:mt-16"
                 aria-hidden
@@ -116,9 +120,17 @@ export function SuggestionList({
                 label="After adding what you have"
               />
             </div>
-            <p className="text-sm leading-relaxed">
-              {afterAddingText(fitScore, potentialScore)}
-            </p>
+            <div className="flex flex-col gap-2 text-sm leading-relaxed">
+              <p>{afterAddingText(fitScore, potentialScore)}</p>
+              {finalScore != null &&
+                potentialFinalScore != null &&
+                potentialFinalScore > finalScore && (
+                  <p className="text-muted-foreground">
+                    Your final score (job fit + ATS) would go from {finalScore}%
+                    to {potentialFinalScore}%.
+                  </p>
+                )}
+            </div>
           </CardContent>
         </Card>
       )}

@@ -7,7 +7,16 @@ from pydantic import BaseModel, Field
 # What the student clicked. `ref` identifies the item inside the stored analysis:
 #   score: ""                  requirement: requirement_index      suggestion: suggestion id
 #   learning_step: step number interview_question: "technical:3", "project:0:5", ...
-ExplainKind = Literal["score", "requirement", "suggestion", "learning_step", "interview_question"]
+#   ats: "" (the ATS score)    ats_check: check id, e.g. "no_tables"
+ExplainKind = Literal[
+    "score",
+    "requirement",
+    "suggestion",
+    "learning_step",
+    "interview_question",
+    "ats",
+    "ats_check",
+]
 
 
 class ExplainRequest(BaseModel):

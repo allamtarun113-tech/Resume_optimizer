@@ -68,12 +68,17 @@ def _escape_pdf(text: str) -> str:
     return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
 
-def make_pdf(text: str) -> bytes:
-    """Build a minimal one-page PDF with a real text layer (Helvetica, one line per row)."""
-    lines = [line.encode("latin-1", "replace").decode("latin-1") for line in text.split("\n")]
-    ops = ["BT", "/F1 10 Tf", "12 TL", "40 800 Td"]
-    ops += [f"({_escape_pdf(line)}) Tj T*" for line in lines]
-    ops.append("ET")
+def make_pdf(text: str, right_column: str | None = None) -> bytes:
+    """Build a minimal one-page PDF with a real text layer (Helvetica, one line per row).
+    `right_column` adds a second column of text beside the first (a two-column layout)."""
+    ops: list[str] = []
+    for column, x in ((text, 40), (right_column, 330)):
+        if column is None:
+            continue
+        lines = [line.encode("latin-1", "replace").decode("latin-1") for line in column.split("\n")]
+        ops += ["BT", "/F1 10 Tf", "12 TL", f"{x} 800 Td"]
+        ops += [f"({_escape_pdf(line)}) Tj T*" for line in lines]
+        ops.append("ET")
     stream = "\n".join(ops).encode("latin-1")
 
     objects = [

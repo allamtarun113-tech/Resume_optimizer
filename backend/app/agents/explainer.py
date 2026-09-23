@@ -35,7 +35,11 @@ How the score works (fixed rules, same input always gives the same score):
   Years of experience count as your years divided by the years asked for (max 1.0).
 - Job fit = weighted average of the strengths, as a percentage.
 - "With what you already have" = the same, but also counting the student's other documents
-  and notes. The difference is what adding those things to the resume could gain."""
+  and notes. The difference is what adding those things to the resume could gain.
+- ATS score = how well an applicant tracking system (the software many employers use to
+  sort resumes) can read the resume file and find the job's skill keywords in it, word
+  for word. Each check earns points; the score is the share of points earned.
+- Final score = 70% job fit + 30% ATS score."""
 
 
 class ExplainNotFound(LookupError):
@@ -85,8 +89,27 @@ def _requirement_facts(m: RequirementMatch) -> list[str]:
     return lines
 
 
+def _ats_facts(a: AnalysisResponse) -> list[str]:
+    if a.ats is None:
+        return ["ATS check: not available for this analysis."]
+    lines = [f"ATS score: {a.ats.score}% (points earned per check):"]
+    for c in a.ats.checks:
+        lines.append(
+            f"- {c.title}: {c.status}, {c.points:g} of {c.max_points:g} points. {c.detail}"
+        )
+    return lines
+
+
 def _score_facts(a: AnalysisResponse) -> list[str]:
-    lines = [SCORING_RULES, "", "Requirements (name | importance | weight | resume | all docs):"]
+    lines = [SCORING_RULES, ""]
+    if a.final_score is not None:
+        lines += [
+            f"Final score: {a.final_score}% = 70% x job fit {a.fit_score}% + 30% x ATS "
+            f"{a.ats_score}%. With what they already have added: {a.potential_final_score}%.",
+            *_ats_facts(a),
+            "",
+        ]
+    lines.append("Requirements (name | importance | weight | resume | all docs):")
     for m in a.matches or []:
         lines.append(
             f"- {m.name} | {IMPORTANCE_TEXT[m.importance]} | {m.weight:g} | "
@@ -123,6 +146,34 @@ def build_request(
             f"{analysis.potential_score}% with what I already have?"
         )
         return question, _score_facts(analysis)
+
+    if kind == "ats":
+        question = f"What does my ATS score of {analysis.ats_score}% mean, and how do I improve it?"
+        return question, [SCORING_RULES, "", *_ats_facts(analysis)]
+
+    if kind == "ats_check":
+        check = (
+            next((c for c in analysis.ats.checks if c.id == ref), None) if analysis.ats else None
+        )
+        if check is None:
+            raise ExplainNotFound("ATS check not found.")
+        facts = [
+            f"ATS check: {check.title}",
+            f"Result: {check.status}, {check.points:g} of {check.max_points:g} points",
+            f"What we found: {check.detail}",
+        ]
+        if check.items:
+            facts.append("Items: " + ", ".join(check.items))
+        if check.fix:
+            facts.append(f"Suggested fix: {check.fix}")
+        if check.id == "keywords" and analysis.ats:
+            for k in analysis.ats.keywords:
+                if not k.found:
+                    where = BUCKET_TEXT[k.bucket] if k.bucket else "unknown"
+                    facts.append(
+                        f"Missing keyword {k.name} ({IMPORTANCE_TEXT[k.importance]}): {where}"
+                    )
+        return f'What does the ATS check "{check.title}" mean for my resume?', facts
 
     if kind == "requirement":
         match = next((m for m in analysis.matches or [] if str(m.requirement_index) == ref), None)
@@ -188,6 +239,11 @@ def render_input(analysis: AnalysisResponse, question: str, facts: list[str]) ->
         [
             "<job>",
             f"Role: {role}{company}",
+            *(
+                [f"Final score: {analysis.final_score}%", f"ATS score: {analysis.ats_score}%"]
+                if analysis.final_score is not None
+                else []
+            ),
             f"Job fit (resume): {analysis.fit_score}%",
             f"With what they already have: {analysis.potential_score}%",
             "</job>",

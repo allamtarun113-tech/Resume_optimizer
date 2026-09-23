@@ -189,6 +189,27 @@
       },
       "AnalysisResponse": {
         "properties": {
+          "ats": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AtsReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ats_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ats Score"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -204,6 +225,17 @@
               }
             ],
             "title": "Error"
+          },
+          "final_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Score"
           },
           "fit_score": {
             "anyOf": [
@@ -270,6 +302,17 @@
               }
             ],
             "title": "Matches"
+          },
+          "potential_final_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potential Final Score"
           },
           "potential_score": {
             "anyOf": [
@@ -364,7 +407,11 @@
           "prompt_versions",
           "fit_score",
           "potential_score",
+          "ats_score",
+          "final_score",
+          "potential_final_score",
           "scoring_version",
+          "ats",
           "student_profile",
           "job_requirements",
           "matches",
@@ -379,6 +426,17 @@
       },
       "AnalysisSummary": {
         "properties": {
+          "ats_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ats Score"
+          },
           "company": {
             "anyOf": [
               {
@@ -394,6 +452,17 @@
             "format": "date-time",
             "title": "Created At",
             "type": "string"
+          },
+          "final_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Score"
           },
           "fit_score": {
             "anyOf": [
@@ -452,10 +521,124 @@
           "created_at",
           "fit_score",
           "potential_score",
+          "ats_score",
+          "final_score",
           "role_title",
           "company"
         ],
         "title": "AnalysisSummary",
+        "type": "object"
+      },
+      "AtsCheck": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "fix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fix"
+          },
+          "group": {
+            "enum": [
+              "readable",
+              "sections",
+              "keywords"
+            ],
+            "title": "Group",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "max_points": {
+            "title": "Max Points",
+            "type": "number"
+          },
+          "points": {
+            "title": "Points",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "warn",
+              "fail"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group",
+          "title",
+          "status",
+          "points",
+          "max_points",
+          "detail",
+          "fix",
+          "items"
+        ],
+        "title": "AtsCheck",
+        "type": "object"
+      },
+      "AtsReport": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/AtsCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "keywords": {
+            "items": {
+              "$ref": "#/components/schemas/KeywordFact"
+            },
+            "title": "Keywords",
+            "type": "array"
+          },
+          "potential_score": {
+            "title": "Potential Score",
+            "type": "integer"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "score",
+          "potential_score",
+          "checks",
+          "keywords"
+        ],
+        "title": "AtsReport",
         "type": "object"
       },
       "Body_extract_document_text_documents_extract_text_post": {
@@ -846,7 +1029,9 @@
               "requirement",
               "suggestion",
               "learning_step",
-              "interview_question"
+              "interview_question",
+              "ats",
+              "ats_check"
             ],
             "title": "Kind",
             "type": "string"
@@ -1156,6 +1341,56 @@
           "requirements"
         ],
         "title": "JobRequirements",
+        "type": "object"
+      },
+      "KeywordFact": {
+        "properties": {
+          "bucket": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong_in_resume",
+                  "weak_in_resume",
+                  "missing_from_resume_but_evidenced",
+                  "true_gap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bucket"
+          },
+          "found": {
+            "title": "Found",
+            "type": "boolean"
+          },
+          "importance": {
+            "enum": [
+              "must",
+              "nice"
+            ],
+            "title": "Importance",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "requirement_index": {
+            "title": "Requirement Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requirement_index",
+          "name",
+          "importance",
+          "found",
+          "bucket"
+        ],
+        "title": "KeywordFact",
         "type": "object"
       },
       "LLMUsage": {

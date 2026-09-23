@@ -41,10 +41,26 @@ def build_markdown_report(analysis: AnalysisResponse, interview: InterviewSet | 
         "",
         "## Job fit",
         "",
+        *(
+            [
+                f"- **Final score:** {analysis.final_score}% (70% job fit + 30% ATS)",
+                f"- **ATS score:** {analysis.ats_score}%",
+            ]
+            if analysis.final_score is not None
+            else []
+        ),
         f"- **Job Fit Score:** {analysis.fit_score}%",
         f"- **With what you already have:** {analysis.potential_score}%",
         "",
     ]
+    if analysis.ats:
+        lines += [f"## ATS check ({analysis.ats.score}%)", ""]
+        mark = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
+        for c in analysis.ats.checks:
+            lines.append(f"- {mark[c.status]} **{c.title}:** {c.detail}")
+            if c.fix:
+                lines.append(f"  - Fix: {c.fix}")
+        lines.append("")
 
     suggestions = analysis.suggestions or []
     if suggestions:

@@ -294,6 +294,9 @@ export interface components {
         };
         /** AnalysisResponse */
         AnalysisResponse: {
+            ats: components["schemas"]["AtsReport"] | null;
+            /** Ats Score */
+            ats_score: number | null;
             /**
              * Created At
              * Format: date-time
@@ -301,6 +304,8 @@ export interface components {
             created_at: string;
             /** Error */
             error: string | null;
+            /** Final Score */
+            final_score: number | null;
             /** Fit Score */
             fit_score: number | null;
             /** Gaps */
@@ -312,6 +317,8 @@ export interface components {
             llm_usage: components["schemas"]["LLMUsage"];
             /** Matches */
             matches: components["schemas"]["RequirementMatch"][] | null;
+            /** Potential Final Score */
+            potential_final_score: number | null;
             /** Potential Score */
             potential_score: number | null;
             /** Prompt Versions */
@@ -338,6 +345,8 @@ export interface components {
         };
         /** AnalysisSummary */
         AnalysisSummary: {
+            /** Ats Score */
+            ats_score: number | null;
             /** Company */
             company: string | null;
             /**
@@ -345,6 +354,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Final Score */
+            final_score: number | null;
             /** Fit Score */
             fit_score: number | null;
             /** Id */
@@ -358,6 +369,46 @@ export interface components {
              * @enum {string}
              */
             status: "queued" | "parsing" | "extracting" | "scoring" | "advising" | "done" | "failed";
+        };
+        /** AtsCheck */
+        AtsCheck: {
+            /** Detail */
+            detail: string;
+            /** Fix */
+            fix: string | null;
+            /**
+             * Group
+             * @enum {string}
+             */
+            group: "readable" | "sections" | "keywords";
+            /** Id */
+            id: string;
+            /** Items */
+            items: string[];
+            /** Max Points */
+            max_points: number;
+            /** Points */
+            points: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pass" | "warn" | "fail";
+            /** Title */
+            title: string;
+        };
+        /** AtsReport */
+        AtsReport: {
+            /** Checks */
+            checks: components["schemas"]["AtsCheck"][];
+            /** Keywords */
+            keywords: components["schemas"]["KeywordFact"][];
+            /** Potential Score */
+            potential_score: number;
+            /** Score */
+            score: number;
+            /** Version */
+            version: string;
         };
         /** Body_extract_document_text_documents_extract_text_post */
         Body_extract_document_text_documents_extract_text_post: {
@@ -516,7 +567,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "score" | "requirement" | "suggestion" | "learning_step" | "interview_question";
+            kind: "score" | "requirement" | "suggestion" | "learning_step" | "interview_question" | "ats" | "ats_check";
             /**
              * Ref
              * @default
@@ -624,6 +675,22 @@ export interface components {
             role_title: string | null;
             /** Seniority */
             seniority: ("intern" | "entry" | "mid" | "senior" | "lead") | null;
+        };
+        /** KeywordFact */
+        KeywordFact: {
+            /** Bucket */
+            bucket: ("strong_in_resume" | "weak_in_resume" | "missing_from_resume_but_evidenced" | "true_gap") | null;
+            /** Found */
+            found: boolean;
+            /**
+             * Importance
+             * @enum {string}
+             */
+            importance: "must" | "nice";
+            /** Name */
+            name: string;
+            /** Requirement Index */
+            requirement_index: number;
         };
         /** LLMUsage */
         LLMUsage: {

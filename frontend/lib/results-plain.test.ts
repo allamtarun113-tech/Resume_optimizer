@@ -6,6 +6,9 @@ import {
   plainStatus,
   plural,
   afterAddingText,
+  atsIssues,
+  headlineScore,
+  keywordHint,
   scoreSentence,
   scoreVerdict,
 } from "@/lib/results";
@@ -169,5 +172,43 @@ describe("YouTube links", () => {
     expect(youTubeSearchUrl("Linear algebra")).toBe(
       "https://www.youtube.com/results?search_query=Linear%20algebra%20tutorial",
     );
+  });
+});
+
+describe("ATS and final score", () => {
+  it("prefers the final score and explains missing keywords", () => {
+    expect(headlineScore({ final_score: 46, fit_score: 35 })).toBe(46);
+    expect(headlineScore({ final_score: null, fit_score: 35 })).toBe(35);
+    expect(keywordHint("missing_from_resume_but_evidenced")).toContain(
+      "Improve resume",
+    );
+    expect(keywordHint("true_gap")).toContain("Learn");
+    expect(keywordHint(null)).toBe("Not written in your resume.");
+    const check = {
+      id: "no_tables",
+      group: "readable" as const,
+      title: "No tables",
+      points: 2,
+      max_points: 8,
+      detail: "",
+      fix: null,
+      items: [],
+    };
+    expect(
+      atsIssues([
+        { ...check, status: "warn" },
+        { ...check, status: "pass" },
+      ]),
+    ).toHaveLength(1);
+    const steps = nextSteps({
+      fitScore: 35,
+      potentialScore: 35,
+      suggestionCount: 0,
+      gapNames: [],
+      atsIssues: 3,
+      atsScore: 64,
+    });
+    expect(steps[0]).toMatchObject({ tab: "ats" });
+    expect(steps[0].detail).toContain("64%");
   });
 });
