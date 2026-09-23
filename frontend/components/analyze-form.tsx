@@ -14,13 +14,13 @@ import {
 import { toast } from "sonner";
 import { apiFetch, apiPostForm, apiPostJson } from "@/lib/api";
 import {
-  MAX_EXTRA_CHARS,
-  MAX_JD_CHARS,
   MAX_SUPPORTING_DOCS,
   RESUME_ACCEPT,
   SUPPORTING_ACCEPT,
+  filledProjects,
   validateAnalyzeInput,
 } from "@/lib/analyze";
+import { formatSkills } from "@/lib/skills";
 import { showApiError } from "@/lib/errors";
 import type {
   AiSettings,
@@ -29,10 +29,12 @@ import type {
   DocumentResponse,
 } from "@/lib/types";
 import { FileDropzone } from "@/components/file-dropzone";
+import { JobDescriptionInput } from "@/components/inputs/job-description-input";
+import { ProjectDescriptions } from "@/components/inputs/project-descriptions";
+import { SkillsInput } from "@/components/inputs/skills-input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 
 function uploadFile(kind: "resume" | "supporting", file: File) {
   const form = new FormData();
@@ -85,9 +87,9 @@ export function AnalyzeForm() {
   const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [resume, setResume] = useState<File[]>([]);
   const [jdText, setJdText] = useState("");
-  const [extraText, setExtraText] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [projects, setProjects] = useState<string[]>([""]);
   const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
-  const [supportingText, setSupportingText] = useState("");
   const [step, setStep] = useState<string | null>(null);
 
   useEffect(() => {
@@ -101,9 +103,9 @@ export function AnalyzeForm() {
     const input = {
       resume: resume[0] ?? null,
       jdText,
-      extraText,
+      skills,
+      projects,
       supportingFiles,
-      supportingText,
     };
     const problem = validateAnalyzeInput(input);
     if (problem) return toast.error(problem);
@@ -113,14 +115,14 @@ export function AnalyzeForm() {
       const [resumeDoc, ...supportingDocs] = await Promise.all([
         uploadFile("resume", input.resume!),
         ...supportingFiles.map((f) => uploadFile("supporting", f)),
-        ...(supportingText.trim() ? [uploadText(supportingText)] : []),
+        ...filledProjects(projects).map(uploadText),
       ]);
 
       setStep("Starting analysis…");
       const body: AnalysisCreate = {
         resume_doc_id: resumeDoc.id,
         jd_text: jdText,
-        extra_text: extraText.trim() || null,
+        extra_text: formatSkills(skills) || null,
         supporting_doc_ids: supportingDocs.map((d) => d.id),
       };
       const created = await apiPostJson<AnalysisCreated>("/analyses", body);
@@ -157,6 +159,8 @@ export function AnalyzeForm() {
   }
 
   const busy = step !== null;
+  const supportingCount =
+    supportingFiles.length + filledProjects(projects).length;
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-6">
@@ -180,45 +184,43 @@ export function AnalyzeForm() {
         number={2}
         icon={BriefcaseIcon}
         title="The job"
-        description="Paste the full job description, including requirements."
+        description="Paste it, or upload the PDF/DOCX; you can edit the text either way."
       >
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="jd">Job description</Label>
-          <Textarea
-            id="jd"
-            rows={10}
-            maxLength={MAX_JD_CHARS}
-            placeholder="Paste the full job description here."
-            disabled={busy}
-            value={jdText}
-            onChange={(e) => setJdText(e.target.value)}
-          />
-          <p className="text-right text-xs text-muted-foreground tabular-nums">
-            {jdText.length.toLocaleString()} / {MAX_JD_CHARS.toLocaleString()}
-          </p>
-        </div>
+        <JobDescriptionInput
+          value={jdText}
+          onChange={setJdText}
+          disabled={busy}
+        />
       </Step>
 
       <Step
         number={3}
         icon={SparklesIcon}
         title="Anything missing from your resume? (optional)"
-        description="Projects, skills or experience you really have. Suggestions only ever use what you give here."
+        description="Skills, projects and documents you really have. Suggestions only ever use what you give here."
       >
         <div className="flex flex-col gap-2">
-          <Label htmlFor="extra">Additional skills or experience</Label>
-          <Textarea
-            id="extra"
-            rows={3}
-            maxLength={MAX_EXTRA_CHARS}
-            placeholder="e.g. I deployed my food ordering app with Docker on a small Kubernetes cluster."
+          <Label htmlFor="skills">Additional skills</Label>
+          <SkillsInput
+            id="skills"
+            skills={skills}
+            onChange={setSkills}
             disabled={busy}
-            value={extraText}
-            onChange={(e) => setExtraText(e.target.value)}
           />
         </div>
+        <ProjectDescriptions
+          projects={projects}
+          onChange={setProjects}
+          canAddMore={supportingCount < MAX_SUPPORTING_DOCS}
+          disabled={busy}
+        />
         <div className="flex flex-col gap-2">
-          <Label>Supporting documents (up to {MAX_SUPPORTING_DOCS})</Label>
+          <div className="flex items-center justify-between">
+            <Label>Supporting documents</Label>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {supportingCount} / {MAX_SUPPORTING_DOCS} documents and projects
+            </span>
+          </div>
           <FileDropzone
             label="Drop project reports, older resumes or exports"
             hint="PDF, DOCX or TXT · 5 MB each"
@@ -227,18 +229,6 @@ export function AnalyzeForm() {
             files={supportingFiles}
             onChange={setSupportingFiles}
             disabled={busy}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="supporting-text">
-            Or paste a project description
-          </Label>
-          <Textarea
-            id="supporting-text"
-            rows={4}
-            disabled={busy}
-            value={supportingText}
-            onChange={(e) => setSupportingText(e.target.value)}
           />
         </div>
       </Step>

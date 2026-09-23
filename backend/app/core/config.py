@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # Accepts a JSON list or a comma-separated string.
     allowed_origins: Annotated[list[str], NoDecode] = Field(default=["http://localhost:3000"])
     daily_analysis_limit: int = 10
-    daily_upload_limit: int = 40
+    daily_upload_limit: int = 100
 
     @field_validator("allowed_origins", mode="before")
     @classmethod

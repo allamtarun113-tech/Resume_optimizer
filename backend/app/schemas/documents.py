@@ -34,3 +34,10 @@ class DocumentResponse(BaseModel):
     filename: str | None
     char_count: int
     sections: list[str]
+
+
+class ExtractedText(BaseModel):
+    """Text pulled out of an uploaded file without storing it (e.g. a job description)."""
+
+    text: str
+    char_count: int

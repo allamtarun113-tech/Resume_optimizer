@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import { DownloadIcon, PrinterIcon, RefreshCwIcon } from "lucide-react";
 import { toast } from "sonner";
 import { apiDownload, apiPostJson } from "@/lib/api";
-import { MAX_JD_CHARS, MIN_JD_CHARS } from "@/lib/analyze";
+import { MIN_JD_CHARS } from "@/lib/analyze";
 import { showApiError } from "@/lib/errors";
 import type { AnalysisCreated, AnalysisRerun } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { JobDescriptionInput } from "@/components/inputs/job-description-input";
 import {
   Card,
   CardContent,
@@ -67,7 +66,7 @@ export function RerunForm({ analysisId }: { analysisId: string }) {
     const text = jdText.trim();
     if (text.length < MIN_JD_CHARS)
       return toast.error(
-        `Paste the full job description (at least ${MIN_JD_CHARS} characters).`,
+        `Add the full job description (at least ${MIN_JD_CHARS} characters).`,
       );
     setBusy(true);
     try {
@@ -97,17 +96,12 @@ export function RerunForm({ analysisId }: { analysisId: string }) {
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="flex flex-col gap-3">
-          <Label htmlFor="rerun-jd" className="sr-only">
-            Job description
-          </Label>
-          <Textarea
-            id="rerun-jd"
-            rows={6}
-            maxLength={MAX_JD_CHARS}
-            placeholder="Paste another job description."
+          <JobDescriptionInput
             value={jdText}
+            onChange={setJdText}
             disabled={busy}
-            onChange={(e) => setJdText(e.target.value)}
+            rows={6}
+            label="Another job description"
           />
           <div>
             <Button type="submit" disabled={busy}>

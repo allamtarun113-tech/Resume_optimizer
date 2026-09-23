@@ -53,8 +53,11 @@ test("student analyses a job end to end", async ({ page }) => {
   await page
     .getByLabel("Drop your resume here, or click to choose")
     .setInputFiles(path.join(__dirname, "fixtures", "resume.pdf"));
-  await page.getByLabel("Job description").fill(JOB_DESCRIPTION);
-  await page.getByLabel("Additional skills or experience").fill(NOTES);
+  await page.getByLabel("Job description", { exact: true }).fill(JOB_DESCRIPTION);
+  await page.getByLabel("Project description 1").fill(NOTES);
+  await page.getByLabel("Additional skills").fill("Git");
+  await page.getByRole("button", { name: "Add skill" }).click();
+  await expect(page.getByRole("button", { name: "Remove Git" })).toBeVisible();
   await page.getByRole("button", { name: "Analyze", exact: true }).click();
   await page.waitForURL(/\/analysis\/[0-9a-f-]{36}$/, { timeout: 120_000 });
   const analysisId = page.url().split("/").pop()!;

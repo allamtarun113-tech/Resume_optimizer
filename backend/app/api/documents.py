@@ -11,7 +11,8 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.config import Settings, get_settings
 from app.db.repository import Repository
 from app.parsing.extract import ExtractionError, FileType, detect_file_type
-from app.schemas.documents import DocumentResponse, ParsedDocument, UploadKind
+from app.schemas.analyses import MAX_JD_CHARS
+from app.schemas.documents import DocumentResponse, ExtractedText, ParsedDocument, UploadKind
 
 router = APIRouter(tags=["documents"])
 
@@ -93,3 +94,26 @@ async def upload_document(
         char_count=len(parsed.text),
         sections=[s.name for s in parsed.sections],
     )
+
+
+@router.post("/documents/extract-text")
+async def extract_document_text(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    file: Annotated[UploadFile, File()],
+) -> ExtractedText:
+    """Read the text of a job description file (PDF/DOCX/TXT) so the user can review and
+    edit it before analyzing. Nothing is stored."""
+    data = await file.read(MAX_FILE_BYTES + 1)
+    if len(data) > MAX_FILE_BYTES:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "Files must be 5 MB or smaller.")
+    try:
+        parsed = await asyncio.to_thread(_parser.parse_file, data, _safe_filename(file.filename))
+    except ExtractionError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
+    if len(parsed.text) > MAX_JD_CHARS:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            f"This file has {len(parsed.text):,} characters; job descriptions can be up to "
+            f"{MAX_JD_CHARS:,}. Paste just the job description part instead.",
+        )
+    return ExtractedText(text=parsed.text, char_count=len(parsed.text))

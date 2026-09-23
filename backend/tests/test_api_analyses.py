@@ -258,7 +258,7 @@ def test_analysis_validates_documents(h: Harness) -> None:
     assert h.analyze(resume_id, [resume_id]).status_code == 404
     assert h.analyze("not-a-uuid").status_code == 422
     assert h.analyze(resume_id, jd_text="too short").status_code == 422
-    assert h.analyze(resume_id, [supporting_id] * 6).status_code == 422
+    assert h.analyze(resume_id, [supporting_id] * 21).status_code == 422
 
     # Another user's documents and analyses are invisible.
     analysis_id = h.analyze(resume_id).json()["id"]

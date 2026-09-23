@@ -12,7 +12,10 @@ from app.schemas.profile import StudentProfile
 logger = logging.getLogger(__name__)
 
 MAX_RESUME_CHARS = 20_000
-MAX_SUPPLEMENTARY_CHARS = 15_000
+MAX_SUPPLEMENTARY_CHARS = 15_000  # per document
+# All supplementary documents together (up to 20 per analysis) share this budget, which
+# keeps a 20-document analysis around a cent on a small model.
+SUPPLEMENTARY_BUDGET = 60_000
 MAX_OUTPUT_TOKENS = 16_000
 RESUME_LABEL = "RESUME"
 _SOURCED_FIELDS = ("skills", "projects", "experience", "education", "certifications")
@@ -45,10 +48,30 @@ def label_documents(inp: ProfileExtractorInput) -> list[tuple[str, str, SourceDo
     return labeled
 
 
+def fair_limits(lengths: list[int], budget: int, cap: int) -> list[int]:
+    """Per-document character limits that fit `budget`: short documents keep all their
+    text, and what they don't use is shared equally among the longer ones."""
+    limits = [0] * len(lengths)
+    remaining = budget
+    pending = sorted(range(len(lengths)), key=lambda i: lengths[i])
+    while pending:
+        share = remaining // len(pending)
+        i = pending.pop(0)
+        limits[i] = min(lengths[i], cap, share)
+        remaining -= limits[i]
+    return limits
+
+
 def build_input(labeled: list[tuple[str, str, SourceDocument]]) -> str:
+    supplementary = [doc for label, _, doc in labeled if label != RESUME_LABEL]
+    limits = iter(
+        fair_limits(
+            [len(d.text) for d in supplementary], SUPPLEMENTARY_BUDGET, MAX_SUPPLEMENTARY_CHARS
+        )
+    )
     blocks = []
     for label, _, doc in labeled:
-        limit = MAX_RESUME_CHARS if label == RESUME_LABEL else MAX_SUPPLEMENTARY_CHARS
+        limit = MAX_RESUME_CHARS if label == RESUME_LABEL else next(limits)
         blocks.append(f'<document id="{label}">\n{doc.text[:limit]}\n</document>')
     return "\n\n".join(blocks)
 

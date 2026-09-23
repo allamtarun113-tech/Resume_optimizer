@@ -25,3 +25,4 @@ export type InterviewQuestion = Schemas["InterviewQuestion"];
 export type AiSettings = Schemas["AiSettingsResponse"];
 export type AiSettingsUpdate = Schemas["AiSettingsUpdate"];
 export type ModelList = Schemas["ModelListResponse"];
+export type ExtractedText = Schemas["ExtractedText"];

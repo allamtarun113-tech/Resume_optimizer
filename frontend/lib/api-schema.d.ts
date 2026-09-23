@@ -122,6 +122,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/documents/extract-text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Extract Document Text
+         * @description Read the text of a job description file (PDF/DOCX/TXT) so the user can review and
+         *     edit it before analyzing. Nothing is stored.
+         */
+        post: operations["extract_document_text_documents_extract_text_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -317,6 +338,11 @@ export interface components {
              */
             status: "queued" | "parsing" | "extracting" | "scoring" | "advising" | "done" | "failed";
         };
+        /** Body_extract_document_text_documents_extract_text_post */
+        Body_extract_document_text_documents_extract_text_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_document_documents_post */
         Body_upload_document_documents_post: {
             /** File */
@@ -462,6 +488,16 @@ export interface components {
             technologies: string[];
             /** Title */
             title: string;
+        };
+        /**
+         * ExtractedText
+         * @description Text pulled out of an uploaded file without storing it (e.g. a job description).
+         */
+        ExtractedText: {
+            /** Char Count */
+            char_count: number;
+            /** Text */
+            text: string;
         };
         /** Gap */
         Gap: {
@@ -1148,6 +1184,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DocumentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    extract_document_text_documents_extract_text_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_extract_document_text_documents_extract_text_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtractedText"];
                 };
             };
             /** @description Validation Error */

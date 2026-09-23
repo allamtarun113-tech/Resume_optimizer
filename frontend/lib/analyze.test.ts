@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_FILE_BYTES,
+  filledProjects,
   validateAnalyzeInput,
   type AnalyzeInput,
 } from "./analyze";
@@ -15,9 +16,9 @@ const valid: AnalyzeInput = {
   resume: file("resume.pdf"),
   jdText:
     "Backend engineer. Requirements: Python, FastAPI, PostgreSQL, Docker.",
-  extraText: "",
+  skills: [],
+  projects: [""],
   supportingFiles: [],
-  supportingText: "",
 };
 
 describe("validateAnalyzeInput", () => {
@@ -44,18 +45,25 @@ describe("validateAnalyzeInput", () => {
     ).toMatch(/too long/);
   });
 
-  it("limits supporting documents, counting pasted text as one", () => {
-    const five = Array.from({ length: 5 }, (_, i) => file(`p${i}.pdf`));
+  it("allows up to 20 files and project descriptions together", () => {
+    const files = Array.from({ length: 18 }, (_, i) => file(`p${i}.pdf`));
+    const projects = ["Project A", "Project B", "  "];
     expect(
-      validateAnalyzeInput({ ...valid, supportingFiles: five }),
+      validateAnalyzeInput({ ...valid, supportingFiles: files, projects }),
     ).toBeNull();
     expect(
       validateAnalyzeInput({
         ...valid,
-        supportingFiles: five,
-        supportingText: "more",
+        supportingFiles: files,
+        projects: [...projects, "Project C"],
       }),
-    ).toMatch(/at most 5/);
+    ).toMatch(/at most 20 .* \(you have 21\)/);
+  });
+
+  it("rejects over-long project descriptions", () => {
+    expect(
+      validateAnalyzeInput({ ...valid, projects: ["x".repeat(20_001)] }),
+    ).toMatch(/project description/);
   });
 
   it("rejects unsupported types and large files", () => {
@@ -68,5 +76,11 @@ describe("validateAnalyzeInput", () => {
         resume: file("resume.pdf", MAX_FILE_BYTES + 1),
       }),
     ).toMatch(/larger than 5 MB/);
+  });
+});
+
+describe("filledProjects", () => {
+  it("drops blank descriptions and trims the rest", () => {
+    expect(filledProjects(["  A  ", "", "   ", "B"])).toEqual(["A", "B"]);
   });
 });

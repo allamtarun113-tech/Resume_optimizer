@@ -218,7 +218,7 @@ Storage bucket `uploads/` is private and keyed by `user_id/`. The backend reads 
 - `GET /health`
 - `/mcp`: MCP server endpoint (protected by a service token)
 
-Limits: PDF/DOCX ≤ 5 MB, ≤ 5 supporting docs, JD ≤ 15k chars. Reject scanned PDFs that have no text layer, with a clear message (OCR is out of scope for v1).
+Limits: PDF/DOCX ≤ 5 MB, ≤ 20 supporting docs, JD ≤ 15k chars. Reject scanned PDFs that have no text layer, with a clear message (OCR is out of scope for v1).
 
 ---
 
@@ -230,6 +230,7 @@ Each phase ends with working, deployed software plus tests. **Don't start a phas
 
 **Post-v1 (2026-09-23): bring-your-own OpenAI key + redesign.**
 - Every AI request uses the **signed-in user's own OpenAI key** (the server's `OPENAI_API_KEY` is no longer used for user requests, only for offline ingestion). Keys are set on `/settings`: `POST /settings/ai/models` validates a key and lists usable models (`app/ai/models.py`: chat models with structured outputs, recommended cheap ones first, default gpt-4o-mini), `PUT /settings/ai` saves it **Fernet-encrypted** (`APP_ENCRYPTION_KEY`, `app/core/crypto.py`) in `user_ai_settings` (RLS, backend-only), `GET` shows only the last 4 characters, `DELETE` removes it. `get_user_ai` → `get_llm_client`/`get_embedder` build per-key OpenAI clients (small LRU). No key → HTTP 428 "Add your OpenAI API key in Settings…", which the frontend turns into an "Open Settings" action.
+- Inputs: the JD can be pasted or uploaded (PDF/DOCX/TXT via `POST /documents/extract-text`, which extracts text without storing the file and fills the editable box); up to **20** supporting items (files + pasted project descriptions, each project its own supporting doc); skills are entered as tags ("Add skill"; comma/Enter; deduped) and sent as `extra_text` ("Additional skills: …"). ProfileExtractor gives all supplementary text a shared 60,000-character budget split fairly (`fair_limits`: short docs stay whole), keeping a 20-document analysis around a cent. `DAILY_UPLOAD_LIMIT` default 100.
 - UI: indigo/violet theme with dark mode (next-themes), landing page, dashboard home, split sign-in, sticky header with icon nav + user menu, drag-and-drop uploads, analysis progress stepper, tabbed results (Overview / Improve resume / Learn / Interview).
 Phase 1 live baseline (`gpt-4o-mini`): ~3.4k input / 2.3k output tokens, ~28 s, ≈ $0.002 per analysis; identical re-run = 2/2 cache hits in ~2 s.
 

@@ -133,7 +133,7 @@
               "format": "uuid",
               "type": "string"
             },
-            "maxItems": 5,
+            "maxItems": 20,
             "title": "Supporting Doc Ids",
             "type": "array"
           }
@@ -456,6 +456,20 @@
           "company"
         ],
         "title": "AnalysisSummary",
+        "type": "object"
+      },
+      "Body_extract_document_text_documents_extract_text_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_extract_document_text_documents_extract_text_post",
         "type": "object"
       },
       "Body_upload_document_documents_post": {
@@ -822,6 +836,25 @@
           "evidence"
         ],
         "title": "Experience",
+        "type": "object"
+      },
+      "ExtractedText": {
+        "description": "Text pulled out of an uploaded file without storing it (e.g. a job description).",
+        "properties": {
+          "char_count": {
+            "title": "Char Count",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "char_count"
+        ],
+        "title": "ExtractedText",
         "type": "object"
       },
       "Gap": {
@@ -2411,6 +2444,53 @@
           }
         ],
         "summary": "Upload Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/documents/extract-text": {
+      "post": {
+        "description": "Read the text of a job description file (PDF/DOCX/TXT) so the user can review and\nedit it before analyzing. Nothing is stored.",
+        "operationId": "extract_document_text_documents_extract_text_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_extract_document_text_documents_extract_text_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractedText"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Extract Document Text",
         "tags": [
           "documents"
         ]

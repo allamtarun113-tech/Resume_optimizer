@@ -14,7 +14,7 @@ AnalysisStatus = Literal["queued", "parsing", "extracting", "scoring", "advising
 
 MAX_JD_CHARS = 15_000
 MAX_EXTRA_TEXT_CHARS = 5_000
-MAX_SUPPORTING_DOCS = 5
+MAX_SUPPORTING_DOCS = 20
 
 
 class AnalysisCreate(BaseModel):
