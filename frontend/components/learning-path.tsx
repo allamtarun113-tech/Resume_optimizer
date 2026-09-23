@@ -1,8 +1,8 @@
 "use client";
 
-import { BookOpenCheckIcon } from "lucide-react";
+import { BookOpenCheckIcon, PlayCircleIcon, SearchIcon } from "lucide-react";
 import type { LearningPath, LearningStep } from "@/lib/types";
-import { formatHours } from "@/lib/results";
+import { formatHours, isYouTube, youTubeSearchUrl } from "@/lib/results";
 import { ExplainButton, ExplainPanel, useExplain } from "@/components/explain";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -52,6 +52,8 @@ export function LearningPathView({ path }: { path: LearningPath }) {
 function StepItem({ step }: { step: LearningStep }) {
   const explain = useExplain("learning_step", String(step.step));
   const hours = formatHours(step.est_hours);
+  const videos = step.resources.filter((r) => isYouTube(r.url));
+  const reading = step.resources.filter((r) => !isYouTube(r.url));
   return (
     <li className="relative">
       <span
@@ -73,9 +75,9 @@ function StepItem({ step }: { step: LearningStep }) {
           )}
         </div>
         <p className="text-sm text-muted-foreground">{step.why}</p>
-        {step.resources.length > 0 ? (
+        {reading.length > 0 ? (
           <ul className="flex flex-col gap-1 text-sm">
-            {step.resources.map((r) => (
+            {reading.map((r) => (
               <li key={r.url} className="flex flex-wrap gap-x-2">
                 <a
                   href={r.url}
@@ -93,11 +95,47 @@ function StepItem({ step }: { step: LearningStep }) {
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-muted-foreground">
-            No curated resource yet. Search the official documentation for{" "}
-            {step.name}.
-          </p>
+          videos.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No curated resource yet. Search the official documentation for{" "}
+              {step.name}.
+            </p>
+          )
         )}
+        <div className="flex flex-col gap-1 rounded-lg bg-muted/40 p-2.5 text-sm">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Watch on YouTube
+          </p>
+          {videos.map((r) => (
+            <a
+              key={r.url}
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-2 text-primary underline-offset-4 hover:underline"
+            >
+              <PlayCircleIcon className="mt-0.5 size-4 shrink-0 text-rose-500" />
+              <span>
+                {r.title.replace(/, YouTube\)$/, ")")}
+                {formatHours(r.est_hours) && (
+                  <span className="text-xs text-muted-foreground">
+                    {" "}
+                    · {formatHours(r.est_hours)}
+                  </span>
+                )}
+              </span>
+            </a>
+          ))}
+          <a
+            href={youTubeSearchUrl(step.name)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            <SearchIcon className="size-4 shrink-0" />
+            {videos.length > 0 ? "More" : "Find"} {step.name} videos on YouTube
+          </a>
+        </div>
         <ExplainButton explain={explain} className="-ml-2 self-start" />
         <ExplainPanel explain={explain} />
       </div>

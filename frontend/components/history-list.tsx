@@ -21,9 +21,15 @@ export function HistoryList() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Ignore a response that arrives after this load was cancelled (it could re-add an
+    // analysis deleted in the meantime).
+    let active = true;
     apiFetch<AnalysisSummary[]>("/analyses")
-      .then(setItems)
-      .catch((e) => setError((e as Error).message));
+      .then((data) => active && setItems(data))
+      .catch((e) => active && setError((e as Error).message));
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function remove(item: AnalysisSummary) {

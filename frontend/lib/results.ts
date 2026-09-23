@@ -237,3 +237,21 @@ export function nextSteps(input: {
   });
   return steps;
 }
+
+export function isYouTube(url: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+    return (
+      host === "youtu.be" ||
+      host === "youtube.com" ||
+      host.endsWith(".youtube.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
+// A YouTube search (built here, never by the AI) for more videos on a topic.
+export function youTubeSearchUrl(topic: string): string {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${topic} tutorial`)}`;
+}

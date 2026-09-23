@@ -12,8 +12,15 @@ from app.core.config import Settings
 from app.llm.client import LLMClient
 from app.mcp_server.server import create_mcp_server, open_tools
 from app.rag.embeddings import CachedEmbedder, embedding_key
-from app.rag.templates import is_faithful_fill, load_templates, project_facets
+from app.rag.templates import (
+    background_questions,
+    is_faithful_fill,
+    load_background_templates,
+    load_templates,
+    project_facets,
+)
 from app.schemas.interview import (
+    INTERVIEW_SET_VERSION,
     BankQuestion,
     FilledTemplate,
     InterviewSelection,
@@ -22,7 +29,7 @@ from app.schemas.interview import (
 from app.schemas.matching import RequirementMatch
 from app.schemas.profile import Project
 from app.skills.taxonomy import load_taxonomy
-from tests.builders import profile, project, req, reqs
+from tests.builders import cert, edu, job, profile, project, req, reqs
 from tests.fakes import FakeModel, InMemoryRepository
 
 pytestmark = pytest.mark.anyio
@@ -259,13 +266,15 @@ async def test_deterministic_fallback_is_complete_and_fully_sourced() -> None:
     result = await prep.run(prep_input(BACKEND_JD))
 
     assert len(model.requests) == 1
-    assert len(result.technical) >= 8
-    assert len(result.personal) >= 3 and len(result.general) >= 5
+    # The test bank is small: every candidate for the job is used (14 < the minimum of 20).
+    assert len(result.technical) == 14
+    assert len(result.personal) == 5 and len(result.general) == 9  # whole test bank
+    assert result.version == INTERVIEW_SET_VERSION
     assert {q.category for q in result.personal} == {"personal"}
     assert [p.project for p in result.projects] == ["Campus Food App", "Plant Disease Detector"]
     for p in result.projects:
-        assert len(p.questions) >= 8
-        assert len({q.dimension for q in p.questions}) >= 5
+        assert len(p.questions) >= 12
+        assert len({q.dimension for q in p.questions}) >= 7
         assert all(p.project in q.text for q in p.questions)
     # Exit criterion: 100% of questions have a source.
     for q in all_questions(result):
@@ -329,7 +338,7 @@ async def test_llm_selection_is_validated() -> None:
     assert food.questions[0].source.template_id == "T5"
     assert not any("Kafka" in q.text for q in food.questions)
     assert not any(q.source.template_id == "T9" for q in food.questions)
-    assert len(food.questions) >= 8
+    assert len(food.questions) >= 12
 
 
 async def test_llm_failure_still_returns_a_full_set() -> None:
@@ -338,7 +347,7 @@ async def test_llm_failure_still_returns_a_full_set() -> None:
 
     prep, _, _ = await make_prep(boom)
     result = await prep.run(prep_input(BACKEND_JD))
-    assert len(result.technical) >= 8 and len(result.projects) == 2
+    assert len(result.technical) == 14 and len(result.projects) == 2
 
 
 async def test_templates_needing_missing_details_are_skipped() -> None:
@@ -347,6 +356,56 @@ async def test_templates_needing_missing_details_are_skipped() -> None:
     result = await prep.run(prep_input(BACKEND_JD, [bare]))
     texts = [q.text for q in result.projects[0].questions]
     assert texts and all("{" not in t for t in texts)
+
+
+def test_background_questions_drill_into_jobs_degree_and_certification() -> None:
+    templates = list(load_background_templates())
+    student = profile(
+        experience=[
+            job("Backend Intern", "Acme", "2025-01", "2025-06", ["Go"]),
+            job("Research Assistant", "State University", "2024-01", "2024-12"),
+            job("TA", "Uni", None, None),
+            job("Fourth job", "Ignored", None, None),  # at most three jobs
+        ],
+        education=[edu("B.Tech", "Computer Science")],
+        certifications=[cert("AWS Cloud Practitioner")],
+    )
+    questions = background_questions(student, templates)
+    texts = [text for _, text in questions]
+    ids = [t.id for t, _ in questions]
+
+    assert ids[:3] == ["B1", "B2", "B3"]  # first job, with its technology
+    assert "How did you use Go at Acme?" in texts[2]
+    assert ids[3:6] == ["B4", "B5", "B6"]  # second job starts elsewhere: varied questions
+    assert len([t for t, _ in questions if t.kind == "experience"]) == 9
+    assert not any("Ignored" in t for t in texts)
+    assert "Why did you choose Computer Science at State University?" in texts
+    assert any("AWS Cloud Practitioner" in t for t in texts)
+    assert all("{" not in t for t in texts)
+    assert background_questions(profile(), templates) == []
+
+
+def test_background_templates_skip_missing_details() -> None:
+    templates = list(load_background_templates())
+    no_tech = profile(experience=[job("Intern", "Acme", None, None)])
+    assert all(t.id != "B3" for t, _ in background_questions(no_tech, templates))
+
+
+async def test_personal_questions_include_background_drill_downs() -> None:
+    prep, _, _ = await make_prep()
+    inp = prep_input(BACKEND_JD)
+    inp = inp.model_copy(
+        update={
+            "profile": inp.profile.model_copy(
+                update={"experience": [job("Backend Intern", "Acme", "2025-01", None, ["Go"])]}
+            )
+        }
+    )
+    result = await prep.run(inp)
+    drill = [q for q in result.personal if q.source.kind == "template"]
+    assert len(drill) == 3 and all("Acme" in q.text for q in drill)
+    assert {q.dimension for q in drill} == {"experience"}
+    assert drill[0].source.label == "Resume Optimizer background question bank"
 
 
 # -- API -------------------------------------------------------------------------------
@@ -397,3 +456,19 @@ async def test_interview_requires_a_finished_analysis(api: tuple[TestClient, Any
     analysis_id = h.analyze(h.upload_resume().json()["id"]).json()["id"]
     await h.repo.update_analysis(analysis_id, status="extracting")
     assert client.post(f"/analyses/{analysis_id}/interview").status_code == 409
+
+
+async def test_outdated_interview_sets_are_regenerated(api: tuple[TestClient, Any]) -> None:
+    client, h = api
+    for q, vector in (await make_repo(FakeEmbedder())).bank:
+        h.repo.bank.append((q, vector))
+    analysis_id = h.analyze(h.upload_resume().json()["id"]).json()["id"]
+    # A set stored by an older version (smaller, no version field).
+    old = {"personal": [], "projects": [], "technical": [], "general": []}
+    h.repo.interview_sets[analysis_id] = old
+
+    assert client.get(f"/analyses/{analysis_id}/interview").status_code == 404
+    fresh = client.post(f"/analyses/{analysis_id}/interview").json()
+    assert fresh["version"] == INTERVIEW_SET_VERSION and fresh["technical"]
+    assert h.repo.interview_sets[analysis_id]["version"] == INTERVIEW_SET_VERSION
+    assert client.get(f"/analyses/{analysis_id}/interview").json() == fresh

@@ -345,13 +345,17 @@ class SupabaseRepository:
         )
         return rows[0]["questions"] if rows else None
 
-    async def save_interview_set(self, analysis_id: str, questions: dict[str, Any]) -> None:
+    async def save_interview_set(
+        self, analysis_id: str, questions: dict[str, Any], *, replace: bool = False
+    ) -> None:
+        # Without replace, the first stored set wins (two racing requests store one set).
+        resolution = "merge-duplicates" if replace else "ignore-duplicates"
         await self._request(
             "POST",
             "/rest/v1/interview_sets",
             params={"on_conflict": "analysis_id"},
             json={"analysis_id": analysis_id, "questions": questions},
-            headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+            headers={"Prefer": f"resolution={resolution},return=minimal"},
         )
 
     # -- per-user AI settings ------------------------------------------------------------

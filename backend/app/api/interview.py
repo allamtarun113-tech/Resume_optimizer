@@ -10,7 +10,7 @@ from app.db.repository import Repository
 from app.llm.client import LLMClient
 from app.mcp_server.server import create_mcp_server, open_tools
 from app.rag.embeddings import Embedder
-from app.schemas.interview import InterviewSet
+from app.schemas.interview import INTERVIEW_SET_VERSION, InterviewSet
 from app.schemas.matching import RequirementMatch
 from app.schemas.profile import StudentProfile
 from app.schemas.requirements import JobRequirements
@@ -20,6 +20,15 @@ router = APIRouter(tags=["interview"])
 
 User = Annotated[CurrentUser, Depends(get_current_user)]
 Repo = Annotated[Repository, Depends(get_repository)]
+
+
+async def _current_set(repo: Repository, analysis_id: str) -> InterviewSet | None:
+    """The stored set, unless it was made by an older (smaller) version."""
+    stored = await repo.get_interview_set(analysis_id)
+    if stored is None:
+        return None
+    interview = InterviewSet.model_validate(stored)
+    return interview if interview.version == INTERVIEW_SET_VERSION else None
 
 
 async def _own_analysis_id(repo: Repository, user: CurrentUser, analysis_id: UUID) -> str:
@@ -34,10 +43,10 @@ async def _own_analysis_id(repo: Repository, user: CurrentUser, analysis_id: UUI
 @router.get("/analyses/{analysis_id}/interview")
 async def get_interview(analysis_id: UUID, user: User, repo: Repo) -> InterviewSet:
     aid = await _own_analysis_id(repo, user, analysis_id)
-    stored = await repo.get_interview_set(aid)
-    if stored is None:
+    current = await _current_set(repo, aid)
+    if current is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No interview set yet.")
-    return InterviewSet.model_validate(stored)
+    return current
 
 
 @router.post("/analyses/{analysis_id}/interview")
@@ -48,11 +57,13 @@ async def prepare_interview(
     llm: Annotated[LLMClient, Depends(get_llm_client)],
     embedder: Annotated[Embedder, Depends(get_embedder)],
 ) -> InterviewSet:
-    """ "Prepare Me for Interview". Idempotent: returns the stored set if there is one."""
+    """ "Prepare Me for Interview". Idempotent: returns the stored set if there is one
+    (a set from an older version is regenerated and replaced)."""
     aid = await _own_analysis_id(repo, user, analysis_id)
-    stored = await repo.get_interview_set(aid)
-    if stored is not None:
-        return InterviewSet.model_validate(stored)
+    outdated = await repo.get_interview_set(aid) is not None
+    current = await _current_set(repo, aid)
+    if current is not None:
+        return current
 
     results = await repo.get_analysis_results(aid) or {}
     if not results.get("student_profile") or not results.get("job_requirements"):
@@ -70,6 +81,6 @@ async def prepare_interview(
         ),
         user_id=user.id,
     )
-    await repo.save_interview_set(aid, interview.model_dump(mode="json"))
+    await repo.save_interview_set(aid, interview.model_dump(mode="json"), replace=outdated)
     # If two requests raced, both return whichever set was stored first.
     return InterviewSet.model_validate(await repo.get_interview_set(aid) or interview.model_dump())

@@ -46,6 +46,14 @@ class ProjectTemplate(BaseModel):
     facets: list[str]  # "any", or project facets such as "ml", "backend", "frontend"
 
 
+class BackgroundTemplate(BaseModel):
+    """Background question about one of the student's jobs, degrees or certifications."""
+
+    id: str
+    kind: Literal["experience", "education", "certification"]
+    text: str
+
+
 class QuestionSource(BaseModel):
     kind: Literal["github", "template"]
     label: str  # "owner/repo" or "Resume Optimizer project deep-dive bank"
@@ -68,11 +76,16 @@ class ProjectQuestions(BaseModel):
     questions: list[InterviewQuestion]
 
 
+# Bumped when interview sets get bigger or better; older stored sets are regenerated.
+INTERVIEW_SET_VERSION = "2"
+
+
 class InterviewSet(BaseModel):
     personal: list[InterviewQuestion]
     projects: list[ProjectQuestions]
     technical: list[InterviewQuestion]
     general: list[InterviewQuestion]
+    version: str | None = None  # INTERVIEW_SET_VERSION when generated
 
 
 # -- InterviewPrep LLM output (strict schema: no defaults) ---------------------------------

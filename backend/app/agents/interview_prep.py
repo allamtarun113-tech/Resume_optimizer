@@ -13,8 +13,14 @@ from pydantic import BaseModel
 from app.llm.client import LLMClient
 from app.llm.prompts import load_prompt
 from app.mcp_server.server import McpTools
-from app.rag.templates import fill_template, is_faithful_fill, project_facets
+from app.rag.templates import (
+    background_questions,
+    fill_template,
+    is_faithful_fill,
+    project_facets,
+)
 from app.schemas.interview import (
+    INTERVIEW_SET_VERSION,
     BankQuestion,
     InterviewQuestion,
     InterviewSelection,
@@ -30,18 +36,19 @@ from app.skills.taxonomy import Taxonomy
 
 logger = logging.getLogger(__name__)
 
-MAX_OUTPUT_TOKENS = 6_000
-MAX_TOPICS = 8  # requirements used to retrieve technical questions
-PER_TOPIC = 5
+MAX_OUTPUT_TOKENS = 12_000
+MAX_TOPICS = 12  # requirements used to retrieve technical questions
+PER_TOPIC = 8
 MIN_SIMILARITY_UNFILTERED = 0.35
-MAX_PROJECTS = 3
-GENERAL_SAMPLE = 12
+MAX_PROJECTS = 5
+GENERAL_SAMPLE = 30
 TEMPLATE_LABEL = "Resume Optimizer project deep-dive bank"
+BACKGROUND_LABEL = "Resume Optimizer background question bank"
 # (min, max) per group; the LLM picks within, Python pads up to the min.
-TECHNICAL = (8, 12)
-GENERAL = (5, 8)
-PERSONAL = (3, 5)
-PROJECT = (8, 12)
+TECHNICAL = (20, 30)
+GENERAL = (10, 15)
+PERSONAL = (6, 10)  # from the question bank; background drill-downs come on top
+PROJECT = (12, 15)
 LEARNABLE = ("skill", "domain", "experience")
 
 
@@ -129,6 +136,7 @@ class InterviewPrep:
             templates_by_project = [
                 await tools.project_templates(project_facets(p, self._taxonomy)) for p in projects
             ]
+            background = background_questions(inp.profile, await tools.background_templates())
 
         tech_ids = {f"Q{i + 1}": pair for i, pair in enumerate(technical)}
         general_ids = {f"G{i + 1}": q for i, q in enumerate(general)}
@@ -138,7 +146,22 @@ class InterviewPrep:
         return InterviewSet(
             personal=self._pick_bank(
                 selection.personal_ids if selection else [], general_ids, "personal", PERSONAL
-            ),
+            )
+            + [
+                InterviewQuestion(
+                    text=text,
+                    category="personal",
+                    dimension=template.kind,
+                    source=QuestionSource(
+                        kind="template",
+                        label=BACKGROUND_LABEL,
+                        url=None,
+                        license=None,
+                        template_id=template.id,
+                    ),
+                )
+                for template, text in background
+            ],
             projects=[
                 self._project_questions(i, p, templates_by_project[i], all_templates, selection)
                 for i, p in enumerate(projects)
@@ -147,6 +170,7 @@ class InterviewPrep:
             general=self._pick_bank(
                 selection.general_ids if selection else [], general_ids, "general", GENERAL
             ),
+            version=INTERVIEW_SET_VERSION,
         )
 
     # -- LLM selection -------------------------------------------------------------------

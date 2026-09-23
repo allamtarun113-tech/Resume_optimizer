@@ -12,18 +12,20 @@ import json
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from typing import Any, Protocol
+from urllib.parse import urlparse
 
 from fastmcp import Client, FastMCP
 from pydantic import BaseModel
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.rag.embeddings import Embedder
-from app.rag.templates import load_templates, matching_templates
-from app.schemas.interview import BankQuestion, ProjectTemplate
+from app.rag.templates import load_background_templates, load_templates, matching_templates
+from app.schemas.interview import BackgroundTemplate, BankQuestion, ProjectTemplate
 from app.schemas.learning import LearningResource
 from app.skills.taxonomy import Taxonomy
 
 MAX_RESOURCES_PER_SKILL = 3
+MAX_YOUTUBE_PER_SKILL = 2
 _LEVEL_ORDER = {"beginner": 0, "intermediate": 1, "advanced": 2}
 
 
@@ -51,6 +53,10 @@ class TemplatesResult(BaseModel):
     templates: list[ProjectTemplate]
 
 
+class BackgroundTemplatesResult(BaseModel):
+    templates: list[BackgroundTemplate]
+
+
 class ResourcesResult(BaseModel):
     resources: list[LearningResource]
 
@@ -64,6 +70,11 @@ class PrerequisitesResult(BaseModel):
     skill_id: str
     name: str | None  # None when the skill isn't in the taxonomy
     prerequisites: list[SkillRef]
+
+
+def is_youtube(url: str) -> bool:
+    host = urlparse(url).hostname or ""
+    return host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")
 
 
 def rank_resources(resources: list[LearningResource]) -> list[LearningResource]:
@@ -101,16 +112,19 @@ def create_mcp_server(
 
     @mcp.tool
     async def get_learning_resources(skill_ids: list[str]) -> ResourcesResult:
-        """Curated, mostly free learning resources for the given taxonomy skill ids
-        (at most 3 per skill, best first)."""
+        """Curated, mostly free learning resources for the given taxonomy skill ids: at
+        most 3 per skill (best first), then at most 2 YouTube videos per skill."""
         wanted = sorted(set(skill_ids))
         ranked = rank_resources(await store().get_learning_resources(wanted))
         kept: list[LearningResource] = []
-        per_skill: dict[str, int] = {}
-        for r in ranked:
-            if per_skill.get(r.skill_id, 0) < MAX_RESOURCES_PER_SKILL:
-                per_skill[r.skill_id] = per_skill.get(r.skill_id, 0) + 1
-                kept.append(r)
+        per_skill: dict[tuple[str, bool], int] = {}
+        for youtube in (False, True):
+            limit = MAX_YOUTUBE_PER_SKILL if youtube else MAX_RESOURCES_PER_SKILL
+            for r in ranked:
+                key = (r.skill_id, youtube)
+                if is_youtube(r.url) == youtube and per_skill.get(key, 0) < limit:
+                    per_skill[key] = per_skill.get(key, 0) + 1
+                    kept.append(r)
         return ResourcesResult(resources=kept)
 
     @mcp.tool
@@ -154,6 +168,13 @@ def create_mcp_server(
         """Deep-dive question templates for a project with these facets (e.g. ["ml",
         "backend"]). Placeholders: {project}, {tech}, {tech2}, {metric}."""
         return TemplatesResult(templates=matching_templates(project_facets, load_templates()))
+
+    @mcp.tool
+    def get_background_question_templates() -> BackgroundTemplatesResult:
+        """Templates for background questions about the student's own jobs ({role},
+        {org}, {tech}), education ({degree}, {field}, {institution}) and certifications
+        ({cert})."""
+        return BackgroundTemplatesResult(templates=list(load_background_templates()))
 
     @mcp.tool
     async def get_general_questions(k: int, seed: str) -> QuestionsResult:
@@ -206,6 +227,10 @@ class McpTools:
     async def project_templates(self, facets: list[str]) -> list[ProjectTemplate]:
         data = await self._call("get_project_question_templates", {"project_facets": facets})
         return TemplatesResult.model_validate(data).templates
+
+    async def background_templates(self) -> list[BackgroundTemplate]:
+        data = await self._call("get_background_question_templates", {})
+        return BackgroundTemplatesResult.model_validate(data).templates
 
     async def general_questions(self, k: int, seed: str) -> list[BankQuestion]:
         data = await self._call("get_general_questions", {"k": k, "seed": seed})

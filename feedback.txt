@@ -1,0 +1,4 @@
+1. after clicking on signup we should tell the user to confirm email address from their indox.
+2. prepare me for Interview requires more questions in all the ways. 
+3. Learning should have some youtube links as well.
+4. 

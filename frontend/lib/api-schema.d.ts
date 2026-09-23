@@ -92,7 +92,8 @@ export interface paths {
         put?: never;
         /**
          * Prepare Interview
-         * @description "Prepare Me for Interview". Idempotent: returns the stored set if there is one.
+         * @description "Prepare Me for Interview". Idempotent: returns the stored set if there is one
+         *     (a set from an older version is regenerated and replaced).
          */
         post: operations["prepare_interview_analyses__analysis_id__interview_post"];
         delete?: never;
@@ -610,6 +611,8 @@ export interface components {
             projects: components["schemas"]["ProjectQuestions"][];
             /** Technical */
             technical: components["schemas"]["InterviewQuestion"][];
+            /** Version */
+            version?: string | null;
         };
         /** JobRequirements */
         JobRequirements: {

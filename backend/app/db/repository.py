@@ -78,7 +78,9 @@ class Repository(LLMStore, Protocol):
 
     async def get_interview_set(self, analysis_id: str) -> dict[str, Any] | None: ...
 
-    async def save_interview_set(self, analysis_id: str, questions: dict[str, Any]) -> None: ...
+    async def save_interview_set(
+        self, analysis_id: str, questions: dict[str, Any], *, replace: bool = False
+    ) -> None: ...
 
     # -- per-user AI settings ----------------------------------------------------------
 

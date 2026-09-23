@@ -1,0 +1,20 @@
+# Background question templates (hand-curated): personal drill-downs on the student's own
+# jobs, education and certifications, filled deterministically from their profile.
+# Placeholders: experience {role}, {org}, {tech}; education {degree}, {field},
+# {institution}; certification {cert}.
+
+templates:
+  # --- jobs, internships, research positions
+  - {id: B1, kind: experience, text: "Walk me through your role as {role} at {org}. What did a typical week look like?"}
+  - {id: B2, kind: experience, text: "What was the most important thing you delivered as {role} at {org}, and how did you measure its impact?"}
+  - {id: B3, kind: experience, text: "How did you use {tech} at {org}? Give a concrete example of a problem you solved with it."}
+  - {id: B4, kind: experience, text: "Tell me about a time something went wrong during your time at {org}. What did you do?"}
+  - {id: B5, kind: experience, text: "What did you learn at {org} that you could not have learned in a classroom?"}
+  - {id: B6, kind: experience, text: "Who did you work with most closely at {org}, and how did you keep them updated on your work?"}
+  - {id: B7, kind: experience, text: "If you went back to {org} tomorrow, what would you improve first?"}
+  # --- education
+  - {id: B8, kind: education, text: "Why did you choose {field} at {institution}?"}
+  - {id: B9, kind: education, text: "Which course in your {degree} was most useful for this role, and what did you build or study in it?"}
+  - {id: B10, kind: education, text: "What was the hardest part of your {degree}, and how did you handle it?"}
+  # --- certifications
+  - {id: B11, kind: certification, text: "Why did you take the {cert} certification, and how have you used what you learned?"}

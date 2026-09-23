@@ -22,3 +22,25 @@ export function signUpOutcome(data: SignUpData): SignUpOutcome {
     return "already_exists";
   return "check_email";
 }
+
+// A shortcut to the user's webmail inbox for common providers, else null.
+const INBOXES: [RegExp, string, string][] = [
+  [
+    /^(gmail|googlemail)\.com$/,
+    "Gmail",
+    "https://mail.google.com/mail/u/0/#inbox",
+  ],
+  [
+    /^(outlook|hotmail|live|msn)\.[a-z.]+$/,
+    "Outlook",
+    "https://outlook.live.com/mail/0/inbox",
+  ],
+  [/^(yahoo|ymail)\.[a-z.]+$/, "Yahoo Mail", "https://mail.yahoo.com/"],
+  [/^(icloud|me|mac)\.com$/, "iCloud Mail", "https://www.icloud.com/mail"],
+];
+
+export function inboxLink(email: string): { name: string; url: string } | null {
+  const domain = email.split("@").pop()?.trim().toLowerCase() ?? "";
+  const match = INBOXES.find(([re]) => re.test(domain));
+  return match ? { name: match[1], url: match[2] } : null;
+}

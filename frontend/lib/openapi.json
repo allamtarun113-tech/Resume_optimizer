@@ -1077,6 +1077,17 @@
             },
             "title": "Technical",
             "type": "array"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
           }
         },
         "required": [
@@ -2413,7 +2424,7 @@
         ]
       },
       "post": {
-        "description": "\"Prepare Me for Interview\". Idempotent: returns the stored set if there is one.",
+        "description": "\"Prepare Me for Interview\". Idempotent: returns the stored set if there is one\n(a set from an older version is regenerated and replaced).",
         "operationId": "prepare_interview_analyses__analysis_id__interview_post",
         "parameters": [
           {

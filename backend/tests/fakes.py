@@ -187,8 +187,13 @@ class InMemoryRepository:
     async def get_interview_set(self, analysis_id: str) -> dict[str, Any] | None:
         return self.interview_sets.get(analysis_id)
 
-    async def save_interview_set(self, analysis_id: str, questions: dict[str, Any]) -> None:
-        self.interview_sets.setdefault(analysis_id, questions)
+    async def save_interview_set(
+        self, analysis_id: str, questions: dict[str, Any], *, replace: bool = False
+    ) -> None:
+        if replace:
+            self.interview_sets[analysis_id] = questions
+        else:
+            self.interview_sets.setdefault(analysis_id, questions)
 
     async def get_ai_settings(self, user_id: str) -> AiSettingsRecord | None:
         return self.ai_settings.get(user_id)

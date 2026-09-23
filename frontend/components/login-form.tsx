@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MailCheckIcon } from "lucide-react";
+import { ExternalLinkIcon, InfoIcon, MailCheckIcon } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { signUpOutcome } from "@/lib/signup";
+import { inboxLink, signUpOutcome } from "@/lib/signup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/card";
 
 type Mode = "signin" | "signup";
+type Sent = { email: string; reason: "signed_up" | "not_confirmed" };
+
+const RESEND_COOLDOWN_S = 60;
 
 // Enable once the Google provider is configured in Supabase.
 const GOOGLE_AUTH_ENABLED =
@@ -29,7 +32,7 @@ export function LoginForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [sent, setSent] = useState<Sent | null>(null);
 
   const callbackUrl = () =>
     `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
@@ -45,6 +48,10 @@ export function LoginForm({ next }: { next: string }) {
         password,
       });
       setLoading(false);
+      if (error?.code === "email_not_confirmed") {
+        // Signed up but never clicked the link: show how to confirm (and resend).
+        return setSent({ email, reason: "not_confirmed" });
+      }
       if (error) return toast.error(error.message);
       router.push(next);
       router.refresh();
@@ -65,44 +72,24 @@ export function LoginForm({ next }: { next: string }) {
         setMode("signin");
         setPassword("");
       } else {
-        toast.success("Check your email to confirm your email address.");
-        setSentTo(email);
+        toast.success("Check your inbox to confirm your email address.", {
+          duration: 10_000,
+        });
+        setSent({ email, reason: "signed_up" });
       }
     }
   }
 
-  if (sentTo) {
+  if (sent) {
     return (
-      <Card className="w-full max-w-sm shadow-xl shadow-primary/5">
-        <CardHeader>
-          <span className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <MailCheckIcon className="size-5" />
-          </span>
-          <CardTitle className="text-2xl font-semibold tracking-tight">
-            Check your email
-          </CardTitle>
-          <CardDescription>
-            We sent a confirmation link to <strong>{sentTo}</strong>.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4 text-sm text-muted-foreground">
-          <p>
-            Open it on any device and click <em>Confirm email address</em> once;
-            you&apos;ll be signed in. It can take a minute to arrive, so check
-            Spam or Promotions too.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSentTo(null);
-              setMode("signin");
-              setPassword("");
-            }}
-          >
-            Back to sign in
-          </Button>
-        </CardContent>
-      </Card>
+      <ConfirmEmailCard
+        sent={sent}
+        onBack={() => {
+          setSent(null);
+          setMode("signin");
+          setPassword("");
+        }}
+      />
     );
   }
 
@@ -154,6 +141,13 @@ export function LoginForm({ next }: { next: string }) {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+          {mode === "signup" && (
+            <p className="flex gap-2 rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
+              <InfoIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              We&apos;ll email you a confirmation link. You need to click it
+              before you can sign in.
+            </p>
+          )}
           <Button type="submit" size="lg" disabled={loading}>
             {loading
               ? "Please wait…"
@@ -176,6 +170,97 @@ export function LoginForm({ next }: { next: string }) {
             ? "No account? Sign up"
             : "Already have an account? Sign in"}
         </button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ConfirmEmailCard({
+  sent,
+  onBack,
+}: {
+  sent: Sent;
+  onBack: () => void;
+}) {
+  const inbox = inboxLink(sent.email);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  async function resend() {
+    setCooldown(RESEND_COOLDOWN_S);
+    const { error } = await createClient().auth.resend({
+      type: "signup",
+      email: sent.email,
+    });
+    if (error) {
+      setCooldown(0);
+      toast.error(error.message);
+    } else {
+      toast.success(`Sent another confirmation link to ${sent.email}.`);
+    }
+  }
+
+  return (
+    <Card
+      className="w-full max-w-sm shadow-xl shadow-primary/5"
+      role="alertdialog"
+      aria-labelledby="confirm-email-title"
+    >
+      <CardHeader>
+        <span className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <MailCheckIcon className="size-5" />
+        </span>
+        <CardTitle
+          id="confirm-email-title"
+          className="text-2xl font-semibold tracking-tight"
+        >
+          {sent.reason === "signed_up"
+            ? "Confirm your email"
+            : "Confirm your email first"}
+        </CardTitle>
+        <CardDescription>
+          {sent.reason === "signed_up"
+            ? "Your account is almost ready. "
+            : "Your account isn't confirmed yet. "}
+          We sent a confirmation link to <strong>{sent.email}</strong>.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4 text-sm">
+        <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-muted-foreground">
+          <li>Open your inbox for {sent.email}.</li>
+          <li>
+            Find the email from Resume Optimizer. It can take a minute; check
+            Spam or Promotions too.
+          </li>
+          <li>
+            Click <em>Confirm email address</em>. You&apos;ll be signed in (it
+            works on any device).
+          </li>
+        </ol>
+        {inbox && (
+          <Button
+            nativeButton={false}
+            render={
+              <a href={inbox.url} target="_blank" rel="noopener noreferrer" />
+            }
+          >
+            Open {inbox.name}
+            <ExternalLinkIcon />
+          </Button>
+        )}
+        <Button variant="outline" onClick={resend} disabled={cooldown > 0}>
+          {cooldown > 0
+            ? `Resend available in ${cooldown}s`
+            : "Resend confirmation email"}
+        </Button>
+        <Button variant="ghost" onClick={onBack}>
+          Back to sign in
+        </Button>
       </CardContent>
     </Card>
   );

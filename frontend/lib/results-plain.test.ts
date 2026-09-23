@@ -149,3 +149,20 @@ describe("plain wording", () => {
     ).toEqual(["interview"]);
   });
 });
+
+describe("YouTube links", () => {
+  it("recognises YouTube URLs", async () => {
+    const { isYouTube } = await import("@/lib/results");
+    expect(isYouTube("https://www.youtube.com/watch?v=abc")).toBe(true);
+    expect(isYouTube("https://youtu.be/abc")).toBe(true);
+    expect(isYouTube("https://notyoutube.com/x")).toBe(false);
+    expect(isYouTube("not a url")).toBe(false);
+  });
+
+  it("builds a search link", async () => {
+    const { youTubeSearchUrl } = await import("@/lib/results");
+    expect(youTubeSearchUrl("Linear algebra")).toBe(
+      "https://www.youtube.com/results?search_query=Linear%20algebra%20tutorial",
+    );
+  });
+});

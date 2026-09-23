@@ -104,6 +104,10 @@ test("student analyses a job end to end", async ({ page }) => {
   await expect(
     page.getByText(/Still to learn|Nothing to learn/).first(),
   ).toBeVisible();
+  if (await page.getByText("Your learning path").isVisible()) {
+    // Every step has YouTube links (curated videos and/or a search link).
+    await expect(page.getByText("Watch on YouTube").first()).toBeVisible();
+  }
 
   // Interview preparation: grouped questions, every one with a source.
   await page.getByRole("tab", { name: /Interview/ }).click();

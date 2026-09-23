@@ -116,6 +116,30 @@ async def test_mcp_learning_resources_are_ranked_and_capped() -> None:
     assert [r.skill_id for r in found].count("kubernetes") == 1
 
 
+async def test_youtube_videos_come_after_other_resources_and_are_capped() -> None:
+    from app.mcp_server.server import is_youtube
+
+    repo = repo_with_resources()
+    for i in range(3):
+        repo.resources.append(
+            resource(
+                "docker",
+                f"Docker video {i}",
+                type="video",
+                url=f"https://www.youtube.com/watch?v=vid{i}",
+            )
+        )
+    server = create_mcp_server(lambda: repo, TAXONOMY)
+    async with open_tools(server) as tools:
+        found = await tools.learning_resources(["docker"])
+    titles = [r.title for r in found]
+    # Up to 3 other resources first, then up to 2 videos.
+    assert titles[:3] == ["Docker get started", "Docker book", "Docker deep dive"]
+    assert titles[3:] == ["Docker video 0", "Docker video 1"]
+    assert is_youtube("https://youtu.be/x") and is_youtube("https://m.youtube.com/watch?v=x")
+    assert not is_youtube("https://notyoutube.com/x")
+
+
 async def test_mcp_prerequisites() -> None:
     server = create_mcp_server(repo_with_resources, TAXONOMY)
     async with open_tools(server) as tools:

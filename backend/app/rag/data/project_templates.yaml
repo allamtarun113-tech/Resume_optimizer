@@ -66,3 +66,26 @@ templates:
   - {id: T48, dimension: reflection, facets: [ml], text: "If you had ten times more data for {project}, what would you try?"}
   - {id: T49, dimension: reflection, facets: [data], text: "What surprised you most in the data behind {project}?"}
   - {id: T50, dimension: reflection, facets: [any], text: "Which part of {project} are you least proud of, and why?"}
+  # --- more depth (added 2026-09-23)
+  - {id: T51, dimension: overview, facets: [any], text: "Who were the users of {project}, and what feedback did you get from them?"}
+  - {id: T52, dimension: overview, facets: [any], text: "What made {project} technically hard, compared with a typical student project?"}
+  - {id: T53, dimension: architecture, facets: [any], text: "Which part of {project} would you show a senior engineer first, and why?"}
+  - {id: T54, dimension: architecture, facets: [any], text: "How is the code of {project} organised into modules, and where would a new teammate start reading?"}
+  - {id: T55, dimension: architecture, facets: [backend], text: "How does {project} handle errors between services or layers? What does the user see when something fails?"}
+  - {id: T56, dimension: architecture, facets: [ml], text: "Which features or inputs matter most to the model in {project}, and how did you find out?"}
+  - {id: T57, dimension: data, facets: [any], text: "Where is the state of {project} stored, and what happens to it if the app restarts?"}
+  - {id: T58, dimension: data, facets: [database], text: "How do you change the database schema of {project} without losing data?"}
+  - {id: T59, dimension: trade-offs, facets: [any], text: "Which shortcut did you take in {project} to ship on time, and what would it take to fix it properly?"}
+  - {id: T60, dimension: trade-offs, facets: [any], text: "Why did you use {tech} together with {tech2} in {project} instead of a single tool?"}
+  - {id: T61, dimension: failures, facets: [any], text: "What happens in {project} when two users do the same thing at the same time?"}
+  - {id: T62, dimension: failures, facets: [any], text: "How would you find out that {project} is broken in production before a user tells you?"}
+  - {id: T63, dimension: metrics, facets: [any], text: "What result from {project} are you most proud of, and how could someone verify it?"}
+  - {id: T64, dimension: testing, facets: [any], text: "Which part of {project} was hardest to test, and how did you work around it?"}
+  - {id: T65, dimension: testing, facets: [ml, data], text: "How did you check that the results of {project} were correct and not a fluke?"}
+  - {id: T66, dimension: deployment, facets: [any], text: "Where does {project} run today, and what does it cost to keep it running?"}
+  - {id: T67, dimension: scale, facets: [any], text: "What is the slowest operation in {project}, and how would you profile it?"}
+  - {id: T68, dimension: scale, facets: [database], text: "How big can the data in {project} get before the current design stops working?"}
+  - {id: T69, dimension: security, facets: [any], text: "Which inputs to {project} come from users, and how do you stop them from being used for an attack?"}
+  - {id: T70, dimension: collaboration, facets: [any], text: "How did you document {project} so someone else could run and extend it?"}
+  - {id: T71, dimension: reflection, facets: [any], text: "How does {project} relate to the job you're applying for?"}
+  - {id: T72, dimension: reflection, facets: [any], text: "Which decision in {project} would you defend in a code review, and which one would you not?"}
