@@ -62,7 +62,7 @@ def test_rerun_reuses_documents_with_a_new_jd(h: Harness) -> None:
     # The profile extraction came from the cache: only the JD side hit the model.
     new_calls = [r["output_type"] for r in h.model.requests[before:]]
     assert "StudentProfile" not in new_calls
-    assert "JobRequirements" in new_calls
+    assert "JDAnalysis" in new_calls
 
 
 def test_rerun_validation(h: Harness) -> None:

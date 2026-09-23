@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { TargetIcon, WandSparklesIcon } from "lucide-react";
+import { ArrowRightIcon, TargetIcon, WandSparklesIcon } from "lucide-react";
 import { toast } from "sonner";
 import type { Gap, Suggestion } from "@/lib/types";
-import { whereToAdd } from "@/lib/results";
+import { afterAddingText, whereToAdd } from "@/lib/results";
+import { ScoreGauge } from "@/components/score-gauge";
 import { ExplainButton, ExplainPanel, useExplain } from "@/components/explain";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,10 +98,30 @@ export function SuggestionList({
         </h2>
         <p className="text-sm text-muted-foreground">
           {suggestions.length > 0
-            ? `Each suggestion uses only what you gave us. Applying all of them takes your score from ${fitScore}% to about ${potentialScore}%.`
-            : "Nothing to add yet. Upload project reports or describe work that isn't on your resume, and we'll show how to add it."}
+            ? "Each suggestion uses only what you gave us."
+            : "Nothing to add yet."}
         </p>
       </div>
+      {fitScore != null && potentialScore != null && (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
+            <div className="flex items-start gap-2 sm:gap-4">
+              <ScoreGauge score={fitScore} label="Your resume now" />
+              <ArrowRightIcon
+                className="mt-14 size-5 shrink-0 text-muted-foreground sm:mt-16"
+                aria-hidden
+              />
+              <ScoreGauge
+                score={potentialScore}
+                label="After adding what you have"
+              />
+            </div>
+            <p className="text-sm leading-relaxed">
+              {afterAddingText(fitScore, potentialScore)}
+            </p>
+          </CardContent>
+        </Card>
+      )}
       {suggestions.map((s) => (
         <SuggestionCard key={s.id} suggestion={s} />
       ))}

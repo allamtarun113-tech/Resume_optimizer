@@ -10,7 +10,8 @@ import re
 
 from app.llm.client import LLMClient
 from app.llm.prompts import load_prompt
-from app.schemas.requirements import JobRequirements, Requirement
+from app.parsing.extract import ExtractionError
+from app.schemas.requirements import JDAnalysis, JobRequirements, Requirement
 from app.skills.taxonomy import Taxonomy, load_taxonomy
 
 MAX_OUTPUT_TOKENS = 6_000
@@ -23,6 +24,16 @@ _LEADING_RE = re.compile(
     r"(?:(?:experience|knowledge|understanding|proficiency|familiarity|foundation)"
     r"\s+(?:with|of|in)\s+)?",
     re.IGNORECASE,
+)
+
+
+class NotAJobDescriptionError(ExtractionError):
+    """The pasted text isn't a job description (message is shown to the user)."""
+
+
+NOT_A_JD_MESSAGE = (
+    "The text in the job description box doesn't look like a job description. "
+    "Paste the full job posting (the role, responsibilities and requirements) and try again."
 )
 
 
@@ -89,10 +100,17 @@ class JDAnalyzer:
             agent=self.name,
             prompt=self.prompt,
             input_text=f"<job_description>\n{jd_text}\n</job_description>",
-            output_type=JobRequirements,
+            output_type=JDAnalysis,
             max_output_tokens=MAX_OUTPUT_TOKENS,
             analysis_id=analysis_id,
             user_id=user_id,
         )
+        if not result.is_job_description or not result.requirements:
+            raise NotAJobDescriptionError(NOT_A_JD_MESSAGE)
         requirements = split_requirements(result.requirements, self._taxonomy)
-        return result.model_copy(update={"requirements": dedupe_requirements(requirements)})
+        return JobRequirements(
+            role_title=result.role_title,
+            company=result.company,
+            seniority=result.seniority,
+            requirements=dedupe_requirements(requirements),
+        )

@@ -27,6 +27,12 @@ from app.skills.taxonomy import Taxonomy, skill_key
 MAX_OUTPUT_TOKENS = 6_000
 NAME_FUZZY_CUTOFF = 92
 MAX_DETAIL_CHARS = 300
+# Requirements naming a specific product (a language, tool, database or cloud) need
+# evidence that names it: a job description can't show GitHub or MySQL unless it says so.
+NAMED_CATEGORIES = frozenset({"language", "tool", "database", "cloud"})
+GENERIC_NAMED_IDS = frozenset(
+    {"cloud-computing", "serverless", "command-line", "rpa", "vector-databases"}
+)
 
 
 def _clip(text: str, limit: int = MAX_DETAIL_CHARS) -> str:
@@ -257,8 +263,27 @@ class Matcher:
             *(self._ask(requirements, c, idx, analysis_id, user_id) for c, idx in asks)
         )
         for (catalog, idx), judged in zip(asks, answers, strict=True):
-            self._apply(judged, catalog, idx, results, normalized)
+            self._apply(judged, catalog, idx, results, profile, normalized)
         return results
+
+    def _names_it(
+        self,
+        ref: EvidenceRef,
+        known: set[str],
+        profile: StudentProfile,
+        normalized: NormalizedSkills,
+    ) -> bool:
+        """Whether a project or job names one of the `known` skills (or one implying it)."""
+        if ref.kind == "project":
+            p = profile.projects[ref.index]
+            ids = set(normalized.project_ids[ref.index])
+            text = " ".join([p.name, p.summary, *p.technologies, *p.highlights, p.evidence])
+        else:
+            x = profile.experience[ref.index]
+            ids = set(normalized.experience_ids[ref.index])
+            text = " ".join([x.title, *x.technologies, *x.highlights, x.evidence])
+        ids |= self._taxonomy.find_in_text(text)
+        return any(sid in known or known & self._taxonomy.implied_by(sid) for sid in ids)
 
     def _contradicts_taxonomy(
         self, ref: EvidenceRef, known: set[str], normalized: NormalizedSkills
@@ -271,6 +296,12 @@ class Matcher:
         ids = normalized.mention_ids[ref.index]
         return bool(ids) and not any(
             sid in known or known & self._taxonomy.implied_by(sid) for sid in ids
+        )
+
+    def _is_named(self, known: set[str]) -> bool:
+        return all(
+            self._taxonomy.skills[sid].category in NAMED_CATEGORIES and sid not in GENERIC_NAMED_IDS
+            for sid in known
         )
 
     async def _ask(
@@ -305,6 +336,7 @@ class Matcher:
         catalog: EvidenceCatalog,
         pending: list[int],
         results: list[RequirementEvidence],
+        profile: StudentProfile,
         normalized: NormalizedSkills,
     ) -> None:
         allowed = set(pending)
@@ -327,6 +359,13 @@ class Matcher:
             }
             if known:
                 refs = [r for r in refs if not self._contradicts_taxonomy(r, known, normalized)]
+                if self._is_named(known):
+                    refs = [
+                        r
+                        for r in refs
+                        if r.kind not in ("project", "experience")
+                        or self._names_it(r, known, profile, normalized)
+                    ]
             if not refs:
                 continue
             current = results[index]

@@ -335,6 +335,31 @@ async def test_llm_cannot_link_unrelated_known_skills() -> None:
     assert [r.label for r in diving.evidence] == ["Linear Algebra", "Underwater welding"]
 
 
+async def test_named_tools_need_evidence_that_names_them() -> None:
+    # The LLM said an internship that never mentions GitHub shows "GitHub": ignored. A job
+    # whose text names GitHub counts. Domains can still be inferred from descriptions.
+    p = profile(
+        experience=[
+            job("Project Intern", "NetSabioS", "2023-05", "2023-07"),
+            job("GitHub repository maintainer", "Acme", "2024-01", "2024-06"),
+        ],
+        projects=[project("Bus booking", [], summary="Planning and reporting system")],
+    )
+    evidence, _ = await _match(
+        p,
+        reqs(req("GitHub"), req("MySQL"), req("Requirements analysis", "domain")),
+        judged(
+            ("R1", "direct", ["X1", "X2"]),
+            ("R2", "direct", ["P1"]),
+            ("R3", "direct", ["X1"]),
+        ),
+    )
+    github, mysql, analysis = evidence
+    assert [r.label for r in github.evidence] == ["GitHub repository maintainer at Acme"]
+    assert mysql.evidence == []
+    assert [r.label for r in analysis.evidence] == ["Project Intern at NetSabioS"]
+
+
 async def test_experience_requirements_always_go_to_the_llm() -> None:
     p = profile(
         skills=[skill("Python")],

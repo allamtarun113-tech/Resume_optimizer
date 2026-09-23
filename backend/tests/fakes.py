@@ -221,6 +221,7 @@ class InMemoryRepository:
 
 
 Responder = Callable[[str, str], BaseModel]
+FAKE_CHECKS = {"is_job_description": True}
 
 
 class FakeModel:
@@ -242,11 +243,14 @@ class FakeModel:
         self.requests.append(
             {"model": model, "output_type": output_type.__name__, "input_text": input_text}
         )
-        answer = self.responses[output_type.__name__]
+        # A fixture recorded for a base model also answers for its subclasses (e.g. a
+        # JobRequirements fixture for JDAnalysis), with the subclass's extra checks passing.
+        name = next(c.__name__ for c in output_type.__mro__ if c.__name__ in self.responses)
+        answer = self.responses[name]
         if callable(answer):
             answer = answer(model, input_text)
         return Completion(
-            parsed=output_type.model_validate(answer.model_dump()),
+            parsed=output_type.model_validate({**FAKE_CHECKS, **answer.model_dump()}),
             input_tokens=len(input_text) // 4,
             output_tokens=100,
         )

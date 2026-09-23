@@ -130,6 +130,13 @@ export function scoreSentence(fit: number, potential: number | null): string {
     : base;
 }
 
+// Explains the "after adding what you have" score next to the resume score.
+export function afterAddingText(fit: number, potential: number): string {
+  if (potential > fit)
+    return `Add the lines below to your resume and your score goes from ${fit}% to ${potential}% (+${potential - fit} points), using only things you already have.`;
+  return `Your other documents and notes don't show anything more that this job asks for, so adding them wouldn't change the score (${fit}%). Upload project reports or describe work that isn't on your resume to find more.`;
+}
+
 type Evidence = RequirementMatch["evidence"][number];
 
 const DEMONSTRATED = ["project", "experience"];

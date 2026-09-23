@@ -5,6 +5,7 @@ import {
   nextSteps,
   plainStatus,
   plural,
+  afterAddingText,
   scoreSentence,
   scoreVerdict,
 } from "@/lib/results";
@@ -122,6 +123,10 @@ describe("plain wording", () => {
     expect(scoreSentence(74, 90)).toContain("could raise it to 90%");
     expect(scoreSentence(74, 74)).toBe(
       "Your resume shows 74% of what this job asks for.",
+    );
+    expect(afterAddingText(74, 90)).toContain("from 74% to 90% (+16 points)");
+    expect(afterAddingText(35, 35)).toContain(
+      "wouldn't change the score (35%)",
     );
     expect(plural(1, "gap")).toBe("1 gap");
     expect(plural(3, "gap")).toBe("3 gaps");

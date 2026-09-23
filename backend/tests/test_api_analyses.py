@@ -4,6 +4,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app.agents.jd_analyzer import NOT_A_JD_MESSAGE
 from app.api.deps import get_llm_client, get_repository
 from app.core.auth import CurrentUser, get_current_user
 from app.core.config import Settings, get_settings
@@ -11,6 +12,7 @@ from app.llm.client import LLMClient
 from app.main import create_app
 from app.schemas.advice import ResumeAdvice
 from app.schemas.learning import PathPlan
+from app.schemas.requirements import JDAnalysis
 from app.scoring.weights import SCORING_VERSION
 from tests.builders import judged
 from tests.fakes import FakeModel, InMemoryRepository
@@ -167,7 +169,7 @@ def test_analysis_runs_extraction_and_returns_results(h: Harness) -> None:
     ]
     assert body["prompt_versions"] == {
         "profile_extractor": "2",
-        "jd_analyzer": "2",
+        "jd_analyzer": "3",
         "evidence_matcher": "1",
         "resume_advisor": "1",
         "learning_path_planner": "1",
@@ -256,6 +258,24 @@ def test_failed_extraction_marks_analysis_failed_with_safe_message(h: Harness) -
     assert body["status"] == "failed"
     assert body["error"] == "Something went wrong while analyzing. Please try again."
     assert "secret" not in body["error"]
+
+
+def test_text_that_is_not_a_job_description_fails_with_a_clear_message(h: Harness) -> None:
+    def chat_message(model: str, input_text: str) -> Any:
+        return JDAnalysis(
+            role_title=None,
+            company=None,
+            seniority=None,
+            requirements=[],
+            is_job_description=False,
+        )
+
+    h.model.responses["JDAnalysis"] = chat_message
+    created = h.analyze(h.upload_resume().json()["id"])
+    body = h.client.get(f"/analyses/{created.json()['id']}").json()
+    assert body["status"] == "failed"
+    assert body["error"] == NOT_A_JD_MESSAGE
+    assert body["fit_score"] is None
 
 
 def test_analysis_validates_documents(h: Harness) -> None:

@@ -27,3 +27,13 @@ class JobRequirements(BaseModel):
     company: str | None
     seniority: Seniority | None
     requirements: list[Requirement]
+
+
+class JDAnalysis(JobRequirements):
+    """What the JDAnalyzer LLM returns: the requirements plus a check on the input."""
+
+    is_job_description: bool = Field(
+        description="True if the text is a job description or job posting (it describes a "
+        "role and what the candidate needs). False for anything else, e.g. a chat message, "
+        "an article, a resume, notes or random text."
+    )

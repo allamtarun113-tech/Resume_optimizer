@@ -196,13 +196,12 @@ export function AnalysisView({ id }: { id: string }) {
                   score={analysis.fit_score}
                   label="Job fit (resume)"
                 />
-                {analysis.potential_score != null &&
-                  analysis.potential_score > analysis.fit_score && (
-                    <ScoreGauge
-                      score={analysis.potential_score}
-                      label="With what you already have"
-                    />
-                  )}
+                {analysis.potential_score != null && (
+                  <ScoreGauge
+                    score={analysis.potential_score}
+                    label="After adding what you have"
+                  />
+                )}
               </div>
             )}
           </div>
